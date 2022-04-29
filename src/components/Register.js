@@ -1,17 +1,10 @@
 import React, {useContext, useState} from 'react';
 import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
-import AuthService from "../service/AuthService";
-// import AppContext from "../AppContext";
-import {Modal} from "./Modal";
-import {Confirm} from "./login-register-page-components/RegisterConfirm";
 import validator from 'validator'
-import PasswordChecklist from "react-password-checklist"
 import RegisterService from "../service/RegisterService";
 import {Dialog} from "primereact/dialog";
-import {LoginPage} from "./login-register-page-components/LoginPage";
 import AppContext from "../AppContext";
-import {CampaignItems} from "./home-page-components/CampaignItems";
 import {Password} from "primereact/password";
 import { Divider } from 'primereact/divider';
 
@@ -107,8 +100,6 @@ export const Register = () => {
     const ModalTemp = () => {
         if (modalVisible) {
             return (
-                // <Modal dialogHeaderMessage={"Dorulama Kodu Gönderme"}
-                //        component={<Confirm UserId={createdUserId}/>}/>
                 <div className="base-dialog">
                     <Dialog className="p-dialog-titlebar-close" header={"Hesap Onay"} visible={modalVisible} onHide={onHide}>
                         <div className="register-confirm">
@@ -228,16 +219,13 @@ export const Register = () => {
 
                 <div className="login-item">
                     <label>Şifre</label>
-                    {/*<InputText value={pass} type="text" onChange={(e) => setPass(e.target.value)}/>*/}
                     <Password placeholder="Kullanıcı Şifresi"
-                              // feedback={false}
                               header={header} footer={footer}
                               value={pass}
                               toggleMask
                               style={{width: '100%',fontSize:'1px'}}
                               onChange={(e) => {
                                   setPass(e.target.value)
-                                  // setWrongAccountInfo(false);
                               }}
                     />
                     <span className="password-validate-message">Şifreniz en az 7 karakter olmalı. harf ve karakter içermelidir.</span>
