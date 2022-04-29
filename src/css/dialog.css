@@ -1,0 +1,14 @@
+.base-dialog{
+    display:flex;
+    flex-direction: row;
+    /*justify-content: space-evenly;*/
+    /*height: 70%;*/
+    /*width: 70%;*/
+}
+
+.p-dialog .p-dialog-header .p-dialog-title {
+    /*font-weight: 700;*/
+    font-size: 2rem;
+    text-align: center;
+}
+

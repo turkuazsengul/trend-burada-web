@@ -1,0 +1,131 @@
+.login-card-wrap{
+    display:flex;
+    flex-direction: row;
+    justify-content:center;
+    margin-left: 25%;
+    margin-right: 25%;
+    margin-top: 5%;
+    margin-bottom:5%;
+}
+
+
+.container-items .login{
+    display:flex;
+    flex-direction: column;
+    width:40rem;
+    height:100%;
+    margin-bottom:1rem;
+    margin-top:1rem;
+
+}
+
+.container-items .login button{
+    height:100%;
+}
+
+.container-items .login .login-item input{
+    height:45px;
+}
+
+.container-items .login .login-item{
+    display:flex;
+    flex-direction: column;
+    justify-content:center;
+    margin-left:3rem;
+    margin-right:3rem;
+    margin-top:2rem;
+}
+
+.container-items .login .login-item .p-password input{
+    width: 100%;
+}
+.container-items .login .login-item .p-password input{
+    margin-bottom:-0.8rem;
+}
+
+.container-items .login .login-item button{
+    height:45px;
+    background-color: #cc16b3;
+    border: 0px solid #cc16b3;
+    /*margin-top:3rem;*/
+}
+
+.container-items .login .login-item label{
+    width:100%;
+    font-size:14px;
+    text-align: left;
+    margin-bottom:0.8rem;
+    font-weight:bold;
+}
+
+.container-items .login .login-item .forget-password button {
+    font-size:13px;
+    color:#495057;
+    background-color:white;
+    border: 1px solid white;
+    /*font-style:italic;*/
+    text-decoration:underline;
+}
+
+.password-validate-message {
+    font-size:11px;
+    text-align:left;
+    margin-bottom:1rem;
+    margin-top:1rem;
+}
+
+.container-items .login .login-item .forget-password button span{
+    font-size:12px;
+}
+
+.container-items .login .login-item .forget-password{
+    text-align: right;
+}
+
+.login-card-wrap .card{
+    background-color:#ffffff;
+}
+
+.login-card-wrap .p-tabview{
+    border: 1px solid #e6e6e6;
+    border-radius:10px;
+    overflow:hidden;
+    /*background-color:#ffffff;*/
+    /*background: rgb(208,19,188);*/
+    /*background: radial-gradient(circle, rgba(208,19,188,1) 0%, rgba(121,88,9,0.9920168751094187) 52%, rgba(0,212,255,1) 100%);*/
+
+}
+/*.p-password-input{*/
+/*    font-size:1rem;*/
+/*}*/
+
+.login-card-wrap .p-tabview-nav{
+    /*margin-top:1rem;*/
+    background-color:#ffffff;
+}
+
+.fail-login-message-item {
+    display:flex;
+    flex-direction: row;
+    justify-content:left;
+    background-color: #fff4f6;
+    color: #d7293e;
+    text-align: center;
+    margin-left: 7%;
+    margin-right: 7%;
+    height: 4.5rem;
+    border-radius: 10px;
+    border:1px solid #d7293e;
+}
+.fail-login-message-item i{
+    /*margin-top:0.8rem;*/
+    /*margin-left: 1rem;*/
+    /*margin-right: 1rem;*/
+    margin:1rem;
+}
+.fail-login-message-item label{
+    /*margin-top:1rem;*/
+    /*margin-left: 1rem;*/
+    margin:1rem;
+}
+

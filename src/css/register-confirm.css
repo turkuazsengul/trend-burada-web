@@ -1,0 +1,12 @@
+.register-confirm{
+    display:flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    width:45rem;
+    height:20rem;
+}
+
+.register-confirm-item{
+    text-align:center;
+    /*margin:1rem;*/
+}
