@@ -2,11 +2,7 @@ import React, {useContext, useState} from 'react';
 import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
 import AuthService from "../service/AuthService";
-// import AppContext from "../AppContext";
-import {Modal} from "./Modal";
-import {Confirm} from "./login-register-page-components/RegisterConfirm";
 import validator from 'validator'
-import {CampaignItems} from "./home-page-components/CampaignItems";
 import AppContext from "../AppContext";
 import {useHistory} from "react-router-dom";
 import {Password} from 'primereact/password';
@@ -72,7 +68,7 @@ export const Login = () => {
     }
 
     const forgetPasswordClick = () => {
-        myContext.setComponent(<Modal/>)
+
     }
 
 
