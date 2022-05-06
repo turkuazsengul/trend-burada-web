@@ -8,7 +8,7 @@ export const CampaignItems = () => {
         /*
         ** Bu alanda datalar servislerden alınacaktır.
          */
-    }, []);
+    }, [campaignData]);
 
     const campaignDataExp = [
         {
@@ -23,23 +23,53 @@ export const CampaignItems = () => {
         },
         {
             id: 1,
-            value: "https://cdn.dsmcdn.com/ty403/campaign/banners/original/594568/ef34f6a343_1.jpg",
+            value: "https://cdn.dsmcdn.com/ty419/pimWidgetApi/mobile_20220506084614_mobile20220505093405mobile20220429135703stwidgetmobile.jpg",
             description: "Baharda Bahçenizin Kurun"
         },
         {
             id: 1,
-            value: "https://cdn.dsmcdn.com/ty395/pimWidgetApi/mobile_20220411102014_908706KadinMobile202204111301.jpg",
+            value: "https://cdn.dsmcdn.com/ty412/campaign/banners/original/594810/c1f40349a5_0.jpg",
             description: "Baharda Bahçenizin Kurun"
         },
         {
             id: 1,
-            value: "https://cdn.dsmcdn.com/ty403/pimWidgetApi/mobile_20220419045626_ipekyolmobilanneler.jpg",
+            value: "https://cdn.dsmcdn.com/ty403/campaign/banners/original/603949/e03b7e086a_1.jpg",
             description: "Baharda Bahçenizin Kurun"
         },
         {
             id: 1,
-            value: "https://cdn.dsmcdn.com/ty387/campaign/banners/original/594810/f28b3ce95a_1.jpg",
-            description: "Trend Burada Collection - Yeni Sezon"
+            value: "https://cdn.dsmcdn.com/ty386/campaign/banners/original/594571/305971c6c1_1.jpg",
+            description: "Yaz Sezonu Yenilikleri"
+        },
+        {
+            id: 1,
+            value: "https://cdn.dsmcdn.com/ty419/pimWidgetApi/mobile_20220506084614_mobile20220505093405mobile20220429135703stwidgetmobile.jpg",
+            description: "Baharda Bahçenizin Kurun"
+        },
+        {
+            id: 1,
+            value: "https://cdn.dsmcdn.com/ty412/campaign/banners/original/594810/c1f40349a5_0.jpg",
+            description: "Baharda Bahçenizin Kurun"
+        },
+        {
+            id: 1,
+            value: "https://cdn.dsmcdn.com/ty403/campaign/banners/original/603949/e03b7e086a_1.jpg",
+            description: "Baharda Bahçenizin Kurun"
+        },
+        {
+            id: 1,
+            value: "https://cdn.dsmcdn.com/ty386/campaign/banners/original/594571/305971c6c1_1.jpg",
+            description: "Yaz Sezonu Yenilikleri"
+        },
+        {
+            id: 1,
+            value: "https://cdn.dsmcdn.com/ty419/pimWidgetApi/mobile_20220506084614_mobile20220505093405mobile20220429135703stwidgetmobile.jpg",
+            description: "Baharda Bahçenizin Kurun"
+        },
+        {
+            id: 1,
+            value: "https://cdn.dsmcdn.com/ty412/campaign/banners/original/594810/c1f40349a5_0.jpg",
+            description: "Baharda Bahçenizin Kurun"
         },
     ]
 

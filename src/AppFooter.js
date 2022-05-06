@@ -1,9 +1,8 @@
-import React, {useRef, useState, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 
 import appstoreicon from './icons/app-store-icon.svg'
-import googleplayicons from './icons/google-play-badge.png.svg'
 
-export const AppFooter = (props) => {
+export const AppFooter = () => {
     const [footerBodyData, setFooterBodyData] = useState([]);
     const [test, setTest] = useState([]);
 

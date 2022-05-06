@@ -1,12 +1,10 @@
-import React, {useContext, useEffect, useState} from 'react';
-import AppContext from "../../AppContext";
+import React, {useState} from 'react';
 import {TabView, TabPanel} from 'primereact/tabview';
 import {Register} from "../Register";
 import {Login} from "../Login";
+import '../../css/loader.css'
 
-export const LoginPage = (props) => {
-
-    const myContext = useContext(AppContext)
+export const LoginPage = () => {
 
     const [activeIndex,setActiveIndex] = useState(0);
 

@@ -1,8 +1,4 @@
-import React, {useRef, useState, useEffect} from 'react';
-import {Carousel} from 'primereact/carousel';
-import {CampaignItems} from "../home-page-components/CampaignItems";
-import AppContext from "../../AppContext";
-import AuthService from "../../service/AuthService";
+import React from 'react';
 
 export const CustomerProfile = () => {
 

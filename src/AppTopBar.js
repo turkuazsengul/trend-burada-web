@@ -1,11 +1,7 @@
-import React, {useRef, useState, useEffect, useContext} from 'react';
+import React from 'react';
 import {InputText} from 'primereact/inputtext';
 import {Button} from 'primereact/button';
 import {Badge} from 'primereact/badge';
-import {LoginPage} from "./components/login-register-page-components/LoginPage";
-import AppContext from "./AppContext";
-import {CampaignItems} from "./components/home-page-components/CampaignItems";
-import {CustomerProfile} from "./components/customer-profile-components/CustomerProfile";
 import {useHistory} from "react-router-dom";
 import {Tooltip} from 'primereact/tooltip';
 import './css/ToolTipDemo.css'
@@ -14,8 +10,6 @@ import 'primeicons/primeicons.css';
 
 export const AppTopBar = () => {
     const history = useHistory();
-
-    const [loginButtonLabel, setLoginButtonLabel] = useState("Giriş Yap");
 
     const topMenuItems = [
         {
@@ -126,7 +120,6 @@ export const AppTopBar = () => {
                 <Button
                     onClick={clickLoginButton}
                     icon="pi pi-user"
-                    // label={getLoginButtonLabel()}
                     label={"Hesabım"}
                     className="session-in top-bar-login-button p-button-text top-bar-button p-button-secondary p-button-outlined mr-3 mb-2"
                 />
@@ -136,7 +129,6 @@ export const AppTopBar = () => {
                 <Button
                     onClick={clickLoginButton}
                     icon="pi pi-user"
-                    // label={getLoginButtonLabel()}
                     label={"Giriş Yap"}
                     className="session-out top-bar-login-button p-button-text top-bar-button p-button-secondary p-button-outlined mr-3 mb-2"
                 />
@@ -180,7 +172,6 @@ export const AppTopBar = () => {
     const tooltipBody = {
         backgroundColor: '#ffffff',
         textAlign: "center",
-        // borderRadius: "10px",
     }
 
     return (

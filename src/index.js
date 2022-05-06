@@ -3,7 +3,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import {BrowserRouter, Switch} from 'react-router-dom'
 import ScrollToTop from './ScrollToTop';
-import {PublicHome} from "./PublicHome";
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.css';
@@ -18,7 +17,6 @@ ReactDOM.render(
     <BrowserRouter>
         <ScrollToTop>
             <Switch>
-                {/*<PublicHome/>*/}
                 <HomePage/>
             </Switch>
         </ScrollToTop>

@@ -1,9 +1,8 @@
-import React, {useContext, useState} from 'react';
+import React, {useState} from 'react';
 import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
 import AuthService from "../service/AuthService";
 import validator from 'validator'
-import AppContext from "../AppContext";
 import {useHistory} from "react-router-dom";
 import {Password} from 'primereact/password';
 
@@ -11,11 +10,8 @@ export const Login = () => {
 
     const history = useHistory();
 
-    const myContext = useContext(AppContext)
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-
-    const [showPassword, setShowPassword] = useState("");
 
     const [wrongAccountInfo, setWrongAccountInfo] = useState(false);
     const [labelMessage, setLabelMessage] = useState("");

@@ -1,17 +1,14 @@
-import React, {useContext, useState} from 'react';
+import React, {useState} from 'react';
 import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
 import validator from 'validator'
 import RegisterService from "../service/RegisterService";
 import {Dialog} from "primereact/dialog";
-import AppContext from "../AppContext";
 import {Password} from "primereact/password";
 import { Divider } from 'primereact/divider';
 
 
 export const Register = () => {
-
-    const myContext = useContext(AppContext)
 
     const [confirmValue, setConfirmValue] = useState("");
 

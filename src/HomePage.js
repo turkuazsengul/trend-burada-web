@@ -1,11 +1,11 @@
-import React, {useRef, useState} from 'react';
+import React, {useState} from 'react';
 import {AppTopBar} from "./AppTopBar";
-import {BaseContainer} from "./BaseContainer";
 import {AppFooter} from "./AppFooter";
 import AppContext from "./AppContext";
 import {CampaignItems} from "./components/home-page-components/CampaignItems";
-import {Route, Switch, useHistory} from "react-router-dom";
+import {Route, Switch} from "react-router-dom";
 import {LoginPage} from "./components/login-register-page-components/LoginPage";
+import {CustomerProfile} from "./components/customer-profile-components/CustomerProfile";
 
 import "./css/publicPage.css"
 import "./css/topBar.css"
@@ -14,7 +14,8 @@ import "./css/campaignItem.css"
 import "./css/login.css"
 import './css/dialog.css'
 import './css/register-confirm.css'
-import {Register} from "./components/Register";
+import {AuthenticatedRoute} from "./components/AuthenticatedRoute";
+
 
 export const HomePage = () => {
     const [component, setComponent] = useState(<CampaignItems/>);
@@ -33,11 +34,10 @@ export const HomePage = () => {
                         <div className="container">
                             <Route path="/" exact component={CampaignItems}/>
                             <Route path="/login" exact component={LoginPage}/>
-                            <Route path="/register" exact component={Register}/>
+                            <AuthenticatedRoute key="profile" exact path="/profile" component={<CustomerProfile/>}/>
                         </div>
                     </div>
                 </Switch>
-                {/*<BaseContainer components={component}/>*/}
                 <AppFooter/>
             </AppContext.Provider>
 
