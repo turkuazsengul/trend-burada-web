@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
-import AuthService from "../service/AuthService";
+import AuthService from "../../service/AuthService";
 import validator from 'validator'
 import {useHistory} from "react-router-dom";
 import {Password} from 'primereact/password';

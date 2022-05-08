@@ -4,11 +4,11 @@ export const CampaignItems = () => {
     const [campaignData, setCampaignData] = useState([]);
 
     useEffect(() => {
-        setCampaignData(campaignDataExp);
+        // setCampaignData(campaignDataExp);
         /*
         ** Bu alanda datalar servislerden alınacaktır.
          */
-    }, [campaignData]);
+    }, []);
 
     const campaignDataExp = [
         {
@@ -17,57 +17,57 @@ export const CampaignItems = () => {
             description: "Baharda Bahçenizin Kurun"
         },
         {
-            id: 1,
+            id: 2,
             value: "https://cdn.dsmcdn.com/ty386/campaign/banners/original/594571/305971c6c1_1.jpg",
             description: "Yaz Sezonu Yenilikleri"
         },
         {
-            id: 1,
+            id: 3,
             value: "https://cdn.dsmcdn.com/ty419/pimWidgetApi/mobile_20220506084614_mobile20220505093405mobile20220429135703stwidgetmobile.jpg",
             description: "Baharda Bahçenizin Kurun"
         },
         {
-            id: 1,
+            id: 4,
             value: "https://cdn.dsmcdn.com/ty412/campaign/banners/original/594810/c1f40349a5_0.jpg",
             description: "Baharda Bahçenizin Kurun"
         },
         {
-            id: 1,
+            id: 5,
             value: "https://cdn.dsmcdn.com/ty403/campaign/banners/original/603949/e03b7e086a_1.jpg",
             description: "Baharda Bahçenizin Kurun"
         },
         {
-            id: 1,
+            id: 6,
             value: "https://cdn.dsmcdn.com/ty386/campaign/banners/original/594571/305971c6c1_1.jpg",
             description: "Yaz Sezonu Yenilikleri"
         },
         {
-            id: 1,
+            id: 7,
             value: "https://cdn.dsmcdn.com/ty419/pimWidgetApi/mobile_20220506084614_mobile20220505093405mobile20220429135703stwidgetmobile.jpg",
             description: "Baharda Bahçenizin Kurun"
         },
         {
-            id: 1,
+            id: 8,
             value: "https://cdn.dsmcdn.com/ty412/campaign/banners/original/594810/c1f40349a5_0.jpg",
             description: "Baharda Bahçenizin Kurun"
         },
         {
-            id: 1,
+            id: 9,
             value: "https://cdn.dsmcdn.com/ty403/campaign/banners/original/603949/e03b7e086a_1.jpg",
             description: "Baharda Bahçenizin Kurun"
         },
         {
-            id: 1,
+            id: 10,
             value: "https://cdn.dsmcdn.com/ty386/campaign/banners/original/594571/305971c6c1_1.jpg",
             description: "Yaz Sezonu Yenilikleri"
         },
         {
-            id: 1,
+            id: 11,
             value: "https://cdn.dsmcdn.com/ty419/pimWidgetApi/mobile_20220506084614_mobile20220505093405mobile20220429135703stwidgetmobile.jpg",
             description: "Baharda Bahçenizin Kurun"
         },
         {
-            id: 1,
+            id: 12,
             value: "https://cdn.dsmcdn.com/ty412/campaign/banners/original/594810/c1f40349a5_0.jpg",
             description: "Baharda Bahçenizin Kurun"
         },
@@ -82,10 +82,10 @@ export const CampaignItems = () => {
         )
     }
 
-    const campaignItemList = campaignData.map((x) => {
+    const campaignItemList = campaignDataExp.map((x) => {
         return (
-            <div className="campaign-item">
-                <a href="">
+            <div key={x.id} className="campaign-item">
+                <a href="/product">
                     <span>
                         <div className="campaign-item-img" style={style(x.value)}/>
                     </span>
@@ -106,11 +106,11 @@ export const CampaignItems = () => {
                 </div>
             </div>
 
-            <div className="campaign-slider">
-                <div className="campaign-slider-item">
+            {/*<div className="campaign-slider">*/}
+            {/*    <div className="campaign-slider-item">*/}
 
-                </div>
-            </div>
+            {/*    </div>*/}
+            {/*</div>*/}
         </div>
     );
 }

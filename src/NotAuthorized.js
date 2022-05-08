@@ -1,5 +1,5 @@
 import React from "react";
-import notAuthorized from '../images/403.png'
+import notAuthorized from './images/403.png'
 
 function NotAuthorized() {
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import {InputText} from 'primereact/inputtext';
 import {Button} from 'primereact/button';
 import {Badge} from 'primereact/badge';
@@ -7,9 +7,11 @@ import {Tooltip} from 'primereact/tooltip';
 import './css/ToolTipDemo.css'
 import AuthService from "./service/AuthService";
 import 'primeicons/primeicons.css';
+import AppContext from "./AppContext";
 
 export const AppTopBar = () => {
     const history = useHistory();
+    const myContext = useContext(AppContext)
 
     const topMenuItems = [
         {
@@ -37,19 +39,19 @@ export const AppTopBar = () => {
     const profileToolItem = [
         {
             id: 1,
-            value: "Hesabım",
+            name: "Hesabım",
             icon: "pi pi-user",
             to: "/profile",
         },
         {
             id: 2,
-            value: "Siparişlerim",
+            name: "Siparişlerim",
             icon: "pi pi-box",
             to: "/login",
         },
         {
             id: 3,
-            value: "Adreslerim",
+            name: "Adreslerim",
             icon: "pi pi-map",
             to: "/adress",
         },
@@ -58,23 +60,23 @@ export const AppTopBar = () => {
     const categoryHeaderData = [
         {
             id: 1,
-            value: "Kadın",
+            name: "Kadın",
         },
         {
-            id: 1,
-            value: "Erkek"
+            id: 2,
+            name: "Erkek"
         },
         {
-            id: 1,
-            value: "Çocuk",
+            id: 3,
+            name: "Çocuk",
         },
         {
-            id: 1,
-            value: "Spor & Eğlence",
+            id: 4,
+            name: "Spor & Eğlence",
         },
         {
-            id: 1,
-            value: "Yapı Malzemeleri & Aksesuar",
+            id: 5,
+            name: "Yapı Malzemeleri & Aksesuar",
         },
 
     ]
@@ -95,7 +97,7 @@ export const AppTopBar = () => {
 
         const topMenuItemBodyList = topMenuItems.map((x) => {
             return (
-                <a href={x.to}>{x.value}</a>
+                <a key={x.id} href={x.to}>{x.value}</a>
             )
         })
         return topMenuItemBodyList
@@ -104,9 +106,9 @@ export const AppTopBar = () => {
     const categoryHeaderBody = () => {
         const categoryHeaderBodyList = categoryHeaderData.map((x) => {
             return (
-                <div className="menu-bar">
+                <div key={x.id} className="menu-bar">
                     <nav>
-                        <a href="">{x.value}</a>
+                        <a href={"/product/"+x.name}>{x.name}</a>
                     </nav>
                 </div>
             )
@@ -137,13 +139,12 @@ export const AppTopBar = () => {
     }
 
     const profileActionList = () => {
-        debugger;
         if (localStorage.getItem("token")) {
             const profileMenuItems = profileToolItem.map((x) => {
                 return (
                     <div className="content">
                         <a className={x.icon}/>
-                        <a href={x.to}>{x.value}</a>
+                        <a href={x.to}>{x.name}</a>
                     </div>
                 )
             })
@@ -209,7 +210,7 @@ export const AppTopBar = () => {
                     <div>
                         <Button className="top-bar-button p-button-secondary p-button-text" icon="pi pi-shopping-cart" onClick={clickBoxButton} label="Sepetim">
                             <i className="mr-4 p-overlay-badge" style={{marginLeft: '1.5rem'}}>
-                                <Badge value="2" severity="info" className="p-badge-lg"/>
+                                <Badge value={myContext.orderCount} severity="info" className="p-badge-lg"/>
                             </i>
                         </Button>
                     </div>

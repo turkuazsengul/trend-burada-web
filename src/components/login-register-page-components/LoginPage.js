@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {TabView, TabPanel} from 'primereact/tabview';
-import {Register} from "../Register";
-import {Login} from "../Login";
+import {Register} from "./Register";
+import {Login} from "./Login";
 import '../../css/loader.css'
 
 export const LoginPage = () => {

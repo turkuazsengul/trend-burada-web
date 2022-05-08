@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
 import validator from 'validator'
-import RegisterService from "../service/RegisterService";
+import RegisterService from "../../service/RegisterService";
 import {Dialog} from "primereact/dialog";
 import {Password} from "primereact/password";
 import { Divider } from 'primereact/divider';
@@ -14,6 +14,9 @@ export const Register = () => {
 
     const [modalVisible, setModalVisible] = useState(false);
     const [createdUserId, setCreatedUserId] = useState(true);
+
+
+    const [loading, setLoading] = useState(false);
 
     const [mail, setMail] = useState("");
     const [pass, setPass] = useState("");
@@ -44,6 +47,7 @@ export const Register = () => {
         }
 
         if (checkValidation()) {
+            setLoading(true);
             RegisterService.register(request).then(response => {
                 if (response !== 11 && response.data) {
                     if (response.data.returnCode === 99) {
@@ -58,6 +62,8 @@ export const Register = () => {
                     setWrongAccountInfo(true);
                     setLabelMessage("Kayıt esnasında hata oluştu.")
                 }
+
+                setLoading(false);
             }, (error) => {
                 setWrongAccountInfo(true);
                 setLabelMessage("Kayıt esnasında hata oluştu.")

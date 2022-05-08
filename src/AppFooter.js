@@ -96,11 +96,11 @@ export const AppFooter = () => {
 
     const footerBodyHeaderItems = footerBodyData.map((x) => {
             return (
-                <div className="footer-body-header-items">
+                <div key={x.id} className="footer-body-header-items">
                     <span> <a href="">{x.header}</a> </span>
                     {x.items.map((y) => {
                         return (
-                            <a href="">{y.value}</a>
+                            <a key={y.id} href="">{y.value}</a>
                         )
                     })}
                 </div>
