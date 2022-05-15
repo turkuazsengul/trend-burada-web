@@ -12,7 +12,6 @@ export const ProductPage = ({match}) => {
         parentCategory: "",
         subCategory: "",
         childCategory: "",
-        // id: "",
     }
 
     useEffect(() => {
@@ -227,18 +226,18 @@ export const ProductPage = ({match}) => {
         const categoryThreeList = match.params.id.split("-");
 
         if (categoryThreeList.length === 1) {
-            categoryTreeObj.parentCategory = categoryThreeList[0].toLowerCase();
+            categoryTreeObj.parentCategory = categoryThreeList[0];
             setToFilterCategoryType(1) //parent category
         }
         if (categoryThreeList.length === 2) {
-            categoryTreeObj.parentCategory = categoryThreeList[0].toLowerCase();
-            categoryTreeObj.subCategory = categoryThreeList[1].toLowerCase();
+            categoryTreeObj.parentCategory = categoryThreeList[0];
+            categoryTreeObj.subCategory = categoryThreeList[1];
             setToFilterCategoryType(2) // sub category
         }
         if (categoryThreeList.length === 3) {
-            categoryTreeObj.parentCategory = categoryThreeList[0].toLowerCase();
-            categoryTreeObj.subCategory = categoryThreeList[1].toLowerCase();
-            categoryTreeObj.childCategory = categoryThreeList[2].toLowerCase();
+            categoryTreeObj.parentCategory = categoryThreeList[0];
+            categoryTreeObj.subCategory = categoryThreeList[1];
+            categoryTreeObj.childCategory = categoryThreeList[2];
             setToFilterCategoryType(3) // child category
         }
 

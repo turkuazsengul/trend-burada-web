@@ -12,6 +12,30 @@
     text-align:left;
 }
 
+.tool-tip-item-category{
+    display:flex;
+    flex-direction: column;
+    justify-content:left;
+    background-color:#ffffff;
+    border: 0.1rem solid #b1b0b0;
+    margin-top:-1rem;
+    margin-bottom:-2rem;
+    margin-left:-2rem;
+    margin-right:-2rem;
+    border-radius:10px;
+    text-align:left;
+}
+
+.tooltip-body-category{
+    background-color: #ffffff;
+    text-align: left;
+    width:128rem;
+    margin-top:-1rem;
+    /*margin-right:15%;*/
+    /*margin-left:15%;*/
+    border-radius:0px;
+}
+
 .content{
     display:flex;
     flex-direction: row;

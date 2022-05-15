@@ -23,12 +23,15 @@ import {ProductDetail} from "./components/product-components/ProductDetail";
 export const HomePage = () => {
     const [component, setComponent] = useState(<CampaignItems/>);
     const [orderCount, setOrderCount] = useState(0);
+    const [timer, setTimer] = useState(null);
 
     const userSettings = {
         component: component,
         orderCount: orderCount,
+        timer:timer,
         setOrderCount,
         setComponent,
+        setTimer,
     };
 
     return (

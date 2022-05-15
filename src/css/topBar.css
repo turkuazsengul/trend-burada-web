@@ -21,6 +21,9 @@
     grid-template-rows: 1fr 2fr 0.8fr;
     margin-left: 15%;
     margin-right: 17%;
+
+    /*margin-left: 8%;*/
+    /*margin-right: 8%;*/
 }
 
 .tab-menu-category{
@@ -152,3 +155,33 @@
 .session-in{
 
 }
+
+.tooltip-visible{
+
+}
+
+
+.tooltip-area .profile-toogle-menu{
+    border:2px solid blue;
+    width: 100%;
+    height:100%;
+    position: absolute;
+    overflow:hidden;
+    /*z-index:1;*/
+}
+
+.tooltip-area{
+    margin-right: 17%;
+    margin-left: 15%;
+    height:30rem;
+    background-color:red;
+}
+
+/*#tooltip{*/
+
+/*    background-color:red;*/
+/*    right:50rem;*/
+/*    left:29.3rem;*/
+/*    z-index:1;*/
+/*}*/
+

@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {InputText} from 'primereact/inputtext';
 import {Button} from 'primereact/button';
 import {Badge} from 'primereact/badge';
@@ -8,10 +8,21 @@ import './css/ToolTipDemo.css'
 import AuthService from "./service/AuthService";
 import 'primeicons/primeicons.css';
 import AppContext from "./AppContext";
+import CategoryService from "./service/CategoryService";
+import {MenuTool} from "./components/MenuTool";
 
 export const AppTopBar = () => {
     const history = useHistory();
     const myContext = useContext(AppContext)
+
+    const [categoryHeaderData, setCategoryHeaderData] = useState([]);
+    const [categoryMenuVisible, setCategoryMenuVisible] = useState("hidden");
+
+    useEffect(() => {
+        CategoryService.getCategory().then(response => {
+            setCategoryHeaderData(response);
+        })
+    },[]);
 
     const topMenuItems = [
         {
@@ -57,29 +68,34 @@ export const AppTopBar = () => {
         },
     ]
 
-    const categoryHeaderData = [
-        {
-            id: 1,
-            name: "Kadın",
-        },
-        {
-            id: 2,
-            name: "Erkek"
-        },
-        {
-            id: 3,
-            name: "Çocuk",
-        },
-        {
-            id: 4,
-            name: "Spor & Eğlence",
-        },
-        {
-            id: 5,
-            name: "Yapı Malzemeleri & Aksesuar",
-        },
-
-    ]
+    // const categoryHeaderDataMock = [
+    //     {
+    //         id: 1,
+    //         name: "Kadın",
+    //         order: 1
+    //     },
+    //     {
+    //         id: 2,
+    //         name: "Erkek",
+    //         order: 2
+    //     },
+    //     {
+    //         id: 3,
+    //         name: "Çocuk",
+    //         order: 3
+    //     },
+    //     {
+    //         id: 4,
+    //         name: "Spor & Eğlence",
+    //         order: 4
+    //     },
+    //     {
+    //         id: 5,
+    //         name: "Yapı Malzemeleri & Aksesuar",
+    //         order: 5
+    //     },
+    //
+    // ]
 
     const clickLoginButton = () => {
         if (!localStorage.getItem("token")) {
@@ -94,26 +110,36 @@ export const AppTopBar = () => {
     }
 
     const topMenuItemBody = () => {
-
-        const topMenuItemBodyList = topMenuItems.map((x) => {
+        return topMenuItems.map((x) => {
             return (
                 <a key={x.id} href={x.to}>{x.value}</a>
             )
         })
-        return topMenuItemBodyList
     }
 
     const categoryHeaderBody = () => {
-        const categoryHeaderBodyList = categoryHeaderData.map((x) => {
+        categoryHeaderData.sort((a, b) => a.sortOrder - b.sortOrder)
+        return categoryHeaderData.map((x) => {
             return (
                 <div key={x.id} className="menu-bar">
                     <nav>
-                        <a href={"/product/"+x.name}>{x.name}</a>
+                        <a id="test"
+                           onMouseOutCapture={(e) => {
+                               onFocusCategory(x)
+                           }}
+                           // onMouseLeave={setCategoryMenuVisible("hidden")}
+                           href={"/product/" + x.name.toLowerCase()}>{x.name}</a>
                     </nav>
                 </div>
             )
         })
-        return categoryHeaderBodyList
+    }
+
+    const onFocusCategory = (headerData) => {
+        // const list = headerData.filter(x => x.name.toLowerCase() === e.target.text.toLowerCase())
+        // const list = categoryHeaderData.filter(x => x.name.toLowerCase() === e.target.text.toLowerCase())
+        console.log(headerData)
+        setCategoryMenuVisible("visibility");
     }
 
     const getLoginButtonLabel = () => {
@@ -140,7 +166,7 @@ export const AppTopBar = () => {
 
     const profileActionList = () => {
         if (localStorage.getItem("token")) {
-            const profileMenuItems = profileToolItem.map((x) => {
+            return profileToolItem.map((x) => {
                 return (
                     <div className="content">
                         <a className={x.icon}/>
@@ -148,7 +174,6 @@ export const AppTopBar = () => {
                     </div>
                 )
             })
-            return profileMenuItems
         }
     }
 
@@ -175,6 +200,19 @@ export const AppTopBar = () => {
         textAlign: "center",
     }
 
+    const tooltipBodyCategory = {
+        backgroundColor: '#ffffff',
+        textAlign: "left",
+        width: '130rem',
+        marginTop: '-1rem',
+        // marginRight:'15%',
+        borderRadius: '0px',
+    }
+
+    const toolTipMenuStyle = {
+        visible: 'hidden'
+    }
+
     return (
         <div className="top-bar">
             <div className="top-bar-items">
@@ -186,7 +224,7 @@ export const AppTopBar = () => {
                 <div className="top-bar-item">
                     <div className="top-bar-search">
                         <div className="top-bar-logo">
-                            <span>TREND BURADA</span>
+                            <span><a href="/">TREND BURADA</a></span>
                         </div>
                         <div>
                             <div className="col-12 md:col-4">
@@ -198,7 +236,7 @@ export const AppTopBar = () => {
                         </div>
                     </div>
 
-                    <div className="test">
+                    <div>
                         {getLoginButtonLabel()}
                         <Tooltip target=".session-in" position={"bottom"} style={tooltipBody} autoHide={false}>
                             <div className="tool-tip-item">
@@ -207,6 +245,7 @@ export const AppTopBar = () => {
                             </div>
                         </Tooltip>
                     </div>
+
                     <div>
                         <Button className="top-bar-button p-button-secondary p-button-text" icon="pi pi-shopping-cart" onClick={clickBoxButton} label="Sepetim">
                             <i className="mr-4 p-overlay-badge" style={{marginLeft: '1.5rem'}}>
@@ -225,9 +264,22 @@ export const AppTopBar = () => {
 
             </div>
 
-            <div className="profile-toogle-menu">
+            {/*<div className="tooltip-area">*/}
+            {/*    <div id="tooltip" className="profile-toogle-menu" hidden={false}>*/}
 
-            </div>
+            {/*    </div>*/}
+            {/*</div>*/}
+
+
+            {/*<div className="category-tooltip">*/}
+            {/*    <Tooltip className="tooltip-body-category" target=".tab-menu-category" position={"bottom"} autoHide={false}>*/}
+            {/*        <div className="tool-tip-item-category">*/}
+            {/*            {profileActionList()}*/}
+            {/*            {logoutButtonBody()}*/}
+            {/*        </div>*/}
+            {/*    </Tooltip>*/}
+            {/*</div>*/}
+
         </div>
     )
 }

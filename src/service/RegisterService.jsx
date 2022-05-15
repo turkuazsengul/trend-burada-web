@@ -28,7 +28,21 @@ const confirm = (userId, confirmCode) => {
     });
 };
 
+const createConfirm = (userId) => {
+    return axios.post(BASE_URL + `/auth/createConfirm`,{},
+        {params: {userId}}
+    ).then(
+        response => {
+            return response;
+        }
+    ).catch((error) => {
+        console.log('error ' + error)
+        return 11;
+    });
+};
+
 export default {
     register,
-    confirm
+    confirm,
+    createConfirm,
 };

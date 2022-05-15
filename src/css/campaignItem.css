@@ -5,13 +5,13 @@
 }
 
 .campaign-list-item {
-    display:inline;
+    display:inline-block;
     margin-top:1rem;
 }
 
 
 .campaign-item{
-    width: 31.8%;
+    /*width: 31.8%;*/
     height: fit-content;
     display:inline-block;
     margin-bottom:2rem;
@@ -57,7 +57,7 @@
 
 .campaign-item .campaign-item-img{
     display: inline-block;
-    width: 100% !important;
+    width: 42rem !important;
     height: 20rem;
     border-top-right-radius: 10px;
     border-top-left-radius: 10px;

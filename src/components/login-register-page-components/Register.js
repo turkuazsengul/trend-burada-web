@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
 import validator from 'validator'
@@ -6,14 +6,18 @@ import RegisterService from "../../service/RegisterService";
 import {Dialog} from "primereact/dialog";
 import {Password} from "primereact/password";
 import { Divider } from 'primereact/divider';
+import {Confirm} from "./RegisterConfirm";
+import AppContext from "../../AppContext";
 
 
 export const Register = () => {
 
+    const myContext = useContext(AppContext)
+
     const [confirmValue, setConfirmValue] = useState("");
 
     const [modalVisible, setModalVisible] = useState(false);
-    const [createdUserId, setCreatedUserId] = useState(true);
+    const [createdUserId, setCreatedUserId] = useState(0);
 
 
     const [loading, setLoading] = useState(false);
@@ -48,9 +52,11 @@ export const Register = () => {
 
         if (checkValidation()) {
             setLoading(true);
+            // setModalVisible(true)
             RegisterService.register(request).then(response => {
                 if (response !== 11 && response.data) {
                     if (response.data.returnCode === 99) {
+                        debugger;
                         setCreatedUserId(response.data.returnData[0].pkId);
                         setWrongAccountInfo(false);
                         setModalVisible(true)
@@ -105,22 +111,7 @@ export const Register = () => {
             return (
                 <div className="base-dialog">
                     <Dialog className="p-dialog-titlebar-close" header={"Hesap Onay"} visible={modalVisible} onHide={onHide}>
-                        <div className="register-confirm">
-                            <div className="register-confirm-item">
-                                <label>E-Posta ile iletilmiş olan confirm kodunu giriniz. Kayıt işleminiz bu kodun doğrulanması ardından gerçekleştirilecektir.</label>
-                            </div>
-
-                            {failRegisterConfirmMessageLabel()}
-
-                            <div className="register-confirm-item">
-                                <InputText style={{width: '100%'}} placeholder={"Confirm kodunu giriniz"} value={confirmValue} type="text" onChange={(e) => setConfirmValue(e.target.value)}/>
-                            </div>
-
-                            <div className="register-confirm-item">
-                                <Button className="p-button-warning" style={{width: '100%', height: '45px'}} label={"Üye Ol"} onClick={confirmButtonClick}/>
-                            </div>
-
-                        </div>
+                        <Confirm UserId={96}/>
                     </Dialog>
                 </div>
             )
@@ -139,52 +130,9 @@ export const Register = () => {
         }
     }
 
-    const clearState = () => {
-        setName("");
-        setSurname("");
-        setMail("");
-        setPass("");
-    }
-
-    const confirmButtonClick = () => {
-        if (confirmValue !== "") {
-            RegisterService.confirm(createdUserId, confirmValue).then(response => {
-                if (response !== 11 && response.data) {
-                    if (response.data.returnCode === 99) {
-                        clearState();
-                        setModalVisible(false)
-                        window.location.reload();
-                    } else {
-                        setWrongAccountInfo(true);
-                        setLabelMessage("Kod doğrulama sırasında bir hata oluştu.")
-                    }
-                } else {
-                    setWrongAccountInfo(true);
-                    setLabelMessage("Kod doğrulama sırasında bir hata oluştu.")
-                }
-            }, (error) => {
-                setWrongAccountInfo(true);
-                setLabelMessage("Kod doğrulama sırasında bir hata oluştu.")
-            })
-        } else {
-            setWrongAccountInfo(true);
-            setLabelMessage("Doğrulama kodu alanı boş olamaz.")
-        }
-    }
-
-    const failRegisterConfirmMessageLabel = () => {
-        if (wrongAccountInfo) {
-            return (
-                <div className="fail-login-message-item">
-                    <i className="pi pi-exclamation-circle"/>
-                    <label>{labelMessage}</label>
-                </div>
-            )
-        }
-    }
-
     const onHide = () => {
         setModalVisible(false)
+        clearInterval(myContext.timer);
     }
 
     const header = <h6>Pick a password</h6>;

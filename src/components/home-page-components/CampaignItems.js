@@ -97,6 +97,13 @@ export const CampaignItems = () => {
         )
     })
 
+    // const toolTipMenuStyle= {
+    //     // visible:'hidden'
+    //     visible:'hidden',
+    //     width:'130rem',
+    //     height:'20rem,',
+    //     backgroundColor:'red',
+    // }
 
     return (
         <div className="catalog">

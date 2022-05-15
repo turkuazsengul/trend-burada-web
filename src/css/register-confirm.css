@@ -3,10 +3,38 @@
     flex-direction: column;
     justify-content: space-evenly;
     width:45rem;
-    height:20rem;
+    height:25rem;
 }
 
 .register-confirm-item{
+    margin-top:1rem;
     text-align:center;
+    margin-left: 5%;
+    margin-right: 5%;
     /*margin:1rem;*/
+}
+
+.confirm-timer-area{
+    display:flex;
+    flex-direction: row;
+    justify-content:center;
+    text-align: center;
+    margin-left: 7%;
+    margin-right: 7%;
+    font-weight:bold;
+    /*height: 4.5rem;*/
+    /*margin-top:1rem;*/
+}
+
+.confirm-timer-area #timer{
+    color: #d7293e;
+}
+
+.confirm-timer-area #timerLabel{
+    color:#64748b;
+    margin-right:8px;
+}
+
+.confirm-button {
+    margin-bottom:1rem;
 }
