@@ -20,7 +20,7 @@ export const AppTopBar = () => {
 
     useEffect(() => {
         CategoryService.getCategory().then(response => {
-            setCategoryHeaderData(response);
+            setCategoryHeaderData(categoryHeaderDataMock);
         })
     },[]);
 
@@ -68,34 +68,34 @@ export const AppTopBar = () => {
         },
     ]
 
-    // const categoryHeaderDataMock = [
-    //     {
-    //         id: 1,
-    //         name: "Kadın",
-    //         order: 1
-    //     },
-    //     {
-    //         id: 2,
-    //         name: "Erkek",
-    //         order: 2
-    //     },
-    //     {
-    //         id: 3,
-    //         name: "Çocuk",
-    //         order: 3
-    //     },
-    //     {
-    //         id: 4,
-    //         name: "Spor & Eğlence",
-    //         order: 4
-    //     },
-    //     {
-    //         id: 5,
-    //         name: "Yapı Malzemeleri & Aksesuar",
-    //         order: 5
-    //     },
-    //
-    // ]
+    const categoryHeaderDataMock = [
+        {
+            id: 1,
+            name: "Kadın",
+            order: 1
+        },
+        {
+            id: 2,
+            name: "Erkek",
+            order: 2
+        },
+        {
+            id: 3,
+            name: "Çocuk",
+            order: 3
+        },
+        {
+            id: 4,
+            name: "Spor & Eğlence",
+            order: 4
+        },
+        {
+            id: 5,
+            name: "Yapı Malzemeleri & Aksesuar",
+            order: 5
+        },
+    
+    ]
 
     const clickLoginButton = () => {
         if (!localStorage.getItem("token")) {

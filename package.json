@@ -2,7 +2,7 @@
     "name": "trend-burada-web",
     "version": "1.0.0",
     "homepage": ".",
-    "private": false,
+    "private": true,
     "repository": {
         "type": "git",
         "url": "https://github.com/turkuazsengul/trend-burada-web"
@@ -32,7 +32,7 @@
         "validator": "^13.7.0"
     },
     "scripts": {
-        "start": "react-scripts start",
+        "start": "react-scripts --openssl-legacy-provider start",
         "build": "react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject"
