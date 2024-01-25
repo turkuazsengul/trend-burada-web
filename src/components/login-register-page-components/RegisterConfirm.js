@@ -5,9 +5,10 @@ import RegisterService from "../../service/RegisterService";
 import AppContext from "../../AppContext";
 import {LoginPage} from "./LoginPage";
 import {InputNumber} from "primereact/inputnumber";
+import {useHistory} from "react-router-dom";
 
 export const Confirm = ({UserId: userId}) => {
-
+    const history = useHistory();
     const myContext = useContext(AppContext)
 
     const [confirmValue, setConfirmValue] = useState("");
@@ -23,27 +24,30 @@ export const Confirm = ({UserId: userId}) => {
         ** Bu alanda datalar servislerden alınacaktır.
         *
          */
-        confirmTimer();
+        // confirmTimer();
     }, []);
 
     const confirmButtonClick = () => {
-        RegisterService.confirm(userId, confirmValue).then(response => {
-            if (response !== 11 && response.data) {
-                if (response.data.returnCode === 99) {
-                    myContext.setComponent(<LoginPage/>)
-                    window.location.reload();
-                } else {
-                    setLabelMessage(response.data.detail.exceptionDetailMessage)
-                    setWrongAccountInfo(true);
-                }
-            } else {
+        myContext.setComponent(<LoginPage/>)
+        window.location.reload();
 
-            }
-
-        }, (error) => {
-            setWrongAccountInfo(true);
-            setLabelMessage("Kod doğrulama sırasında bir hata oluştu.")
-        })
+        // RegisterService.confirm(userId, confirmValue).then(response => {
+        //     if (response !== 11 && response.data) {
+        //         if (response.data.returnCode === 99) {
+        //             myContext.setComponent(<LoginPage/>)
+        //             window.location.reload();
+        //         } else {
+        //             setLabelMessage(response.data.detail.exceptionDetailMessage)
+        //             setWrongAccountInfo(true);
+        //         }
+        //     } else {
+        //
+        //     }
+        //
+        // }, (error) => {
+        //     setWrongAccountInfo(true);
+        //     setLabelMessage("Kod doğrulama sırasında bir hata oluştu.")
+        // })
     }
 
     const createConfirmClick = () => {
@@ -51,7 +55,7 @@ export const Confirm = ({UserId: userId}) => {
             if (response === 99 && response.data) {
                 if (response.data.returnCode === 99) {
                     settimerEnable(true);
-                    confirmTimer();
+                    // confirmTimer();
                     setDisableConfirm(false);
                 }
             } else {
@@ -76,69 +80,69 @@ export const Confirm = ({UserId: userId}) => {
         }
     }
 
-    const confirmTimer = () => {
-        let number = 10;
-        const timer = setInterval(() => {
-            number--;
-            document.getElementById("timer").innerText = number;
+    // const confirmTimer = () => {
+    //     let number = 10;
+    //     const timer = setInterval(() => {
+    //         number--;
+    //         document.getElementById("timer").innerText = number;
+    //
+    //         if (number === 0) {
+    //             clearInterval(timer)
+    //             settimerEnable(false);
+    //             setDisableConfirm(true)
+    //         }
+    //
+    //     }, 1000);
+    //     myContext.setTimer(timer);
+    // }
 
-            if (number === 0) {
-                clearInterval(timer)
-                settimerEnable(false);
-                setDisableConfirm(true)
-            }
-
-        }, 1000);
-        myContext.setTimer(timer);
-    }
-
-    const confirmTimerBody = () => {
-        if (timerEnable) {
-            return (
-                <div className="confirm-timer-area">
-                    <label id="timerLabel">{"Kalan Süre: "}</label>
-                    <label id="timer">10</label>
-                </div>
-            )
-        } else {
-            return (
-                <Button className="p-button-text"
-                        style={{fontSize: '14px', color: '#64748b', textDecoration: 'underline'}}
-                        label={"Yeniden Kod Gönder"}
-                        onClick={createConfirmClick}
-                />
-            )
-        }
-    }
+    // const confirmTimerBody = () => {
+    //     if (timerEnable) {
+    //         return (
+    //             <div className="confirm-timer-area">
+    //                 <label id="timerLabel">{"Kalan Süre: "}</label>
+    //                 <label id="timer">10</label>
+    //             </div>
+    //         )
+    //     } else {
+    //         return (
+    //             <Button className="p-button-text"
+    //                     style={{fontSize: '14px', color: '#64748b', textDecoration: 'underline'}}
+    //                     label={"Yeniden Kod Gönder"}
+    //                     onClick={createConfirmClick}
+    //             />
+    //         )
+    //     }
+    // }
 
 
     return (
         <div className="register-confirm">
             <div className="register-confirm-item">
-                <label>E-Posta ile iletilmiş olan onaylama kodunu giriniz. Hesap aktivasyonunuz bu kodun doğrulanması ardından gerçekleştirilecektir.</label>
+                <label>Kullanıcı Kaydı Başarıyla Oluşturuldu.</label>
             </div>
 
-            <div className="register-confirm-item">
-                {failRegisterConfirmMessageLabel()}
-                {confirmTimerBody()}
-            </div>
+            {/*<div className="register-confirm-item">*/}
+            {/*    {failRegisterConfirmMessageLabel()}*/}
+            {/*    {confirmTimerBody()}*/}
+            {/*</div>*/}
 
-            <div className="register-confirm-item">
-                <InputText style={{width: '100%'}}
-                           placeholder={"Confirm kodunu giriniz"}
-                           value={confirmValue}
-                           type="text"
-                           onChange={(e) => {
-                               setConfirmValue(e.target.value)
-                           }
-                           }
-                />
-            </div>
+            {/*<div className="register-confirm-item">*/}
+            {/*    <InputText style={{width: '100%'}}*/}
+            {/*               placeholder={"Confirm kodunu giriniz"}*/}
+            {/*               value={confirmValue}*/}
+            {/*               type="text"*/}
+            {/*               onChange={(e) => {*/}
+            {/*                   setConfirmValue(e.target.value)*/}
+            {/*               }*/}
+            {/*               }*/}
+            {/*    />*/}
+            {/*</div>*/}
 
             <div className="register-confirm-item confirm-button">
                 <Button className="p-button-warning"
                         style={{width: '100%', height: '45px'}}
-                        label={"Doğrula"}
+                        label={"Login"}
                         disabled={disableConfirm}
                         onClick={confirmButtonClick}/>
             </div>

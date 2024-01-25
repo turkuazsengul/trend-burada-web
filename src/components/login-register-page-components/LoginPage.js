@@ -3,6 +3,7 @@ import {TabView, TabPanel} from 'primereact/tabview';
 import {Register} from "./Register";
 import {Login} from "./Login";
 import '../../css/loader.css'
+import AuthService from "../../service/AuthService";
 
 export const LoginPage = () => {
 

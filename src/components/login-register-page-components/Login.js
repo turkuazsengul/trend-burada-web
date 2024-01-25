@@ -20,12 +20,14 @@ export const Login = () => {
     const failPasswordLabelMessage = "Lütfen şifrenizi giriniz";
 
     const loginButtonOnClick = () => {
-
+        debugger;
         if (checkValidation()) {
+            debugger;
             AuthService.login(username, password).then(() => {
                 history.push("/")
                 window.location.reload();
-            }, (error) => {
+            }).catch ((error) => {
+                debugger;
                 setWrongAccountInfo(true);
                 setLabelMessage("Kullanıcı adı veya şifre hatalı")
             })
@@ -42,13 +44,14 @@ export const Login = () => {
             }
             return false;
         } else {
-            if (!validator.isEmail(username)) {
-                setWrongAccountInfo(true);
-                setLabelMessage(failMailLabelMessage)
-                return false;
-            } else {
-                return true;
-            }
+            return true;
+            // if (!validator.isEmail(username)) {
+            //     setWrongAccountInfo(true);
+            //     setLabelMessage(failMailLabelMessage)
+            //     return false;
+            // } else {
+            //     return true;
+            // }
         }
     }
 
@@ -72,8 +75,8 @@ export const Login = () => {
         <div className="login">
             {failLoginMessageLabel()}
             <div className="login-item">
-                <label>E-Posta</label>
-                <InputText placeholder={"Kullanıcı e-posta adresi"}
+                <label>Kullanıcı Adı</label>
+                <InputText placeholder={"Kullanıcı Adı"}
                            value={username} type="text"
                            onChange={(e) => {
                                setUsername(e.target.value)
@@ -88,7 +91,7 @@ export const Login = () => {
                           feedback={false}
                           value={password}
                           toggleMask
-                          style={{width: '100%',fontSize:'1px'}}
+                          style={{width: '100%', fontSize: '1px'}}
                           onChange={(e) => {
                               setPassword(e.target.value)
                               setWrongAccountInfo(false);

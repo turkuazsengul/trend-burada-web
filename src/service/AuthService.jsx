@@ -1,21 +1,45 @@
 import axios from "axios";
-
+import {KEYCLOAK_CLIENT_ID, KEYCLOAK_GRANT_TYPE, KEYCLOAK_TOKEN_URL} from "../constants/UrlConstans";
 export const BASE_URL = 'http://localhost:40000/api/v1/user';
 
+
 const login = async (username, password) => {
+    const formData = new URLSearchParams();
+    formData.append('client_id', KEYCLOAK_CLIENT_ID);
+    formData.append('grant_type', KEYCLOAK_GRANT_TYPE);
+    formData.append('username', username);
+    formData.append('password', password);
+    console.log(KEYCLOAK_TOKEN_URL)
+    console.log(formData)
+    debugger;
+    let response = await axios.post(
+        KEYCLOAK_TOKEN_URL,
+        formData,
+        {headers: {'Content-Type': 'application/x-www-form-urlencoded'}}
+    ).then(response => {
+        debugger;
+        localStorage.setItem("token", JSON.stringify(response.data.access_token));
+    }).catch((error) => {
+        debugger;
+        console.log('error ' + error);
+    });
 
-    let response = await axios.post(BASE_URL + `/auth/login`, {}, {
-        auth: {
-            username: username,
-            password: password
-        }
-    })
-
-    if (response.data) {
-        localStorage.setItem("token", JSON.stringify(response.config.headers.Authorization));
-        localStorage.setItem("user", JSON.stringify(response.data.returnData));
-    }
 };
+
+// const login = async (username, password) => {
+//
+//     let response = await axios.post(BASE_URL + `/auth/login`, {}, {
+//         auth: {
+//             username: username,
+//             password: password
+//         }
+//     })
+//
+//     if (response.data) {
+//         localStorage.setItem("token", JSON.stringify(response.config.headers.Authorization));
+//         localStorage.setItem("user", JSON.stringify(response.data.returnData));
+//     }
+// };
 
 const getCurrentUser = () => {
     return JSON.parse(localStorage.getItem("user"));

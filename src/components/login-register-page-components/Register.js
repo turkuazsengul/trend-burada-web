@@ -5,13 +5,13 @@ import validator from 'validator'
 import RegisterService from "../../service/RegisterService";
 import {Dialog} from "primereact/dialog";
 import {Password} from "primereact/password";
-import { Divider } from 'primereact/divider';
+import {Divider} from 'primereact/divider';
 import {Confirm} from "./RegisterConfirm";
 import AppContext from "../../AppContext";
+import {useHistory} from "react-router-dom";
 
 
 export const Register = () => {
-
     const myContext = useContext(AppContext)
 
     const [confirmValue, setConfirmValue] = useState("");
@@ -24,8 +24,10 @@ export const Register = () => {
 
     const [mail, setMail] = useState("");
     const [pass, setPass] = useState("");
-    const [name, setName] = useState("");
     const [surname, setSurname] = useState("");
+    const [username, setUsername] = useState("");
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
 
     const [wrongAccountInfo, setWrongAccountInfo] = useState(false);
     const [labelMessage, setLabelMessage] = useState("");
@@ -38,16 +40,27 @@ export const Register = () => {
 
     const registerButtonClick = () => {
         const request = {
+            enabled: true,
+            username: username,
+            emailVerified: false,
+            firstName: firstName,
+            lastName: lastName,
             email: mail,
-            password: pass,
-            name: name,
-            surname: surname,
-            roleList: [
+            credentials: [
                 {
-                    pkId: 1,
-                    name: "CUSTOMER"
+                    type: "password",
+                    value: pass,
+                    temporary: false
                 }
             ],
+            access: {
+                manageGroupMembership: true,
+                view: true,
+                mapRoles: true,
+                impersonate: true,
+                manage: true
+            },
+            realmRoles: ["USER"]
         }
 
         if (checkValidation()) {
@@ -56,7 +69,6 @@ export const Register = () => {
             RegisterService.register(request).then(response => {
                 if (response !== 11 && response.data) {
                     if (response.data.returnCode === 99) {
-                        debugger;
                         setCreatedUserId(response.data.returnData[0].pkId);
                         setWrongAccountInfo(false);
                         setModalVisible(true)
@@ -78,9 +90,9 @@ export const Register = () => {
     }
 
     const checkValidation = () => {
-        if (mail === "" || name === "" || surname === "" || pass === "") {
+        if (mail === "" || firstName === "" || surname === "" || pass === "") {
             setWrongAccountInfo(true);
-            if (name === "") {
+            if (firstName === "") {
                 setLabelMessage(failNameLabelMessage)
             } else if (surname === "") {
                 setLabelMessage(failSurnameLabelMessage)
@@ -138,7 +150,7 @@ export const Register = () => {
     const header = <h6>Pick a password</h6>;
     const footer = (
         <React.Fragment>
-            <Divider />
+            <Divider/>
             <p className="mt-2">Suggestions</p>
             <ul className="pl-2 ml-2 mt-0" style={{lineHeight: '1.5'}}>
                 <li>At least one lowercase</li>
@@ -155,12 +167,17 @@ export const Register = () => {
                 {failRegisterMessageLabel()}
                 <div className="login-item">
                     <label>Ad</label>
-                    <InputText placeholder="Ad" value={name} type="text" onChange={(e) => setName(e.target.value)}/>
+                    <InputText placeholder="Ad" value={firstName} type="text" onChange={(e) => setFirstName(e.target.value)}/>
                 </div>
 
                 <div className="login-item">
                     <label>Soyad</label>
                     <InputText placeholder="Soyad" value={surname} type="text" onChange={(e) => setSurname(e.target.value)}/>
+                </div>
+
+                <div className="login-item">
+                    <label>Kullanıcı Adı</label>
+                    <InputText placeholder="Kullanıcı Adı" value={username} type="text" onChange={(e) => setUsername(e.target.value)}/>
                 </div>
 
                 <div className="login-item">
@@ -174,7 +191,7 @@ export const Register = () => {
                               header={header} footer={footer}
                               value={pass}
                               toggleMask
-                              style={{width: '100%',fontSize:'1px'}}
+                              style={{width: '100%', fontSize: '1px'}}
                               onChange={(e) => {
                                   setPass(e.target.value)
                               }}
