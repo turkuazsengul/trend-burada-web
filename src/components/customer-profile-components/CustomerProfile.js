@@ -1,18 +1,28 @@
 import React from 'react';
+import UserService from "../../service/UserService.";
 
 export const CustomerProfile = () => {
 
-    const test = () =>{
-        if(localStorage.getItem("token")){
-           return <h5>{localStorage.getItem("user")}</h5>
-        }else{
-           return <h5>Login olunamadı</h5>
+    const getUserInfo = () => {
+        // const response = UserService.getUser();
+        // console.log(response)
+    }
+
+    const userPage = () => {
+        if (localStorage.getItem("token")) {
+
+            return <div>
+                <h5>{getUserInfo()}</h5>
+            </div>
+
+        } else {
+            return <h5>Login olunamadı</h5>
         }
     }
 
     return (
         <div>
-            {test()}
+            {userPage()}
         </div>
     )
 }

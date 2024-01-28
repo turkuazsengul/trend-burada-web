@@ -1,13 +1,15 @@
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
 import AuthService from "../../service/AuthService";
 import validator from 'validator'
 import {useHistory} from "react-router-dom";
 import {Password} from 'primereact/password';
+import AppContext from "../../AppContext";
+import UserService from "../../service/UserService.";
 
 export const Login = () => {
-
+    const myContext = useContext(AppContext)
     const history = useHistory();
 
     const [username, setUsername] = useState("");
@@ -20,14 +22,12 @@ export const Login = () => {
     const failPasswordLabelMessage = "Lütfen şifrenizi giriniz";
 
     const loginButtonOnClick = () => {
-        debugger;
         if (checkValidation()) {
-            debugger;
-            AuthService.login(username, password).then(() => {
+            AuthService.login(username, password).then((response) => {
+                localStorage.setItem("token", response.data.access_token);
                 history.push("/")
                 window.location.reload();
-            }).catch ((error) => {
-                debugger;
+            }).catch((error) => {
                 setWrongAccountInfo(true);
                 setLabelMessage("Kullanıcı adı veya şifre hatalı")
             })

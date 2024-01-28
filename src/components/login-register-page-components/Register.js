@@ -24,8 +24,6 @@ export const Register = () => {
 
     const [mail, setMail] = useState("");
     const [pass, setPass] = useState("");
-    const [surname, setSurname] = useState("");
-    const [username, setUsername] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
 
@@ -41,7 +39,7 @@ export const Register = () => {
     const registerButtonClick = () => {
         const request = {
             enabled: true,
-            username: username,
+            username: mail,
             emailVerified: false,
             firstName: firstName,
             lastName: lastName,
@@ -90,11 +88,11 @@ export const Register = () => {
     }
 
     const checkValidation = () => {
-        if (mail === "" || firstName === "" || surname === "" || pass === "") {
+        if (mail === "" || firstName === "" || lastName === "" || pass === "") {
             setWrongAccountInfo(true);
             if (firstName === "") {
                 setLabelMessage(failNameLabelMessage)
-            } else if (surname === "") {
+            } else if (lastName === "") {
                 setLabelMessage(failSurnameLabelMessage)
             } else if (mail === "") {
                 setLabelMessage(failMailLabelMessage)
@@ -172,12 +170,7 @@ export const Register = () => {
 
                 <div className="login-item">
                     <label>Soyad</label>
-                    <InputText placeholder="Soyad" value={surname} type="text" onChange={(e) => setSurname(e.target.value)}/>
-                </div>
-
-                <div className="login-item">
-                    <label>Kullanıcı Adı</label>
-                    <InputText placeholder="Kullanıcı Adı" value={username} type="text" onChange={(e) => setUsername(e.target.value)}/>
+                    <InputText placeholder="Soyad" value={lastName} type="text" onChange={(e) => setLastName(e.target.value)}/>
                 </div>
 
                 <div className="login-item">

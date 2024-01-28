@@ -19,10 +19,10 @@ export const AppTopBar = () => {
     const [categoryMenuVisible, setCategoryMenuVisible] = useState("hidden");
 
     useEffect(() => {
-        CategoryService.getCategory().then(response => {
-            setCategoryHeaderData(categoryHeaderDataMock);
-        })
-    },[]);
+        // CategoryService.getCategory().then(response => {
+        //     setCategoryHeaderData(categoryHeaderDataMock);
+        // })
+    }, []);
 
     const topMenuItems = [
         {
@@ -94,7 +94,7 @@ export const AppTopBar = () => {
             name: "Yapı Malzemeleri & Aksesuar",
             order: 5
         },
-    
+
     ]
 
     const clickLoginButton = () => {
@@ -106,7 +106,6 @@ export const AppTopBar = () => {
     }
 
     const clickBoxButton = () => {
-        localStorage.clear();
     }
 
     const topMenuItemBody = () => {
@@ -127,7 +126,7 @@ export const AppTopBar = () => {
                            onMouseOutCapture={(e) => {
                                onFocusCategory(x)
                            }}
-                           // onMouseLeave={setCategoryMenuVisible("hidden")}
+                            // onMouseLeave={setCategoryMenuVisible("hidden")}
                            href={"/product/" + x.name.toLowerCase()}>{x.name}</a>
                     </nav>
                 </div>
@@ -165,7 +164,8 @@ export const AppTopBar = () => {
     }
 
     const profileActionList = () => {
-        if (localStorage.getItem("token")) {
+        const token = localStorage.getItem("token")
+        if (token) {
             return profileToolItem.map((x) => {
                 return (
                     <div className="content">
@@ -191,8 +191,8 @@ export const AppTopBar = () => {
     }
 
     const logOutClick = () => {
-        AuthService.revokeCurrentToken();
         localStorage.clear();
+        window.location.reload();
     }
 
     const tooltipBody = {
@@ -263,22 +263,6 @@ export const AppTopBar = () => {
             <div className="hr-style">
 
             </div>
-
-            {/*<div className="tooltip-area">*/}
-            {/*    <div id="tooltip" className="profile-toogle-menu" hidden={false}>*/}
-
-            {/*    </div>*/}
-            {/*</div>*/}
-
-
-            {/*<div className="category-tooltip">*/}
-            {/*    <Tooltip className="tooltip-body-category" target=".tab-menu-category" position={"bottom"} autoHide={false}>*/}
-            {/*        <div className="tool-tip-item-category">*/}
-            {/*            {profileActionList()}*/}
-            {/*            {logoutButtonBody()}*/}
-            {/*        </div>*/}
-            {/*    </Tooltip>*/}
-            {/*</div>*/}
 
         </div>
     )
