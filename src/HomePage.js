@@ -18,6 +18,10 @@ import './css/product.css'
 import {AuthenticatedRoute} from "./AuthenticatedRoute";
 import {ProductPage} from "./components/product-components/ProductPage";
 import {ProductDetail} from "./components/product-components/ProductDetail";
+import MyOrderComp from "./components/customer-profile-components/MyOrderComp";
+import UserDetailComp from "./components/customer-profile-components/MyUserInfo";
+import MyUserInfo from "./components/customer-profile-components/MyUserInfo";
+import AllOrderComp from "./components/customer-profile-components/MyOrderComp";
 
 
 export const HomePage = () => {
@@ -29,8 +33,8 @@ export const HomePage = () => {
     const userSettings = {
         component: component,
         orderCount: orderCount,
-        timer:timer,
-        authenticated:authenticated,
+        timer: timer,
+        authenticated: authenticated,
         setOrderCount,
         setComponent,
         setAuthenticated,
@@ -41,17 +45,18 @@ export const HomePage = () => {
         <div className="home-layout">
             <AppContext.Provider value={userSettings}>
                 <AppTopBar/>
-                    <div className="container-items">
-                        <div className="container">
-                            <Switch>
+                <div className="container-items">
+                    <div className="container">
+                        <Switch>
                             <Route path="/" exact component={CampaignItems}/>
                             <Route path="/login" exact component={LoginPage}/>
                             <Route path="/product/:id" exact component={ProductPage}/>
                             <Route path="/detail/:id" exact component={ProductDetail}/>
-                            <AuthenticatedRoute key="profile" exact path="/profile" component={CustomerProfile}/>
-                            </Switch>
-                        </div>
+                            <AuthenticatedRoute key="profile" exact path="/hesabım/KullaniciBilgilerim" component={UserDetailComp}/>
+                            <AuthenticatedRoute key="order" exact path="/hesabım/Siparislerim" component={AllOrderComp}/>
+                        </Switch>
                     </div>
+                </div>
                 <AppFooter/>
             </AppContext.Provider>
 

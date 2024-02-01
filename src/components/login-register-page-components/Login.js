@@ -2,7 +2,6 @@ import React, {useContext, useState} from 'react';
 import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
 import AuthService from "../../service/AuthService";
-import validator from 'validator'
 import {useHistory} from "react-router-dom";
 import {Password} from 'primereact/password';
 import AppContext from "../../AppContext";
@@ -21,7 +20,35 @@ export const Login = () => {
     const failMailLabelMessage = "Lütfen geçerli bir e-posta adresi giriniz";
     const failPasswordLabelMessage = "Lütfen şifrenizi giriniz";
 
-    const loginButtonOnClick = () => {
+    // const loginButtonOnClick = () => {
+    //     if (checkValidation()) {
+    //         AuthService.login(username, password).then((response) => {
+    //             localStorage.setItem("token", response.data.access_token);
+    //             history.push("/")
+    //             window.location.reload();
+    //         }).catch((error) => {
+    //             setWrongAccountInfo(true);
+    //             setLabelMessage("Kullanıcı adı veya şifre hatalı")
+    //         })
+    //     }
+    // }
+
+    const loginButtonOnClick = async () => {
+        try {
+            const responseLogin = await AuthService.login(username, password);
+            const responseUser = await UserService.getUser(responseLogin.data.access_token);
+            localStorage.setItem("token", responseLogin.data.access_token);
+            localStorage.setItem("user", JSON.stringify(responseUser.data.returnData[0]));
+        }catch (error){
+            console.error('Error fetching data:', error);
+            if (error.response.status === 401) {
+                localStorage.removeItem("token");
+                history.push("/login");
+                window.location.reload()
+            }
+        }
+
+
         if (checkValidation()) {
             AuthService.login(username, password).then((response) => {
                 localStorage.setItem("token", response.data.access_token);

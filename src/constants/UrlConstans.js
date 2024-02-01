@@ -6,3 +6,7 @@ export const LOGOUT_URL = "http://localhost:40000/api/v1/auth/logout"
 
 export const KEYCLOAK_CLIENT_ID = "login-app"
 export const KEYCLOAK_GRANT_TYPE = "password"
+
+
+export const MY_USER_INFO_URL = "/hesabım/KullaniciBilgilerim"
+export const MY_ORDER_URL = "/hesabım/Siparişlerim"

@@ -5,11 +5,8 @@ import {Badge} from 'primereact/badge';
 import {useHistory} from "react-router-dom";
 import {Tooltip} from 'primereact/tooltip';
 import './css/ToolTipDemo.css'
-import AuthService from "./service/AuthService";
 import 'primeicons/primeicons.css';
 import AppContext from "./AppContext";
-import CategoryService from "./service/CategoryService";
-import {MenuTool} from "./components/MenuTool";
 
 export const AppTopBar = () => {
     const history = useHistory();
@@ -22,6 +19,7 @@ export const AppTopBar = () => {
         // CategoryService.getCategory().then(response => {
         //     setCategoryHeaderData(categoryHeaderDataMock);
         // })
+        setCategoryHeaderData(categoryHeaderDataMock);
     }, []);
 
     const topMenuItems = [
@@ -33,7 +31,7 @@ export const AppTopBar = () => {
         {
             id: 2,
             value: "Siparişlerim",
-            to: "/login",
+            to: "/hesabım/Siparislerim",
         },
         {
             id: 3,
@@ -52,13 +50,13 @@ export const AppTopBar = () => {
             id: 1,
             name: "Hesabım",
             icon: "pi pi-user",
-            to: "/profile",
+            to: "/hesabım/KullaniciBilgilerim",
         },
         {
             id: 2,
             name: "Siparişlerim",
             icon: "pi pi-box",
-            to: "/login",
+            to: "/hesabım/Siparislerim",
         },
         {
             id: 3,
@@ -101,7 +99,7 @@ export const AppTopBar = () => {
         if (!localStorage.getItem("token")) {
             history.push("/login")
         } else {
-            history.push("/profile")
+            history.push("/hesabım/KullaniciBilgilerim")
         }
     }
 

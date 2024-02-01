@@ -1,0 +1,63 @@
+.my-account-page {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    margin-top: 2rem;
+    margin-left: 3rem;
+    margin-right: 2.5rem;
+}
+
+.navigation-column {
+    grid-column: 1 / 2;
+    display: grid;
+    /*grid-template-rows: repeat(4, 1fr);*/
+    gap: 12px;
+}
+
+.process-column {
+    grid-column: 2 / 7;
+    display: flex;
+    flex-direction: column;
+    justify-content: normal;
+}
+
+.navi-row {
+    border: 1px solid #e6e6e6;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.navi-row label {
+    font-size: 15px;
+    color: #64748B;
+    font-weight: bold;
+    text-align: left;
+}
+
+.navi-item {
+    border: 1px solid transparent;
+    /*border-radius: 10px;*/
+    padding: 5px;
+    text-align: left;
+    margin-left: 1px;
+    margin-top: 3px;
+}
+
+.navi-item span {
+    margin-left: 1.5rem;
+    font-size: 11px;
+    color: #646f81;
+    /*font-style: revert;*/
+    font-weight: bold
+}
+
+.process-row {
+    border: 1px solid #e6e6e6;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.navi-item:hover {
+    background-color: rgba(228, 208, 229, 0.68);
+}
+
