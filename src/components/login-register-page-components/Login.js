@@ -20,19 +20,6 @@ export const Login = () => {
     const failMailLabelMessage = "Lütfen geçerli bir e-posta adresi giriniz";
     const failPasswordLabelMessage = "Lütfen şifrenizi giriniz";
 
-    // const loginButtonOnClick = () => {
-    //     if (checkValidation()) {
-    //         AuthService.login(username, password).then((response) => {
-    //             localStorage.setItem("token", response.data.access_token);
-    //             history.push("/")
-    //             window.location.reload();
-    //         }).catch((error) => {
-    //             setWrongAccountInfo(true);
-    //             setLabelMessage("Kullanıcı adı veya şifre hatalı")
-    //         })
-    //     }
-    // }
-
     const loginButtonOnClick = async () => {
         try {
             const responseLogin = await AuthService.login(username, password);

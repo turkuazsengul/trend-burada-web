@@ -5,7 +5,6 @@ import AppContext from "./AppContext";
 import {CampaignItems} from "./components/home-page-components/CampaignItems";
 import {Route, Switch} from "react-router-dom";
 import {LoginPage} from "./components/login-register-page-components/LoginPage";
-import {CustomerProfile} from "./components/customer-profile-components/CustomerProfile";
 
 import "./css/publicPage.css"
 import "./css/topBar.css"
@@ -52,7 +51,7 @@ export const HomePage = () => {
                             <Route path="/login" exact component={LoginPage}/>
                             <Route path="/product/:id" exact component={ProductPage}/>
                             <Route path="/detail/:id" exact component={ProductDetail}/>
-                            <AuthenticatedRoute key="profile" exact path="/hesabım/KullaniciBilgilerim" component={UserDetailComp}/>
+                            <AuthenticatedRoute key="profile" exact path="/hesabım/KullaniciBilgilerim" component={MyUserInfo}/>
                             <AuthenticatedRoute key="order" exact path="/hesabım/Siparislerim" component={AllOrderComp}/>
                         </Switch>
                     </div>

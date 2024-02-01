@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import '../../css/customer-profile.css'
 import {MY_ORDER_URL, MY_USER_INFO_URL} from "../../constants/UrlConstans";
 
-const ProfileNavigation = ({user}) => {
+const ProfileNavigation = ({userFullName}) => {
     const [isHovered, setIsHovered] = useState(false);
 
     const handleHover = () => {
@@ -107,11 +107,11 @@ const ProfileNavigation = ({user}) => {
     return (
         <div className="navigation-column">
             <div className="navi-row">
-                <label>{user.name}</label>
+                <label>{userFullName}</label>
             </div>
+            <MyUserInformation/>
             <MyOrder/>
             <SpecialForYou/>
-            <MyUserInformation/>
         </div>
     )
 }

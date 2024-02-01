@@ -2,7 +2,7 @@
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 12px;
-    margin-top: 2rem;
+    margin-top: 1rem;
     margin-left: 3rem;
     margin-right: 2.5rem;
 }
@@ -10,7 +10,6 @@
 .navigation-column {
     grid-column: 1 / 2;
     display: grid;
-    /*grid-template-rows: repeat(4, 1fr);*/
     gap: 12px;
 }
 
@@ -36,7 +35,6 @@
 
 .navi-item {
     border: 1px solid transparent;
-    /*border-radius: 10px;*/
     padding: 5px;
     text-align: left;
     margin-left: 1px;
@@ -47,7 +45,6 @@
     margin-left: 1.5rem;
     font-size: 11px;
     color: #646f81;
-    /*font-style: revert;*/
     font-weight: bold
 }
 
@@ -55,6 +52,185 @@
     border: 1px solid #e6e6e6;
     border-radius: 10px;
     padding: 10px;
+    margin-bottom: 10px;
+}
+
+.process-column .process-row {
+    border: 1px solid #e6e6e6;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+    /*display: flex;*/
+}
+
+.process-row .process-header-item {
+    margin-left: 2rem;
+    margin-top: 2rem;
+    text-align: left;
+    margin-bottom: 2rem;
+    font-size: 15px;
+    font-weight: bold;
+    color: #646f81;
+}
+
+.process-user-form-layer {
+    display: flex;
+    flex-direction: row;
+}
+
+.process-user-form-layer input {
+    font-size: 15px;
+}
+
+.process-user-form-layer button {
+    width: 100%;
+    height: 4rem;
+    margin-bottom: 2rem;
+}
+
+.process-row .user-detail {
+    flex: 1;
+    width: 50%;
+    margin-left: 2rem;
+    display: grid;
+    gap: 2rem;
+}
+
+.process-row .user-detail .user-detail-body {
+    display: grid;
+    text-align: left;
+    margin-top: 1rem;
+}
+
+.process-row .password-change {
+    flex: 1;
+    width: 50%;
+    margin-left: 2rem;
+    margin-right: 1rem;
+    display: grid;
+    gap: 2rem;
+}
+
+.process-row .user-detail .password-change-body {
+    display: grid;
+    text-align: left;
+    margin-top: 1rem;
+}
+
+.password-change .password-change-body {
+    display: grid;
+    text-align: left;
+    margin-top: 1rem;
+}
+
+.process-row .password-change .password-item {
+    flex: 1;
+    text-align: left;
+    margin-right: 2rem;
+}
+
+.process-row .password-change .password-item input {
+    flex: 1;
+    text-align: left;
+    width: 100%
+}
+
+.process-row .password-change .password-item .pi-eye {
+    margin-top: -1rem;
+}
+
+.process-row .password-change .password-item .pi-eye-slash {
+    margin-top: -1rem;
+}
+
+.password-change .password-change-body .password-row-1 {
+    display: flex;
+    text-align: left;
+}
+
+.password-change .password-change-body .password-row-2 {
+    margin-top: 4rem;
+    display: flex;
+    text-align: left;
+}
+
+.password-change .password-change-body .password-row-3 {
+    margin-top: 4rem;
+    display: flex;
+    text-align: left;
+}
+
+.password-change .password-change-body .password-row-4 {
+    margin-top: 4rem;
+    display: flex;
+    text-align: left;
+}
+
+.process-row .user-detail .user-detail-body .detail-row-1 {
+    display: flex;
+    text-align: left;
+}
+
+.process-row .user-detail .user-detail-body .detail-row-2 {
+    margin-top: 4rem;
+    display: flex;
+    text-align: left;
+}
+
+.process-row .user-detail .user-detail-body .detail-row-3 {
+    margin-top: 4rem;
+    display: flex;
+    text-align: left;
+}
+
+.process-row .user-detail .user-detail-body .detail-row-4 {
+    margin-top: 4rem;
+    display: flex;
+    text-align: left;
+}
+
+.process-row .user-detail .user-detail-body .user-detail-item {
+    flex: 1;
+    text-align: left;
+    margin-right: 2rem;
+}
+
+.header-item {
+    font-size: 11px;
+    font-weight: bold;
+    color: #646f81;
+    margin-bottom: 1rem;
+}
+
+.process-row .user-detail-header {
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    color: #c57cf1;
+    margin-top: 1rem;
+}
+
+.process-row .password-change .password-header {
+    text-align: left;
+    font-size: 15px;
+    font-weight: bold;
+    color: #c57cf1;
+    margin-top: 1rem;
+}
+
+.password-change-body .password-row {
+    display: grid;
+    text-align: left;
+    margin-top: 1rem;
+}
+
+.divider {
+    /*flex: 2;*/
+    margin-left: 2rem;
+    margin-right: 2rem;
+    width: 1px;
+    background-color: #e6e6e6;
+
 }
 
 .navi-item:hover {
