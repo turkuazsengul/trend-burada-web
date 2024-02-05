@@ -1,36 +1,26 @@
 import axios from "axios";
-import {KEYCLOAK_CLIENT_ID, KEYCLOAK_GRANT_TYPE, KEYCLOAK_TOKEN_URL, LOGOUT_URL} from "../constants/UrlConstans";
+import {KEYCLOAK_CLIENT_ID, KEYCLOAK_GRANT_TYPE, KEYCLOAK_TOKEN_URL, LOGIN_URL, LOGOUT_URL} from "../constants/UrlConstans";
 
-export const BASE_URL = 'http://localhost:40000/api/v1/user';
-
-
-// const login = async (username, password) => {
+// const login = (username, password) => {
 //     const formData = new URLSearchParams();
 //     formData.append('client_id', KEYCLOAK_CLIENT_ID);
 //     formData.append('grant_type', KEYCLOAK_GRANT_TYPE);
 //     formData.append('username', username);
 //     formData.append('password', password);
-//     let response = await axios.post(
-//         KEYCLOAK_TOKEN_URL,
-//         formData,
-//         {headers: {'Content-Type': 'application/x-www-form-urlencoded'}}
-//     ).then(response => {
-//         localStorage.setItem("token", response.data.access_token);
-//     }).catch((error) => {
-//         console.log('error ' + error);
-//     });
 //
+//     return axios.post(KEYCLOAK_TOKEN_URL, formData, {
+//         headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+//     });
 // };
 
 const login = (username, password) => {
-    const formData = new URLSearchParams();
-    formData.append('client_id', KEYCLOAK_CLIENT_ID);
-    formData.append('grant_type', KEYCLOAK_GRANT_TYPE);
-    formData.append('username', username);
-    formData.append('password', password);
+    const credentials = `${username}:${password}`;
+    const base64EncodedCredentials = btoa(credentials);
 
-    return axios.post(KEYCLOAK_TOKEN_URL, formData, {
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+    return axios.post(LOGIN_URL, {}, {
+        headers: {
+            'Authorization': `Basic ${base64EncodedCredentials}`
+        }
     });
 };
 

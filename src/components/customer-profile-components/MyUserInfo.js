@@ -1,17 +1,20 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import ProfileNavigation from "./ProfileNavigation";
-
 import '../../css/customer-profile.css'
 import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
-import {Dropdown} from "primereact/dropdown";
-import {Calendar} from "primereact/calendar";
 import {Password} from "primereact/password";
 import {InputMask} from "primereact/inputmask";
+import {Toast} from "primereact/toast";
+import UserService from "../../service/UserService.";
+import {useHistory} from "react-router-dom";
 
 const MyUserInfo = () => {
-    const [user, setUser] = useState([]);
-    // const [userDetail, setUserDetail] = useState({});
+    const history = useHistory();
+
+    const toastCenter  = useRef(null);
+
+    const [user, setUser] = useState({});
     const [fullName, setFullName] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -27,33 +30,63 @@ const MyUserInfo = () => {
 
     const phoneCodeList = [{code: '+90'}, {code: '+45'}];
 
-    const userDetailDummy = [
-        {
-            phoneCode: '+90',
-            phoneNumber: '+90 (539) 316 47 59',
-            birthDay: '10/01/1994',
-        }
-    ];
+    // const userDetailDummy = [
+    //     {
+    //         phoneCode: '+90',
+    //         phoneNumber: '+90 (539) 316 47 59',
+    //         birthDay: '10/01/1994',
+    //     }
+    // ];
 
-    useEffect(() => {
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-            const userJson = JSON.parse(storedUser);
-            setFirstName(userJson.firstName)
-            setEmail(userJson.email)
-            setLastName(userJson.lastName)
-            setFullName(userJson.name)
-        }
-        const userDetail = userDetailDummy[0]
-        setPhoneNumber(userDetail.phoneNumber)
-        setBirthDate(userDetail.birthDay)
+    useEffect(async () => {
+        const storedUserStr = localStorage.getItem("user");
+        const user = JSON.parse(storedUserStr);
+
+        setPhoneNumber(user.gsm_no)
+        setBirthDate(user.dob)
+        setFirstName(user.name)
+
+        setEmail(user.email)
+        setLastName(user.surname)
+        setFullName(user.name + ' ' + user.surname)
+
+        // const token = localStorage.getItem("token");
+        // await UserService.getUser(token)
+        //     .then((response) => {
+        //         const userDetail = userDetailDummy[0]
+        //
+        //         setPhoneNumber(userDetail.phoneNumber)
+        //         setBirthDate(userDetail.birthDay)
+        //         setFirstName(response.firstName)
+        //
+        //         setEmail(response.email)
+        //         setLastName(response.lastName)
+        //         setFullName(response.name)
+        //     })
+        //     .catch((error) => {
+        //         if (error.response && error.response.status === 401) {
+        //             localStorage.removeItem("token");
+        //             history.push("/login");
+        //             window.location.reload()
+        //         } else {
+        //             const detailMessage = "Sistemsel bir hata sebebi ile şuan için bilgilerinize erişemiyoruz. Lütfen daha sonra tekrar deneyiniz."
+        //             showMessage("Kullanıcı Bilgisine Erişilemedi.", detailMessage, toastCenter , 'warn')
+        //         }
+        //
+        //     });
     }, []);
+
+    const showMessage = (labelText, detailText, ref, severity) => {
+        ref.current.show({severity: severity, summary: labelText, detail: detailText, life: 3000});
+    };
 
     return (
 
         <div className="catalog">
             <div className="container-items">
                 <div className="my-account-page">
+                    <Toast ref={toastCenter } position="center"/>
+
                     <ProfileNavigation userFullName={fullName}/>
 
                     <div className="process-column">
@@ -84,7 +117,7 @@ const MyUserInfo = () => {
                                             <div className="user-detail-item">
                                                 <div className="header-item">Soyad</div>
                                                 <InputText
-                                                    value={lastName || user.lastName}
+                                                    value={lastName}
                                                     onChange={(e) => {
                                                         setLastName(e.target.value)
                                                         setUpdateBtnDisabled(false)
@@ -97,7 +130,7 @@ const MyUserInfo = () => {
                                             <div className="user-detail-item">
                                                 <div className="header-item">E-Mail</div>
                                                 <InputText
-                                                    value={email || user.email}
+                                                    value={email}
                                                     onChange={(e) => {
                                                         setEmail(e.target.value)
                                                         setUpdateBtnDisabled(false)
@@ -111,7 +144,7 @@ const MyUserInfo = () => {
                                                     placeholder="+11-(111)-111-11-11"
                                                     keyfilter="int"
                                                     value={phoneNumber}
-                                                    onClick={(e) =>{
+                                                    onClick={(e) => {
                                                         setPhoneNumber("")
                                                     }}
                                                     onChange={(e) => {

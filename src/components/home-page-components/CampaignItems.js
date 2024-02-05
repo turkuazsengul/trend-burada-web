@@ -18,58 +18,58 @@ export const CampaignItems = () => {
         },
         {
             id: 2,
-            value: "https://cdn.dsmcdn.com/ty386/campaign/banners/original/594571/305971c6c1_1.jpg",
-            description: "Yaz Sezonu Yenilikleri"
+            value: "https://cdn.dsmcdn.com/ty1157/pimWidgetApi/mobile_20240201202326_2522913EvYasamMobile202402011501.jpg",
+            description: "Mudo Concept"
         },
         {
             id: 3,
-            value: "https://cdn.dsmcdn.com/ty419/pimWidgetApi/mobile_20220506084614_mobile20220505093405mobile20220429135703stwidgetmobile.jpg",
-            description: "Baharda Bahçenizin Kurun"
+            value: "https://cdn.dsmcdn.com/ty1158/pimWidgetApi/mobile_20240205071956_2524256ElektronikMobile202402021201.jpg",
+            description: "Müziği Doyasıya Yaşa "
         },
         {
             id: 4,
-            value: "https://cdn.dsmcdn.com/ty412/campaign/banners/original/594810/c1f40349a5_0.jpg",
-            description: "Baharda Bahçenizin Kurun"
+            value: "https://cdn.dsmcdn.com/ty1137/pimWidgetApi/mobile_20240118070002_mobile20240108065243mobile2023.jpg",
+            description: "Gs Store"
         },
         {
             id: 5,
-            value: "https://cdn.dsmcdn.com/ty403/campaign/banners/original/603949/e03b7e086a_1.jpg",
-            description: "Baharda Bahçenizin Kurun"
+            value: "https://cdn.dsmcdn.com/ty1143/pimWidgetApi/mobile_20240124071226_2401147KadinMobile202401231802.jpg",
+            description: "Sporda En Rahat O"
         },
         {
             id: 6,
-            value: "https://cdn.dsmcdn.com/ty386/campaign/banners/original/594571/305971c6c1_1.jpg",
+            value: "https://cdn.dsmcdn.com/ty1138/pimWidgetApi/mobile_20240118065730_columbia.jpg",
             description: "Yaz Sezonu Yenilikleri"
         },
         {
             id: 7,
-            value: "https://cdn.dsmcdn.com/ty419/pimWidgetApi/mobile_20220506084614_mobile20220505093405mobile20220429135703stwidgetmobile.jpg",
-            description: "Baharda Bahçenizin Kurun"
+            value: "https://cdn.dsmcdn.com/ty1129/pimWidgetApi/mobile_20240111153218_2249025KadinMobile202401111801.jpg",
+            description: "İç Giyim"
         },
         {
             id: 8,
-            value: "https://cdn.dsmcdn.com/ty412/campaign/banners/original/594810/c1f40349a5_0.jpg",
-            description: "Baharda Bahçenizin Kurun"
+            value: "https://cdn.dsmcdn.com/ty1155/pimWidgetApi/mobile_20240202153542_2527400ElektronikMobile202402021801.jpg",
+            description: "Kahve Keyfi"
         },
         {
             id: 9,
-            value: "https://cdn.dsmcdn.com/ty403/campaign/banners/original/603949/e03b7e086a_1.jpg",
-            description: "Baharda Bahçenizin Kurun"
+            value: "https://cdn.dsmcdn.com/ty1111/pimWidgetApi/mobile_20231229092657_2397375ElektronikMobile202312.jpg",
+            description: "Küçük Ev Aletleri"
         },
         {
             id: 10,
-            value: "https://cdn.dsmcdn.com/ty386/campaign/banners/original/594571/305971c6c1_1.jpg",
-            description: "Yaz Sezonu Yenilikleri"
+            value: "https://cdn.dsmcdn.com/ty1153/pimWidgetApi/mobile_20240131064937_SevginiziGosterenTakilar1.jpg",
+            description: "Sevgililer Günü"
         },
         {
             id: 11,
-            value: "https://cdn.dsmcdn.com/ty419/pimWidgetApi/mobile_20220506084614_mobile20220505093405mobile20220429135703stwidgetmobile.jpg",
-            description: "Baharda Bahçenizin Kurun"
+            value: "https://cdn.dsmcdn.com/ty1120/pimWidgetApi/mobile_20240105130028_2414392ElektronikMobile202401041901.jpg",
+            description: "Elektronik Alışverişi"
         },
         {
             id: 12,
-            value: "https://cdn.dsmcdn.com/ty412/campaign/banners/original/594810/c1f40349a5_0.jpg",
-            description: "Baharda Bahçenizin Kurun"
+            value: "https://cdn.dsmcdn.com/ty1082/pimWidgetApi/mobile_20231207122821_2357602SupermarketMobile202312071302.jpg",
+            description: "Sevimli Dostlarımız"
         },
     ]
 

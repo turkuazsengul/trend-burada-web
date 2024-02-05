@@ -8,7 +8,6 @@ import AppContext from "../../AppContext";
 import UserService from "../../service/UserService.";
 
 export const Login = () => {
-    const myContext = useContext(AppContext)
     const history = useHistory();
 
     const [username, setUsername] = useState("");
@@ -21,24 +20,10 @@ export const Login = () => {
     const failPasswordLabelMessage = "Lütfen şifrenizi giriniz";
 
     const loginButtonOnClick = async () => {
-        try {
-            const responseLogin = await AuthService.login(username, password);
-            const responseUser = await UserService.getUser(responseLogin.data.access_token);
-            localStorage.setItem("token", responseLogin.data.access_token);
-            localStorage.setItem("user", JSON.stringify(responseUser.data.returnData[0]));
-        }catch (error){
-            console.error('Error fetching data:', error);
-            if (error.response.status === 401) {
-                localStorage.removeItem("token");
-                history.push("/login");
-                window.location.reload()
-            }
-        }
-
-
         if (checkValidation()) {
             AuthService.login(username, password).then((response) => {
-                localStorage.setItem("token", response.data.access_token);
+                localStorage.setItem("token", response.data.returnData[0].accessTokenResponse.access_token);
+                localStorage.setItem("user", JSON.stringify(response.data.returnData[0].user));
                 history.push("/")
                 window.location.reload();
             }).catch((error) => {
