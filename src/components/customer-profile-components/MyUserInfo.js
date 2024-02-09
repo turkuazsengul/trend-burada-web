@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import ProfileNavigation from "./ProfileNavigation";
-import '../../css/customer-profile.css'
+import '../../css/customer-profile/customer-profile.css'
 import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
 import {Password} from "primereact/password";

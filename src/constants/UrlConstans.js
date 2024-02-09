@@ -13,3 +13,4 @@ export const KEYCLOAK_GRANT_TYPE = "password"
 
 export const MY_USER_INFO_URL = "/hesabım/KullaniciBilgilerim"
 export const MY_ORDER_URL = "/hesabım/Siparişlerim"
+export const MY_ADDRESS_URL = "/hesabım/Adreslerim"

@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
-import '../../css/customer-profile.css'
-import {MY_ORDER_URL, MY_USER_INFO_URL} from "../../constants/UrlConstans";
+import '../../css/customer-profile/customer-profile.css'
+import {MY_ADDRESS_URL, MY_ORDER_URL, MY_USER_INFO_URL} from "../../constants/UrlConstans";
 
 const ProfileNavigation = ({userFullName}) => {
     const [isHovered, setIsHovered] = useState(false);
@@ -87,7 +87,7 @@ const ProfileNavigation = ({userFullName}) => {
                     </div>
                 </a>
 
-                <a href="#">
+                <a href={MY_ADDRESS_URL}>
                     <div className={`navi-item ${isHovered ? 'hovered' : ''}`} onMouseEnter={handleHover} onMouseLeave={handleHover}>
                         <i className="pi pi-map-marker" style={{color: '#708090'}}></i>
                         <span>Adres Bilgilerim</span>

@@ -1,6 +1,6 @@
 import React, {useContext} from 'react';
 import ProfileNavigation from "./ProfileNavigation";
-import '../../css/customer-profile.css'
+import '../../css/customer-profile/customer-profile.css'
 
 const MyOrderComp = () => {
 

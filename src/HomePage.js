@@ -21,6 +21,8 @@ import MyOrderComp from "./components/customer-profile-components/MyOrderComp";
 import UserDetailComp from "./components/customer-profile-components/MyUserInfo";
 import MyUserInfo from "./components/customer-profile-components/MyUserInfo";
 import AllOrderComp from "./components/customer-profile-components/MyOrderComp";
+import {MY_ADDRESS_URL, MY_ORDER_URL, MY_USER_INFO_URL} from "./constants/UrlConstans";
+import MyAddress from "./components/customer-profile-components/MyAddress";
 
 
 export const HomePage = () => {
@@ -51,8 +53,9 @@ export const HomePage = () => {
                             <Route path="/login" exact component={LoginPage}/>
                             <Route path="/product/:id" exact component={ProductPage}/>
                             <Route path="/detail/:id" exact component={ProductDetail}/>
-                            <AuthenticatedRoute key="profile" exact path="/hesabım/KullaniciBilgilerim" component={MyUserInfo}/>
-                            <AuthenticatedRoute key="order" exact path="/hesabım/Siparislerim" component={AllOrderComp}/>
+                            <AuthenticatedRoute key="profile" exact path={MY_USER_INFO_URL} component={MyUserInfo}/>
+                            <AuthenticatedRoute key="order" exact path={MY_ORDER_URL} component={AllOrderComp}/>
+                            <AuthenticatedRoute key="order" exact path={MY_ADDRESS_URL} component={MyAddress}/>
                         </Switch>
                     </div>
                 </div>
