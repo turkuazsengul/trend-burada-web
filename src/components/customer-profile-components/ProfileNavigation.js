@@ -23,7 +23,7 @@ const ProfileNavigation = ({userFullName}) => {
 
                 <a href="#">
                     <div className={`navi-item ${isHovered ? 'hovered' : ''}`} onMouseEnter={handleHover} onMouseLeave={handleHover}>
-                        <i className="pi pi-inbox" style={{color: '#708090'}}></i>
+                        <i className="pi pi-envelope" style={{color: '#708090'}}></i>
                         <span>Satıcı Mesajları</span>
                     </div>
                 </a>

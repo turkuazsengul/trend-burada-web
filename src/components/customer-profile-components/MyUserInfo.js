@@ -5,87 +5,95 @@ import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
 import {Password} from "primereact/password";
 import {InputMask} from "primereact/inputmask";
-import {Toast} from "primereact/toast";
 import UserService from "../../service/UserService.";
 import {useHistory} from "react-router-dom";
+import {Calendar} from "primereact/calendar";
+import {Toast} from "primereact/toast";
 
 const MyUserInfo = () => {
+    const DISABLE_INPUT_TOOLTIP_MESSAGE = "Bu Alanlar Kullanıcı Tarafından Güncellenemez. Lütfen Müşteri Hizmetleri İle İrtibata Geçiniz.";
     const history = useHistory();
 
-    const toastCenter  = useRef(null);
+    const toastCenter = useRef(null);
 
-    const [user, setUser] = useState({});
+    // const [user, setUser] = useState({});
+    const [userId, setUserId] = useState("");
     const [fullName, setFullName] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
-    const [birthDate, setBirthDate] = useState("");
+    const [birthDate, setBirthDate] = useState(null);
     const [phoneNumber, setPhoneNumber] = useState("");
-    const [selectedPhoneCode, setSelectedPhoneCode] = useState("");
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [againNewPassword, setAgainNewPassword] = useState("");
     const [updateBtnDisabled, setUpdateBtnDisabled] = useState(true);
     const [passUpdateBtnDisabled, setPassUpdateBtnDisabled] = useState(true);
 
-    const phoneCodeList = [{code: '+90'}, {code: '+45'}];
-
-    // const userDetailDummy = [
-    //     {
-    //         phoneCode: '+90',
-    //         phoneNumber: '+90 (539) 316 47 59',
-    //         birthDay: '10/01/1994',
-    //     }
-    // ];
-
     useEffect(async () => {
         const storedUserStr = localStorage.getItem("user");
         const user = JSON.parse(storedUserStr);
 
-        setPhoneNumber(user.gsm_no)
-        setBirthDate(user.dob)
-        setFirstName(user.name)
+        if (user) {
+            // setUser(user);
 
-        setEmail(user.email)
-        setLastName(user.surname)
-        setFullName(user.name + ' ' + user.surname)
+            setUserId(user.pkId)
+            setPhoneNumber(user.gsm_no)
+            setBirthDate(new Date(user.dob))
+            setFirstName(user.name)
 
-        // const token = localStorage.getItem("token");
-        // await UserService.getUser(token)
-        //     .then((response) => {
-        //         const userDetail = userDetailDummy[0]
-        //
-        //         setPhoneNumber(userDetail.phoneNumber)
-        //         setBirthDate(userDetail.birthDay)
-        //         setFirstName(response.firstName)
-        //
-        //         setEmail(response.email)
-        //         setLastName(response.lastName)
-        //         setFullName(response.name)
-        //     })
-        //     .catch((error) => {
-        //         if (error.response && error.response.status === 401) {
-        //             localStorage.removeItem("token");
-        //             history.push("/login");
-        //             window.location.reload()
-        //         } else {
-        //             const detailMessage = "Sistemsel bir hata sebebi ile şuan için bilgilerinize erişemiyoruz. Lütfen daha sonra tekrar deneyiniz."
-        //             showMessage("Kullanıcı Bilgisine Erişilemedi.", detailMessage, toastCenter , 'warn')
-        //         }
-        //
-        //     });
+            setEmail(user.email)
+            setLastName(user.surname)
+            setFullName(user.name + ' ' + user.surname)
+        } else {
+            localStorage.removeItem("token");
+            history.push("/login");
+            window.location.reload()
+
+            const detailMessage = "Sistemsel bir hata sebebi ile şuan için bilgilerinize erişemiyoruz. Lütfen daha sonra tekrar deneyiniz."
+            showMessage("Kullanıcı Bilgisine Erişilemedi.", detailMessage, toastCenter, 'warn')
+        }
     }, []);
 
     const showMessage = (labelText, detailText, ref, severity) => {
         ref.current.show({severity: severity, summary: labelText, detail: detailText, life: 3000});
     };
 
+    const clickUserInformationUpdateBtn = () => {
+        const user =
+            {
+                pkId: userId,
+                gsm_no: phoneNumber,
+                dob: birthDate,
+                name:firstName,
+                email:email,
+                surname: lastName
+            };
+        
+        UserService.updateUser(user).then((response) => {
+            if (response) {
+                // setPhoneNumber(response.gsm_no)
+                // setBirthDate(new Date(response.bod))
+                localStorage.setItem("user", JSON.stringify(user));
+                window.location.reload()
+            }
+        }).catch((error) => {
+            if (error.response && error.response.status === 401) {
+                localStorage.removeItem("token");
+                history.push("/login");
+            } else {
+                const detailMessage = "Sistemsel bir hata sebebi ile şuan için bilgilerinize erişemiyoruz. Lütfen daha sonra tekrar deneyiniz."
+                showMessage("Kullanıcı Bilgisine Erişilemedi.", detailMessage, toastCenter, 'warn')
+            }
+        })
+    }
+
     return (
 
         <div className="catalog">
             <div className="container-items">
                 <div className="my-account-page">
-                    <Toast ref={toastCenter } position="center"/>
+                    <Toast ref={toastCenter} position="center"/>
 
                     <ProfileNavigation userFullName={fullName}/>
 
@@ -107,20 +115,23 @@ const MyUserInfo = () => {
                                             <div className="user-detail-item">
                                                 <div className="header-item">Ad</div>
                                                 <InputText
+                                                    tooltip={DISABLE_INPUT_TOOLTIP_MESSAGE}
+                                                    tooltipOptions={{position: 'top'}}
                                                     value={firstName}
+                                                    disabled={true}
                                                     onChange={(e) => {
                                                         setFirstName(e.target.value)
-                                                        setUpdateBtnDisabled(false)
                                                     }}
+
                                                 />
                                             </div>
                                             <div className="user-detail-item">
                                                 <div className="header-item">Soyad</div>
                                                 <InputText
                                                     value={lastName}
+                                                    disabled={true}
                                                     onChange={(e) => {
                                                         setLastName(e.target.value)
-                                                        setUpdateBtnDisabled(false)
                                                     }}
                                                 />
                                             </div>
@@ -130,18 +141,18 @@ const MyUserInfo = () => {
                                             <div className="user-detail-item">
                                                 <div className="header-item">E-Mail</div>
                                                 <InputText
+                                                    disabled={true}
                                                     value={email}
                                                     onChange={(e) => {
                                                         setEmail(e.target.value)
-                                                        setUpdateBtnDisabled(false)
                                                     }}
                                                 />
                                             </div>
                                             <div className="user-detail-item">
                                                 <div className="header-item">Cep Telefonu</div>
                                                 <InputMask
-                                                    mask="+99-(999)-999-99-99"
-                                                    placeholder="+11-(111)-111-11-11"
+                                                    mask="0(999)-999-99-99"
+                                                    placeholder="(___)-___-__-__"
                                                     keyfilter="int"
                                                     value={phoneNumber}
                                                     onClick={(e) => {
@@ -158,23 +169,28 @@ const MyUserInfo = () => {
                                         <div className="detail-row-3">
                                             <div className="user-detail-item">
                                                 <div className="header-item">Doğum Tarihi</div>
-                                                <InputText
-                                                    value={birthDate}
-                                                    onChange={(e) => {
-                                                        setBirthDate(e.target.value)
-                                                        setUpdateBtnDisabled(false)
-                                                    }}
-                                                />
+                                                <div>
+                                                    <Calendar
+                                                        dateFormat={"dd.mm.yy"}
+                                                        id="buttondisplay"
+                                                        value={birthDate}
+                                                        onChange={(e) => {
+                                                            setBirthDate(e.value)
+                                                            setUpdateBtnDisabled(false)
+                                                        }}/>
+                                                </div>
                                             </div>
                                         </div>
-
                                         <div className="detail-row-4">
                                             <div className="user-detail-item">
-                                                <Button
-                                                    label={"Güncelle"}
-                                                    disabled={updateBtnDisabled}
-                                                    size="large"
-                                                />
+                                                <div className="user-detail-button">
+                                                    <Button
+                                                        onClick={clickUserInformationUpdateBtn}
+                                                        label={"Güncelle"}
+                                                        disabled={updateBtnDisabled}
+                                                        size="large"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
 
@@ -238,11 +254,13 @@ const MyUserInfo = () => {
 
                                         <div className="password-row-4">
                                             <div className="password-item">
-                                                <Button
-                                                    label={"Güncelle"}
-                                                    disabled={passUpdateBtnDisabled}
-                                                    size="large"
-                                                />
+                                                <div className="user-detail-button">
+                                                    <Button
+                                                        label={"Güncelle"}
+                                                        disabled={passUpdateBtnDisabled}
+                                                        size="large"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
 

@@ -74,8 +74,8 @@ export const Login = () => {
         <div className="login">
             {failLoginMessageLabel()}
             <div className="login-item">
-                <label>Kullanıcı Adı</label>
-                <InputText placeholder={"Kullanıcı Adı"}
+                <label>E-Posta</label>
+                <InputText placeholder={"E-Posta Adresi"}
                            value={username} type="text"
                            onChange={(e) => {
                                setUsername(e.target.value)
