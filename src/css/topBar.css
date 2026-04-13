@@ -44,6 +44,11 @@
     border-bottom:2px #8036eb solid;
 }
 
+.tab-menu-category .menu-bar {
+    margin-right: 2rem;
+    font-size: 15px;
+}
+
 .tab-menu-category ul{
     margin-left: 38%;
 }

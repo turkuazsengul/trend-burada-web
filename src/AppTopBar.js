@@ -12,13 +12,17 @@ export const AppTopBar = () => {
     const history = useHistory();
     const myContext = useContext(AppContext)
 
+    const [userFullName, setUserFullName] = useState("");
     const [categoryHeaderData, setCategoryHeaderData] = useState([]);
     const [categoryMenuVisible, setCategoryMenuVisible] = useState("hidden");
 
     useEffect(() => {
-        // CategoryService.getCategory().then(response => {
-        //     setCategoryHeaderData(categoryHeaderDataMock);
-        // })
+        if(localStorage.getItem("token")){
+            const storedUserStr = localStorage.getItem("user");
+            const user = JSON.parse(storedUserStr);
+
+            setUserFullName(user.name + ' ' + user.surname)
+        }
         setCategoryHeaderData(categoryHeaderDataMock);
     }, []);
 
@@ -64,6 +68,18 @@ export const AppTopBar = () => {
             icon: "pi pi-map",
             to: "/adress",
         },
+        {
+            id: 4,
+            name: "Değerlendirmelerim",
+            icon: "pi pi-comment",
+            to: "/adress",
+        },
+        {
+            id: 5,
+            name: "Satıcı Mesajlarım",
+            icon: "pi pi-envelope",
+            to: "/adress",
+        },
     ]
 
     const categoryHeaderDataMock = [
@@ -91,6 +107,31 @@ export const AppTopBar = () => {
             id: 5,
             name: "Yapı Malzemeleri & Aksesuar",
             order: 5
+        },
+        {
+            id: 6,
+            name: "Kozmetik",
+            order: 6
+        },
+        {
+            id: 7,
+            name: "Elektronik",
+            order: 7
+        },
+        {
+            id: 8,
+            name: "Anne & Çocuk",
+            order: 8
+        },
+        {
+            id: 9,
+            name: "Ev & Yaşam",
+            order: 9
+        },
+        {
+            id: 10,
+            name: "Çok Satanlar",
+            order: 10
         },
 
     ]
@@ -140,7 +181,9 @@ export const AppTopBar = () => {
     }
 
     const getLoginButtonLabel = () => {
+
         if (localStorage.getItem("token")) {
+
             return (
                 <Button
                     onClick={clickLoginButton}
@@ -167,7 +210,7 @@ export const AppTopBar = () => {
             return profileToolItem.map((x) => {
                 return (
                     <div className="content">
-                        <a className={x.icon}/>
+                        <a className={x.icon} style={{fontWeight:"bold"}}/>
                         <a href={x.to}>{x.name}</a>
                     </div>
                 )
@@ -179,7 +222,7 @@ export const AppTopBar = () => {
         if (localStorage.getItem("token")) {
             return (
                 <div className="content">
-                    <a className="pi pi-sign-out"/>
+                    <a className="pi pi-sign-out" style={{fontWeight:"bold"}}/>
                     <a onClick={logOutClick} href="/">{"Çıkış Yap"}</a>
                 </div>
             )
@@ -238,8 +281,11 @@ export const AppTopBar = () => {
                         {getLoginButtonLabel()}
                         <Tooltip target=".session-in" position={"bottom"} style={tooltipBody} autoHide={false}>
                             <div className="tool-tip-item">
-                                {profileActionList()}
-                                {logoutButtonBody()}
+                                <div className="content-item">
+                                    <div className="content-header">{userFullName}<hr/></div>
+                                    {profileActionList()}
+                                    {logoutButtonBody()}
+                                </div>
                             </div>
                         </Tooltip>
                     </div>

@@ -1,7 +1,7 @@
 import axios from "axios";
 import {REGISTER_URL} from "../constants/UrlConstans";
 
-export const BASE_URL = 'http://localhost:40000/api/v1/user';
+export const BASE_URL = process.env.REACT_APP_USER_SERVICE_BASE_URL
 
 const register = (data) => {
 
