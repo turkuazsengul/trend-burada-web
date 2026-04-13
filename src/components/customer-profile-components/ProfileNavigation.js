@@ -1,117 +1,58 @@
-import React, {useState} from 'react';
+import React from 'react';
 import '../../css/customer-profile/customer-profile.css'
-import {MY_ADDRESS_URL, MY_ORDER_URL, MY_USER_INFO_URL} from "../../constants/UrlConstans";
 
-const ProfileNavigation = ({userFullName}) => {
-    const [isHovered, setIsHovered] = useState(false);
-
-    const handleHover = () => {
-        setIsHovered(!isHovered);
-    };
-
-    const MyOrder = () => {
-        return (
-            <div className="navi-row">
-                <label>Siparişlerim</label>
-                <hr/>
-                <a href={MY_ORDER_URL}>
-                    <div className={`navi-item ${isHovered ? 'hovered' : ''}`} onMouseEnter={handleHover} onMouseLeave={handleHover}>
-                        <i className="pi pi-box" style={{color: '#708090'}}></i>
-                        <span>Tüm Siparişlerim</span>
-                    </div>
-                </a>
-
-                <a href="#">
-                    <div className={`navi-item ${isHovered ? 'hovered' : ''}`} onMouseEnter={handleHover} onMouseLeave={handleHover}>
-                        <i className="pi pi-envelope" style={{color: '#708090'}}></i>
-                        <span>Satıcı Mesajları</span>
-                    </div>
-                </a>
-
-                <a href="#">
-                    <div className={`navi-item ${isHovered ? 'hovered' : ''}`} onMouseEnter={handleHover} onMouseLeave={handleHover}>
-                        <i className="pi pi-comment" style={{color: '#708090'}}></i>
-                        <span>Değerlendirmelerim</span>
-                    </div>
-                </a>
-
-                <a href="#">
-                    <div className={`navi-item ${isHovered ? 'hovered' : ''}`} onMouseEnter={handleHover} onMouseLeave={handleHover}>
-                        <i className="pi pi-shopping-cart" style={{color: '#708090'}}></i>
-                        <span>Yeniden Satın Al</span>
-                    </div>
-                </a>
-
-            </div>
-        )
+export const PROFILE_SECTIONS = [
+    {
+        group: 'Kullanıcı Hesabım',
+        items: [
+            {key: 'user-info', icon: 'pi pi-user', label: 'Kullanıcı Bilgilerim'},
+            {key: 'address', icon: 'pi pi-map-marker', label: 'Adres Bilgilerim'},
+            {key: 'saved-cards', icon: 'pi pi-credit-card', label: 'Kayıtlı Kartlarım'}
+        ]
+    },
+    {
+        group: 'Siparişlerim',
+        items: [
+            {key: 'orders', icon: 'pi pi-box', label: 'Tüm Siparişlerim'},
+            {key: 'seller-messages', icon: 'pi pi-envelope', label: 'Satıcı Mesajları'},
+            {key: 'reviews', icon: 'pi pi-comment', label: 'Değerlendirmelerim'},
+            {key: 'buy-again', icon: 'pi pi-shopping-cart', label: 'Yeniden Satın Al'}
+        ]
+    },
+    {
+        group: 'Sana Özel',
+        items: [
+            {key: 'coupons', icon: 'pi pi-tags', label: 'İndirim Kuponlarım'},
+            {key: 'history', icon: 'pi pi-clock', label: 'Önceden Gezdiklerim'},
+            {key: 'followed-stores', icon: 'pi pi-shopping-bag', label: 'Takip Ettiğim Mağazalar'}
+        ]
     }
+];
 
-    const SpecialForYou = () => {
-        return (
-            <div className="navi-row">
-                <label>Sana Özel</label>
-                <hr/>
-                <a href="#">
-                    <div className={`navi-item ${isHovered ? 'hovered' : ''}`} onMouseEnter={handleHover} onMouseLeave={handleHover}>
-                        <i className="pi pi-tags" style={{color: '#708090'}}></i>
-                        <span>İndirim Kuponlarım</span>
-                    </div>
-                </a>
-
-                <a href="#">
-                    <div className={`navi-item ${isHovered ? 'hovered' : ''}`} onMouseEnter={handleHover} onMouseLeave={handleHover}>
-                        <i className="pi pi-clock" style={{color: '#708090'}}></i>
-                        <span>Önceden Gezdiklerim</span>
-                    </div>
-                </a>
-
-                <a href="#">
-                    <div className={`navi-item ${isHovered ? 'hovered' : ''}`} onMouseEnter={handleHover} onMouseLeave={handleHover}>
-                        <i className="pi pi-shopping-bag" style={{color: '#708090'}}></i>
-                        <span>Takip Ettiğim Mağazalar</span>
-                    </div>
-                </a>
-            </div>
-        )
-    }
-
-    const MyUserInformation = () => {
-        return (
-            <div className="navi-row">
-                <label>Kullanıcı Hesabım</label>
-                <hr/>
-                <a href={MY_USER_INFO_URL}>
-                    <div className={`navi-item ${isHovered ? 'hovered' : ''}`} onMouseEnter={handleHover} onMouseLeave={handleHover}>
-                        <i className="pi pi-user" style={{color: '#708090'}}></i>
-                        <span>Kullanıcı Bilgilerim</span>
-                    </div>
-                </a>
-
-                <a href={MY_ADDRESS_URL}>
-                    <div className={`navi-item ${isHovered ? 'hovered' : ''}`} onMouseEnter={handleHover} onMouseLeave={handleHover}>
-                        <i className="pi pi-map-marker" style={{color: '#708090'}}></i>
-                        <span>Adres Bilgilerim</span>
-                    </div>
-                </a>
-
-                <a href="#">
-                    <div className={`navi-item ${isHovered ? 'hovered' : ''}`} onMouseEnter={handleHover} onMouseLeave={handleHover}>
-                        <i className="pi pi-credit-card" style={{color: '#708090'}}></i>
-                        <span>Kayıtlı Kartlarım</span>
-                    </div>
-                </a>
-            </div>
-        )
-    }
-
+const ProfileNavigation = ({userFullName, activeSection, onChangeSection}) => {
     return (
         <div className="navigation-column">
             <div className="navi-row">
-                <label>{userFullName}</label>
+                <label>{userFullName || 'Hesabım'}</label>
             </div>
-            <MyUserInformation/>
-            <MyOrder/>
-            <SpecialForYou/>
+
+            {PROFILE_SECTIONS.map((sectionGroup) => (
+                <div key={sectionGroup.group} className="navi-row">
+                    <label>{sectionGroup.group}</label>
+                    <hr/>
+                    {sectionGroup.items.map((item) => (
+                        <button
+                            key={item.key}
+                            type="button"
+                            className={`navi-item navi-item-button ${activeSection === item.key ? 'is-active' : ''}`}
+                            onClick={() => onChangeSection && onChangeSection(item.key)}
+                        >
+                            <i className={item.icon} style={{color: '#708090'}}/>
+                            <span>{item.label}</span>
+                        </button>
+                    ))}
+                </div>
+            ))}
         </div>
     )
 }

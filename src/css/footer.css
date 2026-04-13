@@ -137,5 +137,6 @@
     /*margin-bottom:10rem;*/
 }
 
-
-
+body.hide-global-footer .footer {
+    display: none;
+}

@@ -9,18 +9,25 @@ export const LoginPage = () => {
     const [activeIndex,setActiveIndex] = useState(0);
 
     return (
-        <div className="catalog">
+        <div className="catalog login-page-shell">
             <div className="container-items">
                 <div className="login-card-wrap">
-                    <TabView activeIndex={activeIndex} onTabChange={(e) => setActiveIndex(e.index)}>
-                        <TabPanel header="Giriş Yap">
-                            <Login/>
-                        </TabPanel>
+                    <div className="login-page-headline">
+                        <h1>Hesabına Giriş Yap</h1>
+                        <p>Siparişlerini takip et, favorilerini kaydet ve sana özel kampanyaları kaçırma.</p>
+                    </div>
 
-                        <TabPanel header="Üye Ol">
-                            <Register/>
-                        </TabPanel>
-                    </TabView>
+                    <div className="login-card-panel">
+                        <TabView activeIndex={activeIndex} onTabChange={(e) => setActiveIndex(e.index)}>
+                            <TabPanel header="Giriş Yap">
+                                <Login/>
+                            </TabPanel>
+
+                            <TabPanel header="Üye Ol">
+                                <Register/>
+                            </TabPanel>
+                        </TabView>
+                    </div>
                 </div>
             </div>
         </div>

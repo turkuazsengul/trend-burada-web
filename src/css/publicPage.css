@@ -1,6 +1,7 @@
 .home-layout {
     display:flex;
     flex-direction: column;
+    min-height: 100vh;
     background-color: #fefefe;
     overflow:auto;
 
@@ -15,12 +16,18 @@
     display:grid;
     grid-gap: 15px;
     text-align:center;
+    min-height: calc(100vh - 13rem);
 }
 
 .container{
     margin-left: 13.5%;
     margin-right: 15%;
     text-align:center;
+}
+
+.container.container-full {
+    margin-left: 1.2rem;
+    margin-right: 1.2rem;
 }
 
 .catalog{
@@ -75,6 +82,11 @@
     .container {
         flex-flow: column;
     }
+
+    .container.container-full {
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
     .container-items{
         flex-flow: column;
     }
@@ -87,4 +99,3 @@
     }
 
 }
-

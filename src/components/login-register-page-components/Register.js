@@ -9,6 +9,8 @@ import {Divider} from 'primereact/divider';
 import {Confirm} from "./RegisterConfirm";
 import AppContext from "../../AppContext";
 import {useHistory} from "react-router-dom";
+import {USE_DEMO_LOCAL_AUTH} from "../../constants/UrlConstans";
+import DemoAuthService from "../../service/DemoAuthService";
 
 
 export const Register = () => {
@@ -29,6 +31,7 @@ export const Register = () => {
 
     const [wrongAccountInfo, setWrongAccountInfo] = useState(false);
     const [labelMessage, setLabelMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     const failMailLabelMessage = "Lütfen geçerli bir e-posta adresi giriniz";
     const failNameLabelMessage = "Lütfen adınızı giriniz";
@@ -62,6 +65,29 @@ export const Register = () => {
         }
 
         if (checkValidation()) {
+            if (USE_DEMO_LOCAL_AUTH) {
+                const response = DemoAuthService.register({
+                    firstName,
+                    lastName,
+                    email: mail,
+                    password: pass
+                });
+
+                if (response.success) {
+                    setWrongAccountInfo(false);
+                    setSuccessMessage("Kayıt başarılı. Şimdi Giriş Yap sekmesinden giriş yapabilirsiniz.");
+                    setMail("");
+                    setPass("");
+                    setFirstName("");
+                    setLastName("");
+                } else {
+                    setWrongAccountInfo(true);
+                    setSuccessMessage("");
+                    setLabelMessage(response.message || "Kayıt esnasında hata oluştu.");
+                }
+                return;
+            }
+
             setLoading(true);
             // setModalVisible(true)
             RegisterService.register(request).then(response => {
@@ -69,19 +95,23 @@ export const Register = () => {
                     if (response.data.returnCode === 99) {
                         setCreatedUserId(response.data.returnData[0].pkId);
                         setWrongAccountInfo(false);
+                        setSuccessMessage("");
                         setModalVisible(true)
                     } else {
                         setWrongAccountInfo(true);
+                        setSuccessMessage("");
                         setLabelMessage("Kayıt esnasında hata oluştu.")
                     }
                 } else {
                     setWrongAccountInfo(true);
+                    setSuccessMessage("");
                     setLabelMessage("Kayıt esnasında hata oluştu.")
                 }
 
                 setLoading(false);
             }, (error) => {
                 setWrongAccountInfo(true);
+                setSuccessMessage("");
                 setLabelMessage("Kayıt esnasında hata oluştu.")
             })
         }
@@ -90,6 +120,7 @@ export const Register = () => {
     const checkValidation = () => {
         if (mail === "" || firstName === "" || lastName === "" || pass === "") {
             setWrongAccountInfo(true);
+            setSuccessMessage("");
             if (firstName === "") {
                 setLabelMessage(failNameLabelMessage)
             } else if (lastName === "") {
@@ -103,10 +134,12 @@ export const Register = () => {
         } else {
             if (!validator.isEmail(mail)) {
                 setWrongAccountInfo(true);
+                setSuccessMessage("");
                 setLabelMessage(failMailLabelMessage)
                 return false;
             } else if (!validator.isStrongPassword(pass, {minLength: 7, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1})) {
                 setWrongAccountInfo(true);
+                setSuccessMessage("");
                 setLabelMessage(failStrongPasswordMessage)
                 return false;
             } else {
@@ -140,6 +173,17 @@ export const Register = () => {
         }
     }
 
+    const successRegisterMessageLabel = () => {
+        if (successMessage) {
+            return (
+                <div className="success-login-message-item">
+                    <i className="pi pi-check-circle"/>
+                    <label>{successMessage}</label>
+                </div>
+            );
+        }
+    };
+
     const onHide = () => {
         setModalVisible(false)
         clearInterval(myContext.timer);
@@ -163,19 +207,44 @@ export const Register = () => {
         <div>
             <div className="login">
                 {failRegisterMessageLabel()}
+                {successRegisterMessageLabel()}
                 <div className="login-item">
                     <label>Ad</label>
-                    <InputText placeholder="Ad" value={firstName} type="text" onChange={(e) => setFirstName(e.target.value)}/>
+                    <InputText
+                        placeholder="Ad"
+                        value={firstName}
+                        type="text"
+                        onChange={(e) => {
+                            setFirstName(e.target.value)
+                            setWrongAccountInfo(false);
+                        }}
+                    />
                 </div>
 
                 <div className="login-item">
                     <label>Soyad</label>
-                    <InputText placeholder="Soyad" value={lastName} type="text" onChange={(e) => setLastName(e.target.value)}/>
+                    <InputText
+                        placeholder="Soyad"
+                        value={lastName}
+                        type="text"
+                        onChange={(e) => {
+                            setLastName(e.target.value)
+                            setWrongAccountInfo(false);
+                        }}
+                    />
                 </div>
 
                 <div className="login-item">
                     <label>E-Posta</label>
-                    <InputText placeholder="E-Posta Adresi" value={mail} type="text" onChange={(e) => setMail(e.target.value)}/>
+                    <InputText
+                        placeholder="E-Posta Adresi"
+                        value={mail}
+                        type="text"
+                        onChange={(e) => {
+                            setMail(e.target.value)
+                            setWrongAccountInfo(false);
+                        }}
+                    />
                 </div>
 
                 <div className="login-item">
@@ -187,13 +256,36 @@ export const Register = () => {
                               style={{width: '100%', fontSize: '1px'}}
                               onChange={(e) => {
                                   setPass(e.target.value)
+                                  setWrongAccountInfo(false);
                               }}
                     />
                     <span className="password-validate-message">Şifreniz en az 7 karakter olmalı. harf ve karakter içermelidir.</span>
                 </div>
 
                 <div className="login-item">
-                    <Button label={"Üye Ol"} onClick={registerButtonClick}/>
+                    <Button className="login-submit-button" label={"Üye Ol"} onClick={registerButtonClick}/>
+                </div>
+
+                <div className="login-item social-login-section">
+                    <div className="social-login-divider">
+                        <span>veya</span>
+                    </div>
+
+                    <div className="social-login-actions">
+                        <Button type="button" className="social-login-button social-facebook">
+                            <span className="social-facebook-icon pi pi-facebook" aria-hidden="true"/>
+                            <span className="social-label">Facebook ile Devam Et</span>
+                        </Button>
+                        <Button type="button" className="social-login-button social-google">
+                            <img
+                                className="social-google-icon"
+                                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                                alt=""
+                                aria-hidden="true"
+                            />
+                            <span className="social-label">Google ile Devam Et</span>
+                        </Button>
+                    </div>
                 </div>
             </div>
 

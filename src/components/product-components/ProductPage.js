@@ -1,263 +1,265 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {ProductFilter} from "./ProductFilter";
 import {ProductCard} from "./ProductCard";
+import ProductService from "../../service/ProductService";
+import {
+    getCategoryFacets,
+    getMenuItemsByCategory,
+    PRICE_RANGES,
+} from "../../data/demoProductData";
+
+const normalizeSlug = (raw = '') => {
+    return decodeURIComponent(raw)
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/ı/g, 'i')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+};
+
+const normalizeCategoryKey = (rawSlug) => {
+    const slug = normalizeSlug(rawSlug);
+    const aliases = {
+        'ti-sort': 'tisort',
+        'tisort': 'tisort',
+        't-shirt': 'tisort',
+        'gomlek': 'gomlek'
+    };
+
+    return aliases[slug] || slug;
+};
+
+const formatPrice = (price) => `${Number(price || 0).toLocaleString('tr-TR')} TL`;
+
+const matchesPriceRange = (price, rangeValue) => {
+    const range = PRICE_RANGES.find((x) => x.value === rangeValue);
+    return range ? range.check(price) : true;
+};
 
 export const ProductPage = ({match}) => {
+    const categoryKey = normalizeCategoryKey(match.params.id || 'elbise');
+    const menuItems = useMemo(() => getMenuItemsByCategory(categoryKey), [categoryKey]);
+    const catalogRef = useRef(null);
+    const productContentRef = useRef(null);
 
-    const [filteredProduct, setFilteredProduct] = useState([]);
-    const [categoryTree, setCategoryTree] = useState({});
-    const [toFilterCategoryType, setToFilterCategoryType] = useState(0);
+    const [products, setProducts] = useState([]);
+    const [serviceFacets, setServiceFacets] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    let categoryTreeObj = {
-        parentCategory: "",
-        subCategory: "",
-        childCategory: "",
-    }
+    const [selectedFilters, setSelectedFilters] = useState({
+        mark: [],
+        size: [],
+        color: [],
+        priceRange: [],
+        rating: [],
+        sellerScore: [],
+        discountRate: [],
+        isFastDelivery: [],
+        isFreeCargo: [],
+        installmentText: []
+    });
 
     useEffect(() => {
-        setCategoryThree();
-    }, []);
+        setLoading(true);
+        setSelectedFilters({});
 
+        Promise.all([
+            ProductService.getProductsByCategory(categoryKey),
+            ProductService.getFacetsByCategory(categoryKey)
+        ]).then(([productList, facetList]) => {
+            setProducts(Array.isArray(productList) ? productList : []);
+            setServiceFacets(Array.isArray(facetList) ? facetList : []);
+        }).finally(() => setLoading(false));
+    }, [categoryKey]);
 
-    const categoryFilterItem = [
-        {
-            id: 1,
-            title: "Cinsiyet",
-            filterItems: [
-                {
-                    id: 1,
-                    value: "Kadın"
-                },
-                {
-                    id: 2,
-                    value: "Erkek"
-                },
-                {
-                    id: 3,
-                    value: "Çocuk"
-                },
-            ]
-        },
-
-        {
-            id: 2,
-            title: "Marka",
-            filterItems: [
-                {
-                    id: 1,
-                    value: "Koton"
-                },
-                {
-                    id: 2,
-                    value: "Mango"
-                },
-                {
-                    id: 3,
-                    value: "LW"
-                },
-                {
-                    id: 4,
-                    value: "Zara"
-                },
-                {
-                    id: 5,
-                    value: "Zara"
-                },
-                {
-                    id: 6,
-                    value: "Zara"
-                },
-                {
-                    id: 7,
-                    value: "Zara"
-                },
-                {
-                    id: 8,
-                    value: "Zara"
-                },
-                {
-                    id: 9,
-                    value: "Zara"
-                },
-            ]
-        },
-    ]
-
-    const products = [
-        {
-            id: 1,
-            title: "Erkek Siyah T-Shirt",
-            mark: "Zara",
-            price: "2299.90 TL",
-            rating: 2,
-            img: "https://cdn.dsmcdn.com//ty5/product/media/images/20200627/11/3569549/75437598/0/0_org.jpg",
-            category: [
-                {
-                    id: 2,
-                    name: "Erkek",
-                }
-            ],
-            subCategory: [
-                {
-                    id: 1,
-                    name: "Giyim",
-                }
-            ],
-            childCategory: [
-                {
-                    id: 1,
-                    name: "T-shirt",
-                }
-            ]
-        },
-        {
-            id: 2,
-            title: "Beyaz Spor Ayakkabı",
-            mark: "Nike",
-            price: "1299.90 TL",
-            rating: 4,
-            img: "https://cdn.dsmcdn.com//ty278/product/media/images/20211222/10/14981168/166299753/1/1_org.jpg",
-            category: [
-                {
-                    id: 1,
-                    name: "Kadın",
-                }
-            ],
-            subCategory: [
-                {
-                    id: 2,
-                    name: "Ayakkabı",
-                },
-            ],
-            childCategory: [
-                {
-                    id: 3,
-                    name: "Yürüyüş",
-                }
-            ]
-        },
-        {
-            id: 3,
-            title: "Kadın Siyah T-Shirt",
-            mark: "Zara",
-            price: "599.90 TL",
-            rating: 4,
-            img: "https://cdn.dsmcdn.com//ty311/product/media/images/20220126/10/36369263/286929112/2/2_org.jpg",
-            category: [
-                {
-                    id: 1,
-                    name: "Kadın",
-                }
-            ],
-            subCategory: [
-                {
-                    id: 1,
-                    name: "Giyim",
-                },
-            ],
-            childCategory: [
-                {
-                    id: 1,
-                    name: "T-Shirt",
-                },
-            ]
-        },
-        {
-            id: 4,
-            title: "Çocuk Beyaz T-Shirt",
-            mark: "Mavi",
-            price: "99.90 TL",
-            rating: 5,
-            img: "https://cdn.dsmcdn.com//ty370/product/media/images/20220324/14/75485319/195940598/1/1_org.jpg",
-            category: [
-                {
-                    id: 3,
-                    name: "Çocuk",
-                }
-            ],
-            subCategory: [
-                {
-                    id: 1,
-                    name: "Giyim",
-                },
-            ],
-            childCategory: [
-                {
-                    id: 1,
-                    name: "T-Shirt",
-                },
-            ]
-        },
-    ]
-
-    const getFilteredProduct = () => {
-        console.log(toFilterCategoryType)
-        return products.filter((x) => {
-            if (toFilterCategoryType === 1) {
-                return x.category[0].name.toLowerCase() === categoryTree.parentCategory;
-            } else if (toFilterCategoryType === 2) {
-                return (x.category[0].name.toLowerCase() === categoryTree.parentCategory) && findSubCategory(x);
-            } else {
-                return (x.category[0].name.toLowerCase() === categoryTree.parentCategory) && findSubCategory(x) && findChildCategory(x);
+    useLayoutEffect(() => {
+        const updateFooterVisibility = () => {
+            const content = productContentRef.current;
+            if (!content) {
+                document.body.classList.remove('hide-global-footer');
+                return;
             }
 
-        })
-    }
+            const hasOverflow = content.scrollHeight > content.clientHeight + 4;
+            const isAtBottom = content.scrollTop + content.clientHeight >= content.scrollHeight - 8;
 
-    const findSubCategory = (product) =>{
-        const list = product.subCategory.filter(x=>x.name.toLowerCase() === categoryTree.subCategory)
-        return list.length > 0;
-    }
+            // Footer appears only when product stream is fully consumed.
+            if (hasOverflow && !isAtBottom) {
+                document.body.classList.add('hide-global-footer');
+            } else {
+                document.body.classList.remove('hide-global-footer');
+            }
+        };
 
-    const findChildCategory = (product) =>{
-        const list = product.childCategory.filter(x=>x.name.toLowerCase() === categoryTree.childCategory)
-        return list.length > 0;
-    }
+        // Hide footer immediately on mount to prevent first-paint flicker.
+        document.body.classList.add('hide-global-footer');
 
-    const productList = getFilteredProduct().map((x) => {
-        return (
-            <div key={x.id} className="product-card-items">
-                <ProductCard product={x}/>
-            </div>
-        )
-    })
+        const content = productContentRef.current;
+        const catalog = catalogRef.current;
+        let resizeObserver;
+        let raf1;
+        let raf2;
 
-    const setCategoryThree = () => {
-        const categoryThreeList = match.params.id.split("-");
+        updateFooterVisibility();
+        raf1 = window.requestAnimationFrame(updateFooterVisibility);
+        raf2 = window.requestAnimationFrame(updateFooterVisibility);
 
-        if (categoryThreeList.length === 1) {
-            categoryTreeObj.parentCategory = categoryThreeList[0];
-            setToFilterCategoryType(1) //parent category
-        }
-        if (categoryThreeList.length === 2) {
-            categoryTreeObj.parentCategory = categoryThreeList[0];
-            categoryTreeObj.subCategory = categoryThreeList[1];
-            setToFilterCategoryType(2) // sub category
-        }
-        if (categoryThreeList.length === 3) {
-            categoryTreeObj.parentCategory = categoryThreeList[0];
-            categoryTreeObj.subCategory = categoryThreeList[1];
-            categoryTreeObj.childCategory = categoryThreeList[2];
-            setToFilterCategoryType(3) // child category
+        if (content) {
+            content.addEventListener('scroll', updateFooterVisibility, {passive: true});
+            content.addEventListener('load', updateFooterVisibility, true);
         }
 
-        setCategoryTree(categoryTreeObj)
-    }
+        window.addEventListener('resize', updateFooterVisibility, {passive: true});
 
-    console.log(categoryTree)
+        if (typeof ResizeObserver !== 'undefined') {
+            resizeObserver = new ResizeObserver(updateFooterVisibility);
+            if (content) {
+                resizeObserver.observe(content);
+            }
+            if (catalog) {
+                resizeObserver.observe(catalog);
+            }
+        }
+
+        return () => {
+            if (raf1) {
+                window.cancelAnimationFrame(raf1);
+            }
+            if (raf2) {
+                window.cancelAnimationFrame(raf2);
+            }
+            if (content) {
+                content.removeEventListener('scroll', updateFooterVisibility);
+                content.removeEventListener('load', updateFooterVisibility, true);
+            }
+            window.removeEventListener('resize', updateFooterVisibility);
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
+            document.body.classList.remove('hide-global-footer');
+        };
+    }, [categoryKey, loading, products.length]);
+
+    const filters = useMemo(() => {
+        if (serviceFacets.length > 0) {
+            return serviceFacets;
+        }
+
+        return getCategoryFacets(categoryKey);
+    }, [serviceFacets, categoryKey]);
+
+    const filteredProducts = useMemo(() => {
+        const matchesFilter = (product, key, value) => {
+            if (key === 'priceRange') {
+                return matchesPriceRange(product.price, value);
+            }
+
+            if (key === 'rating') {
+                if (value === '4.5+') return Number(product.rating || 0) >= 4.5;
+                if (value === '4.0+') return Number(product.rating || 0) >= 4.0;
+                if (value === '3.5+') return Number(product.rating || 0) >= 3.5;
+                return true;
+            }
+
+            if (key === 'sellerScore') {
+                const score = Number(product.sellerScore || 0);
+                if (value === '9.5+') return score >= 9.5;
+                if (value === '9.0-9.4') return score >= 9.0 && score < 9.5;
+                if (value === '8.5-8.9') return score >= 8.5 && score < 9.0;
+                return true;
+            }
+
+            if (key === 'discountRate') {
+                const discount = Number(product.discountRate || 0);
+                if (value === '10+') return discount >= 10;
+                if (value === '20+') return discount >= 20;
+                if (value === '30+') return discount >= 30;
+                return true;
+            }
+
+            if (key === 'isFastDelivery' || key === 'isFreeCargo') {
+                const boolValue = value === 'true';
+                return Boolean(product[key]) === boolValue;
+            }
+
+            return String(product[key] || '').toLowerCase() === String(value || '').toLowerCase();
+        };
+
+        return products.filter((product) => {
+            return Object.entries(selectedFilters).every(([key, values]) => {
+                if (!Array.isArray(values) || values.length === 0) {
+                    return true;
+                }
+
+                return values.some((value) => matchesFilter(product, key, value));
+            });
+        });
+    }, [products, selectedFilters]);
+
+    const handleFilterChange = (filterKey, value) => {
+        setSelectedFilters((prev) => {
+            const currentValues = prev[filterKey] || [];
+            const exists = currentValues.includes(value);
+            const nextValues = exists
+                ? currentValues.filter((item) => item !== value)
+                : [...currentValues, value];
+
+            return {
+                ...prev,
+                [filterKey]: nextValues
+            };
+        });
+    };
 
     return (
-        <div className="catalog">
-            <div className="product-catalog">
+        <div className="catalog product-page-shell">
+            <div
+                ref={catalogRef}
+                className="product-catalog"
+            >
+                <aside className="product-filter">
+                    <ProductFilter
+                        filterItemList={filters}
+                        selectedFilters={selectedFilters}
+                        onFilterChange={handleFilterChange}
+                        menuItems={menuItems}
+                        activeMenuKey={categoryKey}
+                    />
+                </aside>
 
-                <div className="product-filter">
-                    <ProductFilter filterItemList={categoryFilterItem}/>
-                </div>
+                <section ref={productContentRef} className="product-content">
+                    <div className="product-toolbar">
+                        <span>{filteredProducts.length} ürün listeleniyor</span>
+                    </div>
 
-                <div className="product-list">
-                    {productList}
-                </div>
+                    {loading && <div className="product-empty-state">Ürünler yükleniyor...</div>}
+
+                    {!loading && (
+                        <div className="product-list">
+                            {filteredProducts.map((product) => (
+                                <div key={product.id} className="product-card-items">
+                                    <ProductCard
+                                        product={{
+                                            ...product,
+                                            priceLabel: formatPrice(product.price),
+                                            oldPriceLabel: formatPrice(product.oldPrice)
+                                        }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {!loading && filteredProducts.length === 0 && (
+                        <div className="product-empty-state">
+                            Seçili filtrelere uygun ürün bulunamadı. Farklı filtre kombinasyonları deneyin.
+                        </div>
+                    )}
+                </section>
             </div>
         </div>
-    )
-}
+    );
+};

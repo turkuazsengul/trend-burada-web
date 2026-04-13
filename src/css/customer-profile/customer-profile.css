@@ -1,255 +1,297 @@
 .my-account-page {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 12px;
-    margin-top: 1rem;
-    margin-left: 3rem;
-    margin-right: 2.5rem;
+    grid-template-columns: 29rem minmax(0, 1fr);
+    gap: 1.4rem;
+    margin: 1.1rem 0 2.2rem;
 }
 
 .navigation-column {
-    grid-column: 1 / 2;
     display: grid;
-    gap: 12px;
-}
-
-.process-column {
-    grid-column: 2 / 7;
-    display: flex;
-    flex-direction: column;
-    justify-content: normal;
+    gap: 1rem;
+    align-self: start;
+    position: sticky;
+    top: 1rem;
 }
 
 .navi-row {
-    border: 1px solid #e6e6e6;
-    border-radius: 10px;
-    padding: 10px;
+    border: 1px solid #e6edf5;
+    border-radius: 12px;
+    padding: 1rem;
+    background: #ffffff;
+    text-align: left;
 }
 
 .navi-row label {
-    font-size: 13px;
-    color: #646f81;
-    font-weight: bold;
-    text-align: left;
+    font-size: 1.18rem;
+    color: #334155;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 0.55rem;
+}
+
+.navigation-column .navi-row:first-child label {
+    text-align: center;
+    margin-bottom: 0;
+}
+
+.navi-row hr {
+    border: 0;
+    border-top: 1px solid #edf2f8;
+    margin: 0 0 0.55rem;
+}
+
+.navi-row a {
+    text-decoration: none;
 }
 
 .navi-item {
     border: 1px solid transparent;
-    border-radius: 5px;
-    padding: 5px;
+    border-radius: 8px;
+    padding: 0.7rem 0.75rem;
     text-align: left;
-    margin-left: 1px;
-    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+
+.navi-item-button {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
 }
 
 .navi-item span {
-    margin-left: 1.5rem;
-    font-size: 12px;
-    color: #646f81;
-}
-
-.process-row {
-    border: 1px solid #e6e6e6;
-    border-radius: 10px;
-    padding: 10px;
-    margin-bottom: 10px;
-}
-
-.process-column .process-row {
-    border: 1px solid #e6e6e6;
-    border-radius: 10px;
-    padding: 10px;
-    margin-bottom: 2rem;
-    /*display: flex;*/
-}
-
-.process-row .process-header-item {
-    margin-left: 2rem;
-    margin-top: 2rem;
-    text-align: left;
-    margin-bottom: 2rem;
-    font-size: 18px;
-    font-weight: bold;
-    color: #646f81;
-}
-
-.process-user-form-layer {
-    display: flex;
-    flex-direction: row;
-}
-
-.process-user-form-layer input {
-    font-size: 15px;
-    background-color: #faf7f7;
-}
-
-.user-detail-button button{
-    width: 100%;
-    height: 4rem;
-    margin-bottom: 1rem;
-}
-
-.process-user-form-layer .p-inputtext .p-component {
-    margin-bottom:2rem;
-}
-
-.process-row .user-detail {
-    flex: 1;
-    width: 50%;
-    margin-left: 2rem;
-    display: grid;
-    gap: 2rem;
-}
-
-.process-row .user-detail .user-detail-body {
-    display: grid;
-    text-align: left;
-    margin-top: 1rem;
-}
-
-.process-row .password-change {
-    flex: 1;
-    width: 50%;
-    margin-left: 2rem;
-    margin-right: 1rem;
-    display: grid;
-    gap: 2rem;
-}
-
-.process-row .user-detail .password-change-body {
-    display: grid;
-    text-align: left;
-    margin-top: 1rem;
-}
-
-.password-change .password-change-body {
-    display: grid;
-    text-align: left;
-    margin-top: 1rem;
-}
-
-.process-row .password-change .password-item {
-    flex: 1;
-    text-align: left;
-    margin-right: 2rem;
-}
-
-.process-row .password-change .password-item input {
-    flex: 1;
-    text-align: left;
-    width: 100%
-}
-
-.process-row .password-change .password-item .pi-eye {
-    margin-top: -1rem;
-}
-
-.process-row .password-change .password-item .pi-eye-slash {
-    margin-top: -1rem;
-}
-
-.password-change .password-change-body .password-row-1 {
-    display: flex;
-    text-align: left;
-}
-
-.password-change .password-change-body .password-row-2 {
-    margin-top: 4rem;
-    display: flex;
-    text-align: left;
-}
-
-.password-change .password-change-body .password-row-3 {
-    margin-top: 4rem;
-    display: flex;
-    text-align: left;
-}
-
-.password-change .password-change-body .password-row-4 {
-    margin-top: 4rem;
-    display: flex;
-    text-align: left;
-}
-
-.process-row .user-detail .user-detail-body .detail-row-1 {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    text-align: left;
-}
-
-.process-row .user-detail .user-detail-body .detail-row-2 {
-    margin-top: 4rem;
-    /*display: flex;*/
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    text-align: left;
-}
-
-.process-row .user-detail .user-detail-body .detail-row-3 {
-    margin-top: 4rem;
-    /*display: flex;*/
-    display: grid;
-    grid-template-columns: repeat(1, 1fr);
-    text-align: left;
-}
-
-.process-row .user-detail .user-detail-body .detail-row-3 input{
-    width: 30rem;
-}
-
-.process-row .user-detail .user-detail-body .detail-row-4 {
-    margin-top: 4rem;
-    /*display: flex;*/
-    display: grid;
-    grid-template-columns: repeat(1, 1fr);
-    text-align: left;
-}
-
-.process-row .user-detail .user-detail-body .user-detail-item {
-    /*flex: 1;*/
-    text-align: left;
-    margin-right: 2rem;
-}
-
-.header-item {
-    font-size: 11px;
-    font-weight: bold;
-    color: #646f81;
-    margin-bottom: 1rem;
-}
-
-.process-row .user-detail-header {
-    text-align: left;
-    font-size: 15px;
-    font-weight: bold;
-    color: #c57cf1;
-    margin-top: 1rem;
-}
-
-.process-row .password-change .password-header {
-    text-align: left;
-    font-size: 15px;
-    font-weight: bold;
-    color: #c57cf1;
-    margin-top: 1rem;
-}
-
-.password-change-body .password-row {
-    display: grid;
-    text-align: left;
-    margin-top: 1rem;
-}
-
-.divider {
-    /*flex: 2;*/
-    margin-left: 2rem;
-    margin-right: 2rem;
-    width: 1px;
-    background-color: #e6e6e6;
-
+    margin-left: 0.9rem;
+    font-size: 1.18rem;
+    color: #475569;
+    font-weight: 600;
 }
 
 .navi-item:hover {
-    background-color: rgba(228, 208, 229, 0.68);
+    background-color: #f7f9fc;
+    border-color: #e4eaf3;
 }
 
+.navi-item.is-active {
+    background: #f2f5ff;
+    border-color: #d6dfff;
+}
+
+.navi-item.is-active span {
+    color: #3b4a78;
+}
+
+.process-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.process-row {
+    border: 1px solid #e6edf5;
+    border-radius: 12px;
+    padding: 1rem;
+    background: #ffffff;
+}
+
+.process-row .process-header-item {
+    text-align: left;
+    margin: 0.1rem 0.2rem;
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: #1f2937;
+}
+
+.process-user-form-layer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+    gap: 1.6rem;
+    align-items: stretch;
+    margin-top: 0.4rem;
+}
+
+.process-user-form-layer input {
+    font-size: 1.24rem;
+    background-color: #fbfcfe;
+}
+
+.process-row .user-detail,
+.process-row .password-change {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+    width: 100%;
+}
+
+.process-row .user-detail .user-detail-body,
+.password-change .password-change-body {
+    display: grid;
+    text-align: left;
+    gap: 1.1rem;
+    margin-top: 0.2rem;
+}
+
+.process-row .user-detail .user-detail-body .detail-row-1,
+.process-row .user-detail .user-detail-body .detail-row-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.1rem;
+}
+
+.process-row .user-detail .user-detail-body .detail-row-3,
+.process-row .user-detail .user-detail-body .detail-row-4,
+.password-change .password-change-body .password-row-1,
+.password-change .password-change-body .password-row-2,
+.password-change .password-change-body .password-row-3,
+.password-change .password-change-body .password-row-4 {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    margin-top: 0;
+}
+
+.process-row .user-detail .user-detail-body .detail-row-3 input {
+    width: 100%;
+}
+
+.process-row .user-detail .user-detail-body .user-detail-item,
+.process-row .password-change .password-item {
+    text-align: left;
+    margin: 0;
+}
+
+.header-item {
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 0.5rem;
+}
+
+.process-row .user-detail-header,
+.process-row .password-change .password-header {
+    text-align: left;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #5b21b6;
+    margin-top: 0;
+}
+
+.process-row .user-detail-header hr,
+.process-row .password-change .password-header hr {
+    border: 0;
+    border-top: 1px solid #e9e1fb;
+    margin-top: 0.6rem;
+}
+
+.process-user-form-layer .p-inputtext,
+.process-user-form-layer .p-inputmask,
+.process-user-form-layer .p-inputtext:enabled,
+.process-user-form-layer .p-calendar .p-inputtext,
+.process-user-form-layer .p-password input {
+    width: 100%;
+    height: 4.3rem;
+    border-radius: 9px;
+    border: 1px solid #d8e0ec;
+    background: #fbfcfe;
+    font-size: 1.24rem;
+}
+
+.process-user-form-layer .p-inputtext:enabled:focus,
+.process-user-form-layer .p-inputmask:enabled:focus,
+.process-user-form-layer .p-calendar .p-inputtext:enabled:focus,
+.process-user-form-layer .p-password input:enabled:focus {
+    border-color: #9f77e8;
+    box-shadow: 0 0 0 3px rgba(159, 119, 232, 0.14);
+}
+
+.process-user-form-layer .p-disabled,
+.process-user-form-layer input[disabled] {
+    background: #f3f6fa !important;
+    color: #6b7280 !important;
+}
+
+.user-detail-button button {
+    width: 100%;
+    height: 4.2rem;
+    border-radius: 9px;
+    margin-bottom: 0;
+    font-size: 1.22rem;
+    font-weight: 700;
+}
+
+.divider {
+    margin: 0;
+    width: 1px;
+    background-color: #e8edf5;
+}
+
+.profile-placeholder-panel {
+    text-align: left;
+    padding: 0.2rem 0.35rem 0.5rem;
+}
+
+.profile-placeholder-panel p {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #64748b;
+}
+
+.profile-placeholder-grid {
+    margin-top: 1.2rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.profile-placeholder-card {
+    border: 1px solid #e6edf5;
+    border-radius: 10px;
+    background: #fbfdff;
+    padding: 1.05rem;
+}
+
+.profile-placeholder-card h4 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #334155;
+    font-weight: 700;
+}
+
+.profile-placeholder-card span {
+    display: block;
+    margin-top: 0.6rem;
+    font-size: 1.12rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+@media (max-width: 1200px) {
+    .my-account-page {
+        grid-template-columns: 1fr;
+    }
+
+    .navigation-column {
+        position: static;
+    }
+
+    .process-user-form-layer {
+        grid-template-columns: 1fr;
+    }
+
+    .divider {
+        width: 100%;
+        height: 1px;
+    }
+
+    .profile-placeholder-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .process-row .user-detail .user-detail-body .detail-row-1,
+    .process-row .user-detail .user-detail-body .detail-row-2 {
+        grid-template-columns: 1fr;
+    }
+}
