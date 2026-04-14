@@ -33,7 +33,7 @@
     "scripts": {
         "start": "react-scripts --openssl-legacy-provider start",
         "build": "react-scripts --openssl-legacy-provider build",
-        "build:cpanel": "npm run build && cp -f public/.htaccess build/.htaccess",
+        "build:cpanel": "npm run build && (test -f public/.htaccess && cp -f public/.htaccess build/.htaccess || echo 'public/.htaccess not found, skipping copy')",
         "package:cpanel": "npm run build:cpanel && (cd build && zip -r ../cpanel-deploy.zip .)",
         "test": "react-scripts --openssl-legacy-provider test",
         "eject": "react-scripts eject"
