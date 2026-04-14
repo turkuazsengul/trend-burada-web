@@ -1,5 +1,5 @@
-import React, {useEffect, useRef, useState} from 'react';
-import ProfileNavigation from "./ProfileNavigation";
+import React, {useContext, useEffect, useMemo, useRef, useState} from 'react';
+import ProfileNavigation, {buildProfileSections} from "./ProfileNavigation";
 import '../../css/customer-profile/customer-profile.css'
 import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
@@ -9,16 +9,17 @@ import UserService from "../../service/UserService.";
 import {useHistory, useLocation} from "react-router-dom";
 import {Calendar} from "primereact/calendar";
 import {Toast} from "primereact/toast";
-import {PROFILE_SECTIONS} from "./ProfileNavigation";
+import AppContext from "../../AppContext";
 
 const MyUserInfo = () => {
-    const DISABLE_INPUT_TOOLTIP_MESSAGE = "Bu Alanlar Kullanıcı Tarafından Güncellenemez. Lütfen Müşteri Hizmetleri İle İrtibata Geçiniz.";
+    const {t = (key) => key} = useContext(AppContext) || {};
+    const DISABLE_INPUT_TOOLTIP_MESSAGE = t('profile.readonlyTooltip');
     const history = useHistory();
     const location = useLocation();
+    const profileSections = useMemo(() => buildProfileSections(t), [t]);
 
     const toastCenter = useRef(null);
 
-    // const [user, setUser] = useState({});
     const [userId, setUserId] = useState("");
     const [fullName, setFullName] = useState("");
     const [firstName, setFirstName] = useState("");
@@ -32,6 +33,10 @@ const MyUserInfo = () => {
     const [updateBtnDisabled, setUpdateBtnDisabled] = useState(true);
     const [passUpdateBtnDisabled, setPassUpdateBtnDisabled] = useState(true);
     const [activeSection, setActiveSection] = useState('user-info');
+
+    const showMessage = (labelText, detailText, ref, severity) => {
+        ref.current.show({severity: severity, summary: labelText, detail: detailText, life: 3000});
+    };
 
     useEffect(() => {
         const storedUserStr = localStorage.getItem("user");
@@ -50,15 +55,14 @@ const MyUserInfo = () => {
             history.push("/login");
             window.location.reload()
 
-            const detailMessage = "Sistemsel bir hata sebebi ile şuan için bilgilerinize erişemiyoruz. Lütfen daha sonra tekrar deneyiniz."
-            showMessage("Kullanıcı Bilgisine Erişilemedi.", detailMessage, toastCenter, 'warn')
+            showMessage(t('profile.noUserTitle'), t('profile.noUserDetail'), toastCenter, 'warn')
         }
-    }, [history]);
+    }, [history, t]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const requestedSection = params.get('section');
-        const availableSections = PROFILE_SECTIONS.flatMap((group) => group.items.map((item) => item.key));
+        const availableSections = profileSections.flatMap((group) => group.items.map((item) => item.key));
 
         if (requestedSection && availableSections.includes(requestedSection)) {
             setActiveSection(requestedSection);
@@ -66,27 +70,20 @@ const MyUserInfo = () => {
         }
 
         setActiveSection('user-info');
-    }, [location.search]);
-
-    const showMessage = (labelText, detailText, ref, severity) => {
-        ref.current.show({severity: severity, summary: labelText, detail: detailText, life: 3000});
-    };
+    }, [location.search, profileSections]);
 
     const clickUserInformationUpdateBtn = () => {
-        const user =
-            {
-                pkId: userId,
-                gsm_no: phoneNumber,
-                dob: birthDate,
-                name:firstName,
-                email:email,
-                surname: lastName
-            };
-        
+        const user = {
+            pkId: userId,
+            gsm_no: phoneNumber,
+            dob: birthDate,
+            name: firstName,
+            email: email,
+            surname: lastName
+        };
+
         UserService.updateUser(user).then((response) => {
             if (response) {
-                // setPhoneNumber(response.gsm_no)
-                // setBirthDate(new Date(response.bod))
                 localStorage.setItem("user", JSON.stringify(user));
                 window.location.reload()
             }
@@ -95,23 +92,22 @@ const MyUserInfo = () => {
                 localStorage.removeItem("token");
                 history.push("/login");
             } else {
-                const detailMessage = "Sistemsel bir hata sebebi ile şuan için bilgilerinize erişemiyoruz. Lütfen daha sonra tekrar deneyiniz."
-                showMessage("Kullanıcı Bilgisine Erişilemedi.", detailMessage, toastCenter, 'warn')
+                showMessage(t('profile.noUserTitle'), t('profile.noUserDetail'), toastCenter, 'warn')
             }
         })
     }
 
     const sectionMeta = {
-        'user-info': {title: 'Hesabım Bilgileri', subtitle: 'Üyelik bilgilerinizi ve şifrenizi buradan yönetebilirsiniz.'},
-        'address': {title: 'Adres Bilgilerim', subtitle: 'Kayıtlı teslimat ve fatura adreslerinizi düzenleyin.'},
-        'saved-cards': {title: 'Kayıtlı Kartlarım', subtitle: 'Ödemelerde kullanmak için kartlarınızı güvenle saklayın.'},
-        'orders': {title: 'Tüm Siparişlerim', subtitle: 'Geçmiş siparişlerinizin durumlarını buradan takip edin.'},
-        'seller-messages': {title: 'Satıcı Mesajları', subtitle: 'Satıcılarla yaptığınız yazışmaları görüntüleyin.'},
-        'reviews': {title: 'Değerlendirmelerim', subtitle: 'Ürün değerlendirme ve yorum geçmişinizi yönetin.'},
-        'buy-again': {title: 'Yeniden Satın Al', subtitle: 'Sık aldığınız ürünleri hızlıca tekrar sepete ekleyin.'},
-        'coupons': {title: 'İndirim Kuponlarım', subtitle: 'Size tanımlı kupon ve kampanya haklarınızı görüntüleyin.'},
-        'history': {title: 'Önceden Gezdiklerim', subtitle: 'Yakın zamanda ziyaret ettiğiniz ürünleri tekrar inceleyin.'},
-        'followed-stores': {title: 'Takip Ettiğim Mağazalar', subtitle: 'Takip ettiğiniz mağaza güncellemelerini buradan görün.'}
+        'user-info': {title: t('profile.accountInfoTitle'), subtitle: t('profile.accountInfoSubtitle')},
+        'address': {title: t('profile.sectionTitleAddress'), subtitle: t('profile.sectionSubtitleAddress')},
+        'saved-cards': {title: t('profile.sectionTitleCards'), subtitle: t('profile.sectionSubtitleCards')},
+        'orders': {title: t('profile.sectionTitleOrders'), subtitle: t('profile.sectionSubtitleOrders')},
+        'seller-messages': {title: t('profile.sectionTitleMessages'), subtitle: t('profile.sectionSubtitleMessages')},
+        'reviews': {title: t('profile.sectionTitleReviews'), subtitle: t('profile.sectionSubtitleReviews')},
+        'buy-again': {title: t('profile.sectionTitleBuyAgain'), subtitle: t('profile.sectionSubtitleBuyAgain')},
+        'coupons': {title: t('profile.sectionTitleCoupons'), subtitle: t('profile.sectionSubtitleCoupons')},
+        'history': {title: t('profile.sectionTitleHistory'), subtitle: t('profile.sectionSubtitleHistory')},
+        'followed-stores': {title: t('profile.sectionTitleFollowed'), subtitle: t('profile.sectionSubtitleFollowed')}
     };
 
     const renderPlaceholderSection = () => {
@@ -124,16 +120,16 @@ const MyUserInfo = () => {
                     <p>{info.subtitle}</p>
                     <div className="profile-placeholder-grid">
                         <div className="profile-placeholder-card">
-                            <h4>Demo Bileşen</h4>
-                            <span>Bu alan ilgili modül için örnek içerik panelidir.</span>
+                            <h4>{t('profile.demoComponent')}</h4>
+                            <span>{t('profile.demoComponentText')}</span>
                         </div>
                         <div className="profile-placeholder-card">
-                            <h4>Hızlı İşlem</h4>
-                            <span>Filtreleme, arama, aksiyon butonları bu panelde yer alacak.</span>
+                            <h4>{t('profile.quickAction')}</h4>
+                            <span>{t('profile.quickActionText')}</span>
                         </div>
                         <div className="profile-placeholder-card">
-                            <h4>Durum Kutusu</h4>
-                            <span>Aktif kayıtlar, istatistikler ve özet bilgiler burada gösterilecek.</span>
+                            <h4>{t('profile.statusBox')}</h4>
+                            <span>{t('profile.statusBoxText')}</span>
                         </div>
                     </div>
                 </div>
@@ -146,20 +142,20 @@ const MyUserInfo = () => {
             <>
                 <div className="process-row">
                     <div className="process-header-item">
-                        Hesabım Bilgileri
+                        {t('profile.accountInfoTitle')}
                     </div>
                 </div>
                 <div className="process-row">
                     <div className="process-user-form-layer">
                         <div className="user-detail">
                             <div className="user-detail-header">
-                                <label>Üyelik Bilgilerim</label>
+                                <label>{t('profile.membershipInfo')}</label>
                                 <hr/>
                             </div>
                             <div className="user-detail-body">
                                 <div className="detail-row-1">
                                     <div className="user-detail-item">
-                                        <div className="header-item">Ad</div>
+                                        <div className="header-item">{t('profile.name')}</div>
                                         <InputText
                                             tooltip={DISABLE_INPUT_TOOLTIP_MESSAGE}
                                             tooltipOptions={{position: 'top'}}
@@ -172,7 +168,7 @@ const MyUserInfo = () => {
                                         />
                                     </div>
                                     <div className="user-detail-item">
-                                        <div className="header-item">Soyad</div>
+                                        <div className="header-item">{t('profile.surname')}</div>
                                         <InputText
                                             value={lastName}
                                             disabled={true}
@@ -185,7 +181,7 @@ const MyUserInfo = () => {
 
                                 <div className="detail-row-2">
                                     <div className="user-detail-item">
-                                        <div className="header-item">E-Mail</div>
+                                        <div className="header-item">{t('profile.email')}</div>
                                         <InputText
                                             disabled={true}
                                             value={email}
@@ -195,13 +191,13 @@ const MyUserInfo = () => {
                                         />
                                     </div>
                                     <div className="user-detail-item">
-                                        <div className="header-item">Cep Telefonu</div>
+                                        <div className="header-item">{t('profile.phone')}</div>
                                         <InputMask
                                             mask="0(999)-999-99-99"
                                             placeholder="(___)-___-__-__"
                                             keyfilter="int"
                                             value={phoneNumber}
-                                            onClick={(e) => {
+                                            onClick={() => {
                                                 setPhoneNumber("")
                                             }}
                                             onChange={(e) => {
@@ -214,7 +210,7 @@ const MyUserInfo = () => {
 
                                 <div className="detail-row-3">
                                     <div className="user-detail-item">
-                                        <div className="header-item">Doğum Tarihi</div>
+                                        <div className="header-item">{t('profile.birthDate')}</div>
                                         <div>
                                             <Calendar
                                                 dateFormat={"dd.mm.yy"}
@@ -232,7 +228,7 @@ const MyUserInfo = () => {
                                         <div className="user-detail-button">
                                             <Button
                                                 onClick={clickUserInformationUpdateBtn}
-                                                label={"Güncelle"}
+                                                label={t('profile.update')}
                                                 disabled={updateBtnDisabled}
                                                 size="large"
                                             />
@@ -247,13 +243,13 @@ const MyUserInfo = () => {
 
                         <div className="password-change">
                             <div className="password-header">
-                                <label>Şifre Güncelleme</label>
+                                <label>{t('profile.passwordUpdate')}</label>
                                 <hr/>
                             </div>
                             <div className="password-change-body">
                                 <div className="password-row-1">
                                     <div className="password-item">
-                                        <div className="header-item">Mevcut Şifre</div>
+                                        <div className="header-item">{t('profile.currentPassword')}</div>
                                         <Password
                                             feedback={false}
                                             value={currentPassword}
@@ -269,7 +265,7 @@ const MyUserInfo = () => {
 
                                 <div className="password-row-2">
                                     <div className="password-item">
-                                        <div className="header-item">Yeni Şifre</div>
+                                        <div className="header-item">{t('profile.newPassword')}</div>
                                         <Password
                                             value={newPassword}
                                             toggleMask
@@ -284,7 +280,7 @@ const MyUserInfo = () => {
 
                                 <div className="password-row-3">
                                     <div className="password-item">
-                                        <div className="header-item">Yeni Şifre Tekrar</div>
+                                        <div className="header-item">{t('profile.repeatPassword')}</div>
                                         <Password
                                             feedback={false}
                                             value={againNewPassword}
@@ -302,7 +298,7 @@ const MyUserInfo = () => {
                                     <div className="password-item">
                                         <div className="user-detail-button">
                                             <Button
-                                                label={"Güncelle"}
+                                                label={t('profile.update')}
                                                 disabled={passUpdateBtnDisabled}
                                                 size="large"
                                             />

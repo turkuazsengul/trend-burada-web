@@ -1,42 +1,46 @@
-import React from 'react';
+import React, {useContext, useMemo} from 'react';
 import '../../css/customer-profile/customer-profile.css'
+import AppContext from "../../AppContext";
 
-export const PROFILE_SECTIONS = [
+export const buildProfileSections = (t) => ([
     {
-        group: 'Kullanıcı Hesabım',
+        group: t('profile.groupAccount'),
         items: [
-            {key: 'user-info', icon: 'pi pi-user', label: 'Kullanıcı Bilgilerim'},
-            {key: 'address', icon: 'pi pi-map-marker', label: 'Adres Bilgilerim'},
-            {key: 'saved-cards', icon: 'pi pi-credit-card', label: 'Kayıtlı Kartlarım'}
+            {key: 'user-info', icon: 'pi pi-user', label: t('profile.userInfo')},
+            {key: 'address', icon: 'pi pi-map-marker', label: t('profile.addresses')},
+            {key: 'saved-cards', icon: 'pi pi-credit-card', label: t('profile.cards')}
         ]
     },
     {
-        group: 'Siparişlerim',
+        group: t('profile.groupOrders'),
         items: [
-            {key: 'orders', icon: 'pi pi-box', label: 'Tüm Siparişlerim'},
-            {key: 'seller-messages', icon: 'pi pi-envelope', label: 'Satıcı Mesajları'},
-            {key: 'reviews', icon: 'pi pi-comment', label: 'Değerlendirmelerim'},
-            {key: 'buy-again', icon: 'pi pi-shopping-cart', label: 'Yeniden Satın Al'}
+            {key: 'orders', icon: 'pi pi-box', label: t('profile.allOrders')},
+            {key: 'seller-messages', icon: 'pi pi-envelope', label: t('profile.sellerMessages')},
+            {key: 'reviews', icon: 'pi pi-comment', label: t('profile.myReviews')},
+            {key: 'buy-again', icon: 'pi pi-shopping-cart', label: t('profile.buyAgain')}
         ]
     },
     {
-        group: 'Sana Özel',
+        group: t('profile.groupSpecial'),
         items: [
-            {key: 'coupons', icon: 'pi pi-tags', label: 'İndirim Kuponlarım'},
-            {key: 'history', icon: 'pi pi-clock', label: 'Önceden Gezdiklerim'},
-            {key: 'followed-stores', icon: 'pi pi-shopping-bag', label: 'Takip Ettiğim Mağazalar'}
+            {key: 'coupons', icon: 'pi pi-tags', label: t('profile.coupons')},
+            {key: 'history', icon: 'pi pi-clock', label: t('profile.history')},
+            {key: 'followed-stores', icon: 'pi pi-shopping-bag', label: t('profile.followedStores')}
         ]
     }
-];
+]);
 
 const ProfileNavigation = ({userFullName, activeSection, onChangeSection}) => {
+    const {t = (key) => key} = useContext(AppContext) || {};
+    const profileSections = useMemo(() => buildProfileSections(t), [t]);
+
     return (
         <div className="navigation-column">
             <div className="navi-row">
-                <label>{userFullName || 'Hesabım'}</label>
+                <label>{userFullName || t('profile.accountFallback')}</label>
             </div>
 
-            {PROFILE_SECTIONS.map((sectionGroup) => (
+            {profileSections.map((sectionGroup) => (
                 <div key={sectionGroup.group} className="navi-row">
                     <label>{sectionGroup.group}</label>
                     <hr/>
@@ -58,4 +62,3 @@ const ProfileNavigation = ({userFullName, activeSection, onChangeSection}) => {
 }
 
 export default ProfileNavigation;
-

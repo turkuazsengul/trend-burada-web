@@ -1,130 +1,50 @@
-import React, {useState, useEffect} from 'react';
+import React, {useContext, useMemo} from 'react';
+import AppContext from "./AppContext";
 
 import appstoreicon from './icons/app-store-icon.svg'
 
 export const AppFooter = () => {
-    const [footerBodyData, setFooterBodyData] = useState([]);
-    const [test, setTest] = useState([]);
-
-    useEffect(() => {
-        setFooterBodyData(footerBodyDataExp)
-        setTest(footerBodyItems)
-    }, []);
-
-    const footerBodyDataExp = [
+    const {t = (key) => key} = useContext(AppContext) || {};
+    const footerBodyData = useMemo(() => ([
         {
             id: 0,
-            header: "Trend Burada",
-            items: [
-                {
-                    id: 0,
-                    value: "Biz Kimiz"
-                },
-                {
-                    id: 1,
-                    value: "İletişim"
-                },
-                {
-                    id: 2,
-                    value: "Kurumsal Hediye Çeki"
-                },
-            ]
+            header: t('footer.trendBurada'),
+            items: [t('footer.whoWeAre'), t('footer.contact'), t('footer.corporateGift')]
         },
         {
             id: 1,
-            header: "Hakkımızda",
-            items: [
-                {
-                    id: 0,
-                    value: "Biz Kimiz"
-                },
-                {
-                    id: 1,
-                    value: "İletişim"
-                },
-                {
-                    id: 2,
-                    value: "Kariyer"
-                },
-            ]
+            header: t('footer.about'),
+            items: [t('footer.whoWeAre'), t('footer.contact'), t('footer.career')]
         },
         {
             id: 2,
-            header: "Kampanyalar",
-            items: [
-                {
-                    id: 0,
-                    value: "Aktif Kampanyalar"
-                },
-                {
-                    id: 1,
-                    value: "Üyelik"
-                },
-                {
-                    id: 2,
-                    value: "Hediye Fikirleri"
-                },
-                {
-                    id: 3,
-                    value: "Trend Burada Fırsatları"
-                },
-            ]
+            header: t('footer.campaigns'),
+            items: [t('footer.activeCampaigns'), t('footer.membership'), t('footer.giftIdeas'), t('footer.trendDeals')]
         },
         {
             id: 3,
-            header: "Yardım",
-            items: [
-                {
-                    id: 0,
-                    value: "Sukça Sorulan Sorular"
-                },
-                {
-                    id: 1,
-                    value: "Canlı Yardım"
-                },
-                {
-                    id: 2,
-                    value: "Nasıl İade Ederim"
-                },
-                {
-                    id: 3,
-                    value: "İşlem Rehberi"
-                },
-            ]
-        },
-    ]
-
-    const footerBodyHeaderItems = footerBodyData.map((x) => {
-            return (
-                <div key={x.id} className="footer-body-header-items">
-                    <span> <a href="">{x.header}</a> </span>
-                    {x.items.map((y) => {
-                        return (
-                            <a key={y.id} href="">{y.value}</a>
-                        )
-                    })}
-                </div>
-            )
+            header: t('footer.help'),
+            items: [t('footer.faq'), t('footer.liveHelp'), t('footer.howToReturn'), t('footer.guide')]
         }
-    )
-
-    const footerBodyItems = footerBodyData.map((x) => {
-            return (
-                <a href="">{x.items.value}</a>
-            )
-        }
-    )
+    ]), [t]);
 
     return (
         <div className="footer">
             <div className="footer-body">
                 <div className="footer-body-header">
-                    {footerBodyHeaderItems}
+                    {footerBodyData.map((group) => (
+                        <div key={group.id} className="footer-body-header-items">
+                            <span><a href="/">{group.header}</a></span>
+                            {group.items.map((item, index) => (
+                                <a key={`${group.id}-${index}`} href="/">{item}</a>
+                            ))}
+                        </div>
+                    ))}
                 </div>
 
                 <div className="footer-body-content">
                     <div className="footer-body-content-items">
-                        <span><a href="">Güvenli Alışveriş</a></span>
+                        <span><a href="/">{t('footer.safeShopping')}</a></span>
                         <div className="pay-method-icon">
                             <div className="troy-img"/>
                             <div className="master-card-img"/>
@@ -134,17 +54,17 @@ export const AppFooter = () => {
                     </div>
 
                     <div className="footer-body-content-items">
-                        <span><a href="">Mobil Uygulamalar</a></span>
+                        <span><a href="/">{t('footer.mobileApps')}</a></span>
                         <a href="https://www.apple.com/tr/app-store/"><img src={appstoreicon} alt=""/></a>
                     </div>
 
                     <div className="footer-body-content-items">
-                        <span><a href="">Sosyal Medya</a></span>
+                        <span><a href="/">{t('footer.socialMedia')}</a></span>
                         <div className="mobil-app-icon">
-                            <a className="pi pi-facebook" href="https://tr-tr.facebook.com"/>
-                            <a className="pi pi-twitter" href="https://twitter.com"/>
-                            <a className="pi pi-youtube" href="https://www.youtube.com"/>
-                            <a className="pi pi-instagram" href="https://www.instagram.com/"/>
+                            <a href="https://tr-tr.facebook.com" aria-label="Facebook"><span className="pi pi-facebook"/></a>
+                            <a href="https://twitter.com" aria-label="Twitter"><span className="pi pi-twitter"/></a>
+                            <a href="https://www.youtube.com" aria-label="YouTube"><span className="pi pi-youtube"/></a>
+                            <a href="https://www.instagram.com/" aria-label="Instagram"><span className="pi pi-instagram"/></a>
                         </div>
 
                     </div>

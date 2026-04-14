@@ -1,5 +1,54 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useContext, useEffect, useMemo, useState} from 'react';
 import {Accordion, AccordionTab} from 'primereact/accordion';
+import AppContext from "../../AppContext";
+
+const MENU_ITEM_EN_LABELS = {
+    elbise: 'Dress',
+    tisort: 'T-Shirt',
+    gomlek: 'Shirt',
+    pantolon: 'Pants',
+    ceket: 'Jacket',
+    triko: 'Knitwear',
+    'erkek-tisort': 'T-Shirt',
+    'erkek-gomlek': 'Shirt',
+    jean: 'Jeans',
+    'erkek-pantolon': 'Pants',
+    sweatshirt: 'Sweatshirt',
+    mont: 'Coat',
+    'kiz-cocuk': 'Girls',
+    'erkek-cocuk': 'Boys',
+    'bebek-giyim': 'Baby Clothing',
+    'okul-kombinleri': 'School Outfits',
+    sneaker: 'Sneakers',
+    bot: 'Boots',
+    'topuklu-ayakkabi': 'Heels',
+    loafer: 'Loafers',
+    sandalet: 'Sandals',
+    canta: 'Bag',
+    kemer: 'Belt',
+    cuzdan: 'Wallet',
+    taki: 'Jewelry',
+    sapka: 'Hat',
+    esofman: 'Tracksuit',
+    tayt: 'Leggings',
+    'spor-sutyeni': 'Sports Bra',
+    hoodie: 'Hoodie',
+    'kosu-urunleri': 'Running Products'
+};
+const FACET_TITLE_I18N_KEYS = {
+    mark: 'productFilter.brand',
+    brand: 'productFilter.brand',
+    size: 'productFilter.size',
+    color: 'productFilter.color',
+    priceRange: 'productFilter.price',
+    rating: 'productFilter.rating',
+    sellerScore: 'productFilter.sellerScore',
+    discountRate: 'productFilter.discount',
+    isFastDelivery: 'productFilter.delivery',
+    isFreeCargo: 'productFilter.shipping',
+    installmentText: 'productFilter.paymentOption',
+    __categories: 'productFilter.categories'
+};
 
 export const ProductFilter = ({
     filterItemList = [],
@@ -8,23 +57,30 @@ export const ProductFilter = ({
     menuItems = [],
     activeMenuKey = ''
 }) => {
+    const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
     const allGroups = useMemo(() => {
-        const base = [...filterItemList];
+        const base = [...filterItemList].map((group) => {
+            const i18nKey = FACET_TITLE_I18N_KEYS[group.key];
+            return {
+                ...group,
+                title: i18nKey ? t(i18nKey) : group.title
+            };
+        });
         if (menuItems.length > 0) {
             return [
                 {
                     key: '__categories',
-                    title: 'Kategoriler',
+                    title: t('productFilter.categories'),
                     options: menuItems.map((item) => ({
                         value: item.slug,
-                        label: item.label
+                        label: language === 'en' ? (MENU_ITEM_EN_LABELS[item.slug] || item.label) : item.label
                     }))
                 },
                 ...base
             ];
         }
         return base;
-    }, [filterItemList, menuItems]);
+    }, [filterItemList, menuItems, t, language]);
 
     const defaultActiveIndexes = useMemo(() => {
         const alwaysOpenKeys = new Set(['__categories', 'mark', 'brand']);
@@ -78,7 +134,7 @@ export const ProductFilter = ({
                                 <input
                                     type="text"
                                     className="facet-search-input"
-                                    placeholder={`${group.title} ara`}
+                                    placeholder={t('productFilter.searchPlaceholder', {title: group.title})}
                                     value={groupSearchTerms[group.key] || ''}
                                     onChange={(event) => handleGroupSearchChange(group.key, event.target.value)}
                                 />
@@ -130,7 +186,7 @@ export const ProductFilter = ({
                                 );
                                 })}
                                 {visibleOptions.length === 0 && (
-                                    <div className="facet-empty-result">Sonuc bulunamadi</div>
+                                    <div className="facet-empty-result">{t('productFilter.noResult')}</div>
                                 )}
                                 </div>
                             </div>

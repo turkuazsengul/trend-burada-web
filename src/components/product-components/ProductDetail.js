@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useContext, useEffect, useMemo, useRef, useState} from 'react';
 import {Button} from 'primereact/button';
 import {Carousel} from 'primereact/carousel';
 import {Rating} from 'primereact/rating';
@@ -6,6 +6,7 @@ import ProductService from "../../service/ProductService";
 import {MEGA_MENU_CATEGORIES} from "../../data/demoProductData";
 import {ProductFeedbackPanel} from "./ProductFeedbackPanel";
 import CartService from "../../service/CartService";
+import AppContext from "../../AppContext";
 
 const resolveCategoryKeyFromId = (productId = '') => {
     const normalized = String(productId).toLowerCase();
@@ -17,32 +18,49 @@ const resolveCategoryKeyFromId = (productId = '') => {
     return normalized.slice(0, splitterIndex);
 };
 
-const formatPrice = (price) => `${Number(price || 0).toLocaleString('tr-TR')} TL`;
+const formatPrice = (price, locale = 'tr-TR') => `${Number(price || 0).toLocaleString(locale)} TL`;
 
-const buildDeliveryLabel = () => {
+const buildDeliveryLabel = (language, t) => {
     const start = new Date();
     start.setDate(start.getDate() + 1);
 
     const end = new Date();
     end.setDate(end.getDate() + 3);
 
-    const formatDate = (value) => value.toLocaleDateString('tr-TR', {
+    const locale = language === 'en' ? 'en-US' : 'tr-TR';
+    const formatDate = (value) => value.toLocaleDateString(locale, {
         day: '2-digit',
         month: 'long'
     });
 
-    return `${formatDate(start)} - ${formatDate(end)} arası tahmini teslim`;
+    return t('productDetail.deliveryRange', {start: formatDate(start), end: formatDate(end)});
 };
 
-const buildReviews = (product) => {
-    const productTitle = product?.title || 'Ürün';
-    const mark = product?.mark || 'Satıcı';
-    const names = [
+const buildReviews = (product, language) => {
+    const isEnglish = language === 'en';
+    const productTitle = product?.title || (isEnglish ? 'Product' : 'Ürün');
+    const mark = product?.mark || (isEnglish ? 'Seller' : 'Satıcı');
+    const names = isEnglish ? [
+        'Emma K.', 'Olivia T.', 'Sophia S.', 'Mia A.', 'Chloe B.', 'Emily D.', 'Ava Y.', 'Grace O.',
+        'Lily C.', 'Hannah E.', 'Nora M.', 'Ella K.', 'Ruby P.', 'Aria A.', 'Lucy G.', 'Maya U.',
+        'Zoe N.', 'Ivy V.', 'Leah R.', 'Anna F.'
+    ] : [
         'Ayşe K.', 'Zeynep T.', 'Elif S.', 'Merve A.', 'Ceren B.', 'Ebru D.', 'Sena Y.', 'Büşra Ö.',
         'İrem Ç.', 'Nazlı E.', 'Derya M.', 'Sibel K.', 'Tuğçe P.', 'Aslı A.', 'Yasemin G.', 'Nisa U.',
         'Hande N.', 'Burcu V.', 'Selin R.', 'Mine F.'
     ];
-    const comments = [
+    const comments = isEnglish ? [
+        `${productTitle} is better quality than I expected. The fabric feels great and fit is perfect.`,
+        `Color and fit are great. ${mark} store shipped fast and packaging was clean.`,
+        'Exactly as shown in photos. Very comfortable for daily wear and great value.',
+        'Stitch quality is solid and fabric is not thin. Easy to combine with outfits.',
+        'I ordered by the size chart and it fits perfectly. No return hassle.',
+        'Color is very close to what I saw on screen. No shrink or fade after first wash.',
+        'Loved the cut, neither too tight nor too loose. Comfortable all day.',
+        'Delivery was fast. Packaging was careful and product arrived in good condition.',
+        'Craftsmanship is better than expected. Shoulder and sleeve fit is very clean.',
+        'Great performance for the price, I will buy another color.'
+    ] : [
         `${productTitle} beklediğimden kaliteli geldi. Kumaş dokusu çok iyi, kalıbı da tam oldu.`,
         `Renk ve duruşu çok güzel. ${mark} mağazası hızlı gönderdi, paketleme de temizdi.`,
         'Fotoğraftaki gibi geldi. Günlük kullanımda çok rahat, fiyat/performans açısından başarılı.',
@@ -55,16 +73,17 @@ const buildReviews = (product) => {
         'Fiyatına göre çok iyi performans veriyor, ikinci rengini de alacağım.'
     ];
     const reviewPhotoPool = [
-        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1541101767792-f9b2b1c4f127?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1554412933-514a83d2f3c8?auto=format&fit=crop&w=800&q=80"
+        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1400&q=80",
+        "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=1400&q=80",
+        "https://images.unsplash.com/photo-1541101767792-f9b2b1c4f127?auto=format&fit=crop&w=1400&q=80",
+        "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=1400&q=80",
+        "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=1400&q=80",
+        "https://images.unsplash.com/photo-1554412933-514a83d2f3c8?auto=format&fit=crop&w=1400&q=80"
     ];
+    const locale = isEnglish ? 'en-US' : 'tr-TR';
 
     return Array.from({length: 20}, (_, index) => {
-        const day = String(12 - (index % 10)).padStart(2, '0');
+        const date = new Date(2026, 3, 12 - (index % 10));
         const hasPhotos = index % 3 === 0 || index % 7 === 0;
         const photoStart = index % reviewPhotoPool.length;
         const photos = hasPhotos
@@ -78,15 +97,45 @@ const buildReviews = (product) => {
             id: `${product?.id || 'product'}-r${index + 1}`,
             user: names[index % names.length],
             rating: 4 + (index % 2),
-            date: `${day} Nisan 2026`,
+            date: date.toLocaleDateString(locale, {day: '2-digit', month: 'long', year: 'numeric'}),
             text: comments[index % comments.length],
             photos
         };
     });
 };
 
-const buildQuestionAnswers = (product) => {
-    const mark = product?.mark || 'Satıcı';
+const buildQuestionAnswers = (product, language) => {
+    const isEnglish = language === 'en';
+    const mark = product?.mark || (isEnglish ? 'Seller' : 'Satıcı');
+    if (isEnglish) {
+        return [
+            {
+                id: `${product?.id || 'product'}-qa1`,
+                question: 'Is the fit slim or regular?',
+                answer: `${mark}: This product has a regular fit. You can choose your usual size.`,
+                date: 'April 09, 2026'
+            },
+            {
+                id: `${product?.id || 'product'}-qa2`,
+                question: 'Is the fabric suitable for summer?',
+                answer: `${mark}: A lightweight and breathable fabric is used, suitable for spring and summer.`,
+                date: 'April 07, 2026'
+            },
+            {
+                id: `${product?.id || 'product'}-qa3`,
+                question: 'Does color fade after washing?',
+                answer: `${mark}: Color vibrancy is preserved with care instructions.`,
+                date: 'April 05, 2026'
+            },
+            {
+                id: `${product?.id || 'product'}-qa4`,
+                question: 'When will it be shipped?',
+                answer: `${mark}: Your order is prepared the same day and shipped by the next day at the latest.`,
+                date: 'April 04, 2026'
+            }
+        ];
+    }
+
     return [
         {
             id: `${product?.id || 'product'}-qa1`,
@@ -115,20 +164,20 @@ const buildQuestionAnswers = (product) => {
     ];
 };
 
-const relatedProductTemplate = (item) => {
+const relatedProductTemplate = (item, locale) => {
     return (
         <div className="detail-related-card-wrap">
             <a href={`/detail/${item.id}`} className="detail-related-card">
                 <img src={item.img} alt={item.title} loading="lazy" decoding="async"/>
                 <div className="detail-related-brand">{item.mark}</div>
                 <div className="detail-related-title">{item.title}</div>
-                <div className="detail-related-price">{formatPrice(item.price)}</div>
+                <div className="detail-related-price">{formatPrice(item.price, locale)}</div>
             </a>
         </div>
     );
 };
 
-const normalizeAttributes = (product) => {
+const normalizeAttributes = (product, t) => {
     const incoming = Array.isArray(product?.attributes) ? product.attributes : [];
     const validIncoming = incoming
         .filter((item) => item && typeof item === 'object')
@@ -144,9 +193,9 @@ const normalizeAttributes = (product) => {
     }
 
     return [
-        {label: 'Marka', value: product?.mark || '-'},
-        {label: 'Renk', value: product?.color || '-'},
-        {label: 'Satıcı Puanı', value: String(product?.sellerScore || '-')}
+        {label: t('productDetail.seller'), value: product?.mark || '-'},
+        {label: t('productDetail.color'), value: product?.color || '-'},
+        {label: t('productDetail.sellerScore'), value: String(product?.sellerScore || '-')}
     ];
 };
 
@@ -200,6 +249,8 @@ const resolveColorHex = (colorName = '') => {
 };
 
 export const ProductDetail = ({match}) => {
+    const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
+    const locale = language === 'en' ? 'en-US' : 'tr-TR';
     const productId = match?.params?.id;
     const toastTimerRef = useRef(null);
     const feedbackSectionRef = useRef(null);
@@ -254,11 +305,11 @@ export const ProductDetail = ({match}) => {
 
     const parentCategoryLabel = useMemo(() => {
         const parent = MEGA_MENU_CATEGORIES.find((group) => group.items.some((item) => item.slug === categoryKey));
-        return parent?.label || 'Kategoriler';
-    }, [categoryKey]);
+        return parent?.label || t('productFilter.categories');
+    }, [categoryKey, t]);
 
-    const reviews = useMemo(() => buildReviews(product), [product]);
-    const questionAnswers = useMemo(() => buildQuestionAnswers(product), [product]);
+    const reviews = useMemo(() => buildReviews(product, language), [product, language]);
+    const questionAnswers = useMemo(() => buildQuestionAnswers(product, language), [product, language]);
     const photoReviewCount = useMemo(() => {
         return reviews.filter((review) => Array.isArray(review.photos) && review.photos.length > 0).length;
     }, [reviews]);
@@ -269,7 +320,7 @@ export const ProductDetail = ({match}) => {
         }
         return product?.size ? [product.size] : [];
     }, [product]);
-    const productAttributes = useMemo(() => normalizeAttributes(product), [product]);
+    const productAttributes = useMemo(() => normalizeAttributes(product, t), [product, t]);
     const colorOptions = useMemo(() => normalizeColorOptions(product), [product]);
     const productHighlights = useMemo(() => {
         if (Array.isArray(product?.highlights) && product.highlights.length > 0) {
@@ -277,11 +328,11 @@ export const ProductDetail = ({match}) => {
         }
 
         return [
-            'Yumuşak dokulu kumaş',
-            'Günlük kullanıma uygun tasarım',
-            'Sezon kombinleriyle kolay uyum'
+            t('productDetail.highlight1'),
+            t('productDetail.highlight2'),
+            t('productDetail.highlight3')
         ];
-    }, [product]);
+    }, [product, t]);
     const galleryImages = useMemo(() => {
         const selectedColorImage = colorOptions.find((item) => item.name === selectedColor)?.image;
         const colorImages = colorOptions.map((item) => item.image);
@@ -343,11 +394,11 @@ export const ProductDetail = ({match}) => {
     };
 
     if (loading) {
-        return <div className="product-empty-state">Ürün detayları yükleniyor...</div>;
+        return <div className="product-empty-state">{t('productDetail.detailsLoading')}</div>;
     }
 
     if (!product) {
-        return <div className="product-empty-state">Ürün bulunamadı.</div>;
+        return <div className="product-empty-state">{t('productDetail.notFound')}</div>;
     }
 
     return (
@@ -362,7 +413,7 @@ export const ProductDetail = ({match}) => {
                                 type="button"
                                 className={`product-detail-thumb ${selectedImage === imageUrl ? 'is-active' : ''}`}
                                 onClick={() => setSelectedImage(imageUrl)}
-                                aria-label="Urun gorseli sec"
+                                aria-label={t('productDetail.selectImageAria')}
                             >
                                 <img src={imageUrl} alt={product.title}/>
                             </button>
@@ -372,7 +423,7 @@ export const ProductDetail = ({match}) => {
 
                 <div className="product-detail-info">
                     <div className="product-detail-breadcrumb">
-                        <a href="/">Anasayfa</a>
+                        <a href="/">{t('productDetail.home')}</a>
                         <span>/</span>
                         <a href={`/product/${categoryKey}`}>{parentCategoryLabel}</a>
                         <span>/</span>
@@ -390,8 +441,8 @@ export const ProductDetail = ({match}) => {
                             className="detail-link-button product-detail-review-count"
                             onClick={() => openFeedbackSection('reviews')}
                         >
-                            ({product.reviewCount || 0} değerlendirme
-                            <span className="detail-photo-review-inline" aria-label={`${photoReviewCount} fotolu yorum`}>
+                            ({product.reviewCount || 0} {t('productDetail.reviewsLabel')}
+                            <span className="detail-photo-review-inline" aria-label={t('productDetail.photoReviewsAria', {count: photoReviewCount})}>
                                 <i className="pi pi-camera"/>
                                 <span>{photoReviewCount}</span>
                             </span>
@@ -402,26 +453,26 @@ export const ProductDetail = ({match}) => {
                             className="detail-link-button"
                             onClick={() => openFeedbackSection('qa')}
                         >
-                            {questionAnswers.length} soru-cevap
+                            {questionAnswers.length} {t('productDetail.qaLabel')}
                         </button>
                     </div>
 
                     <div className="product-detail-price-area">
-                        <span className="detail-old-price">{formatPrice(product.oldPrice)}</span>
-                        <div className="detail-current-price">{formatPrice(product.price)}</div>
-                        {product.discountRate > 0 && <span className="detail-discount">%{product.discountRate} indirim</span>}
+                        <span className="detail-old-price">{formatPrice(product.oldPrice, locale)}</span>
+                        <div className="detail-current-price">{formatPrice(product.price, locale)}</div>
+                        {product.discountRate > 0 && <span className="detail-discount">{t('productDetail.discount', {count: product.discountRate})}</span>}
                     </div>
 
                     <div className="product-detail-badges">
-                        {product.isFastDelivery && <span className="detail-badge fast">Hızlı Teslimat</span>}
-                        {product.isFreeCargo && <span className="detail-badge cargo">Kargo Bedava</span>}
+                        {product.isFastDelivery && <span className="detail-badge fast">{t('productDetail.fastDelivery')}</span>}
+                        {product.isFreeCargo && <span className="detail-badge cargo">{t('productDetail.freeCargo')}</span>}
                         <span className="detail-badge neutral">{product.installmentText}</span>
                     </div>
 
                     {sizeOptions.length > 0 && (
                         <div className="product-detail-size-block">
                             <div className="product-detail-size-head">
-                                <span>Beden</span>
+                                <span>{t('productDetail.size')}</span>
                                 {selectedSize && <strong>{selectedSize}</strong>}
                             </div>
                             <div className="product-detail-size-options">
@@ -443,7 +494,7 @@ export const ProductDetail = ({match}) => {
                     {colorOptions.length > 0 && (
                         <div className="product-detail-color-block">
                             <div className="product-detail-size-head">
-                                <span>Renk</span>
+                                <span>{t('productDetail.color')}</span>
                                 {selectedColor && <strong>{selectedColor}</strong>}
                             </div>
                             <div className="product-detail-color-options">
@@ -453,7 +504,7 @@ export const ProductDetail = ({match}) => {
                                         type="button"
                                         className={`product-detail-color-option ${selectedColor === colorItem.name ? 'is-active' : ''}`}
                                         onClick={() => setSelectedColor(colorItem.name)}
-                                        aria-label={`Renk sec: ${colorItem.name}`}
+                                        aria-label={`${t('productDetail.color')}: ${colorItem.name}`}
                                         aria-pressed={selectedColor === colorItem.name}
                                     >
                                         <span
@@ -468,38 +519,38 @@ export const ProductDetail = ({match}) => {
                     )}
 
                     <div className="product-detail-panel-grid">
-                        <div className="product-detail-panel-item">
-                            <div className="panel-label">Satıcı</div>
-                            <div className="panel-value">{product.mark} Mağazası</div>
-                            <div className="panel-sub">Satıcı puanı: {product.sellerScore || 0}</div>
+                    <div className="product-detail-panel-item">
+                            <div className="panel-label">{t('productDetail.seller')}</div>
+                            <div className="panel-value">{product.mark} {t('productDetail.sellerStoreSuffix')}</div>
+                            <div className="panel-sub">{t('productDetail.sellerScore')}: {product.sellerScore || 0}</div>
                         </div>
 
                         <div className="product-detail-panel-item">
-                            <div className="panel-label">Tahmini Teslimat</div>
-                            <div className="panel-value">{buildDeliveryLabel()}</div>
-                            <div className="panel-sub">İstanbul teslimat bölgesi için hesaplanmıştır.</div>
+                            <div className="panel-label">{t('productDetail.estimatedDelivery')}</div>
+                            <div className="panel-value">{buildDeliveryLabel(language, t)}</div>
+                            <div className="panel-sub">{t('productDetail.allDeliveredNote')}</div>
                         </div>
                     </div>
 
                     <div className="product-detail-cart-row">
                         <div className="product-detail-qty-selector">
-                            <button type="button" onClick={decreaseQuantity} aria-label="Adet azalt">-</button>
+                            <button type="button" onClick={decreaseQuantity} aria-label={t('productDetail.qtyDecrease')}>-</button>
                             <span>{quantity}</span>
-                            <button type="button" onClick={increaseQuantity} aria-label="Adet arttır">+</button>
+                            <button type="button" onClick={increaseQuantity} aria-label={t('productDetail.qtyIncrease')}>+</button>
                         </div>
 
                         <Button
-                            label="Sepete Ekle"
+                            label={t('productDetail.addToCart')}
                             icon="pi pi-shopping-cart"
                             className="detail-add-cart-button"
                             onClick={addToCart}
                         />
                     </div>
 
-                    {cartMessageVisible && <div className="detail-cart-feedback">Ürün sepete eklendi.</div>}
+                    {cartMessageVisible && <div className="detail-cart-feedback">{t('productDetail.addedToCart')}</div>}
 
                     <section className="product-detail-features-block">
-                        <h2>Ürün Özellikleri</h2>
+                        <h2>{t('productDetail.productFeatures')}</h2>
                         <div className="product-detail-attributes-grid">
                             {productAttributes.map((attribute) => (
                                 <div key={`${attribute.label}-${attribute.value}`} className="product-detail-attribute-item">
@@ -518,39 +569,38 @@ export const ProductDetail = ({match}) => {
 
                 <aside className="product-detail-side">
                     <div className="product-detail-side-card">
-                        <h3>Ürün Kampanyaları</h3>
+                        <h3>{t('productDetail.promoTitle')}</h3>
                         <a href="/" className="side-link-row">
-                            <span>350 TL üzeri ücretsiz kargo</span>
+                            <span>{t('productDetail.promoFreeCargo')}</span>
                             <i className="pi pi-angle-right"/>
                         </a>
                         <a href="/" className="side-link-row">
-                            <span>3 Al 2 Öde fırsatı</span>
+                            <span>{t('productDetail.promoOffer')}</span>
                             <i className="pi pi-angle-right"/>
                         </a>
                     </div>
 
                     <div className="product-detail-side-card">
-                        <h3>Satıcı</h3>
+                        <h3>{t('productDetail.seller')}</h3>
                         <div className="side-seller-row">
                             <strong>{product.mark}</strong>
                             <span className="seller-score-chip">{product.sellerScore || 0}</span>
                         </div>
-                        <div className="side-muted-line">{buildDeliveryLabel()}</div>
-                        <button type="button" className="side-outline-button">Mağazaya Git</button>
+                        <div className="side-muted-line">{buildDeliveryLabel(language, t)}</div>
+                        <button type="button" className="side-outline-button">{t('productDetail.storeButton')}</button>
                     </div>
                 </aside>
             </div>
 
             <section className="product-detail-section">
-                <h2>Ürün Özeti</h2>
+                <h2>{t('productDetail.summary')}</h2>
                 <p>
-                    {product.title}, günlük kullanıma uygun modern kesimi ve konforlu yapısıyla öne çıkar. Farklı kombinlere
-                    kolay uyum sağlayan bu parça, sezonun öne çıkan seçimleri arasında yer alır.
+                    {t('productDetail.summaryText', {title: product.title})}
                 </p>
             </section>
 
             <section ref={feedbackSectionRef} className="product-detail-section product-detail-feedback-section">
-                <h2>Kullanıcı Yorumları ve Soru-Cevap</h2>
+                <h2>{t('productDetail.feedbackTitle')}</h2>
                 <ProductFeedbackPanel
                     product={product}
                     mode={activeFeedbackMode}
@@ -561,7 +611,7 @@ export const ProductDetail = ({match}) => {
             </section>
 
             <section className="product-detail-section product-detail-related-section">
-                <h2>Benzer Ürünler</h2>
+                <h2>{t('productDetail.related')}</h2>
                 {relatedProducts.length > 0 ? (
                     <Carousel
                         value={relatedProducts}
@@ -572,12 +622,12 @@ export const ProductDetail = ({match}) => {
                             {breakpoint: '920px', numVisible: 2, numScroll: 1},
                             {breakpoint: '640px', numVisible: 1, numScroll: 1}
                         ]}
-                        itemTemplate={relatedProductTemplate}
+                        itemTemplate={(item) => relatedProductTemplate(item, locale)}
                         circular
                         showIndicators={false}
                     />
                 ) : (
-                    <div className="product-empty-state">Benzer ürün bulunamadı.</div>
+                    <div className="product-empty-state">{t('productDetail.relatedEmpty')}</div>
                 )}
             </section>
         </div>

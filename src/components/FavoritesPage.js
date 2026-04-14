@@ -1,10 +1,13 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useContext, useEffect, useMemo, useState} from "react";
 import {ProductCard} from "./product-components/ProductCard";
 import {FAVORITES_UPDATED_EVENT, getFavorites, getFavoritesFromService} from "../service/FavoriteService";
+import AppContext from "../AppContext";
 
-const formatPrice = (price) => `${Number(price || 0).toLocaleString('tr-TR')} TL`;
+const formatPrice = (price, locale) => `${Number(price || 0).toLocaleString(locale)} TL`;
 
 export const FavoritesPage = () => {
+    const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
+    const locale = language === 'en' ? 'en-US' : 'tr-TR';
     const [favorites, setFavorites] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -27,29 +30,29 @@ export const FavoritesPage = () => {
     const favoriteProducts = useMemo(() => {
         return favorites.map((item) => ({
             ...item,
-            priceLabel: item.priceLabel || formatPrice(item.price),
-            oldPriceLabel: item.oldPriceLabel || formatPrice(item.oldPrice)
+            priceLabel: item.priceLabel || formatPrice(item.price, locale),
+            oldPriceLabel: item.oldPriceLabel || formatPrice(item.oldPrice, locale)
         }));
-    }, [favorites]);
+    }, [favorites, locale]);
 
     return (
         <div className="catalog favorites-page">
             <div className="favorites-header">
-                <h1>Favorilerim</h1>
-                <span>{favoriteProducts.length} ürün</span>
+                <h1>{t('favorites.title')}</h1>
+                <span>{t('favorites.productCount', {count: favoriteProducts.length})}</span>
             </div>
 
             {loading && (
                 <div className="favorites-empty-state">
-                    <h3>Favoriler yükleniyor...</h3>
+                    <h3>{t('favorites.loading')}</h3>
                 </div>
             )}
 
             {!loading && favoriteProducts.length === 0 && (
                 <div className="favorites-empty-state">
-                    <h3>Henüz favori ürününüz yok</h3>
-                    <p>Beğendiğiniz ürünlerin kalp ikonuna tıklayarak bu alana ekleyebilirsiniz.</p>
-                    <a href="/" className="favorites-empty-cta">Alışverişe Başla</a>
+                    <h3>{t('favorites.emptyTitle')}</h3>
+                    <p>{t('favorites.emptyText')}</p>
+                    <a href="/" className="favorites-empty-cta">{t('favorites.startShopping')}</a>
                 </div>
             )}
 
