@@ -32,7 +32,7 @@ jobs:
           fi
 
       - name: Build for cPanel
-        run: npm run build:cpanel
+        run: CI=false npm run build:cpanel
 
       - name: Add deploy marker
         run: |
