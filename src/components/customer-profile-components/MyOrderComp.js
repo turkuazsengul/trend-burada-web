@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React from 'react';
 import ProfileNavigation from "./ProfileNavigation";
 import '../../css/customer-profile/customer-profile.css'
 
@@ -10,9 +10,8 @@ const MyOrderComp = () => {
             <div className="container-items">
                 <div className="my-account-page">
                     <ProfileNavigation
-                        // user={myContext.user.name}
-                        user="TEST"
-
+                        userFullName="TEST"
+                        activeSection="orders"
                     />
 
 

@@ -1,7 +1,8 @@
-import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
+import React, {useContext, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {ProductFilter} from "./ProductFilter";
 import {ProductCard} from "./ProductCard";
 import ProductService from "../../service/ProductService";
+import AppContext from "../../AppContext";
 import {
     getCategoryFacets,
     getMenuItemsByCategory,
@@ -32,7 +33,7 @@ const normalizeCategoryKey = (rawSlug) => {
     return aliases[slug] || slug;
 };
 
-const formatPrice = (price) => `${Number(price || 0).toLocaleString('tr-TR')} TL`;
+const formatPrice = (price, locale) => `${Number(price || 0).toLocaleString(locale)} TL`;
 
 const matchesPriceRange = (price, rangeValue) => {
     const range = PRICE_RANGES.find((x) => x.value === rangeValue);
@@ -40,6 +41,8 @@ const matchesPriceRange = (price, rangeValue) => {
 };
 
 export const ProductPage = ({match}) => {
+    const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
+    const locale = language === 'en' ? 'en-US' : 'tr-TR';
     const categoryKey = normalizeCategoryKey(match.params.id || 'elbise');
     const menuItems = useMemo(() => getMenuItemsByCategory(categoryKey), [categoryKey]);
     const catalogRef = useRef(null);
@@ -232,10 +235,10 @@ export const ProductPage = ({match}) => {
 
                 <section ref={productContentRef} className="product-content">
                     <div className="product-toolbar">
-                        <span>{filteredProducts.length} ürün listeleniyor</span>
+                        <span>{t('productList.listingCount', {count: filteredProducts.length})}</span>
                     </div>
 
-                    {loading && <div className="product-empty-state">Ürünler yükleniyor...</div>}
+                    {loading && <div className="product-empty-state">{t('productList.loading')}</div>}
 
                     {!loading && (
                         <div className="product-list">
@@ -244,8 +247,8 @@ export const ProductPage = ({match}) => {
                                     <ProductCard
                                         product={{
                                             ...product,
-                                            priceLabel: formatPrice(product.price),
-                                            oldPriceLabel: formatPrice(product.oldPrice)
+                                            priceLabel: formatPrice(product.price, locale),
+                                            oldPriceLabel: formatPrice(product.oldPrice, locale)
                                         }}
                                     />
                                 </div>
@@ -255,7 +258,7 @@ export const ProductPage = ({match}) => {
 
                     {!loading && filteredProducts.length === 0 && (
                         <div className="product-empty-state">
-                            Seçili filtrelere uygun ürün bulunamadı. Farklı filtre kombinasyonları deneyin.
+                            {t('productList.empty')}
                         </div>
                     )}
                 </section>

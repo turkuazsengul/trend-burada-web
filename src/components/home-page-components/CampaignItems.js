@@ -1,6 +1,8 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useContext, useEffect, useMemo, useState} from 'react';
 import CampaignService from "../../service/CampaignService";
 import {USE_STATIC_CAMPAIGN_ITEMS} from "../../constants/UrlConstans";
+import AppContext from "../../AppContext";
+import {MEGA_MENU_CATEGORIES} from "../../data/demoProductData";
 
 const staticCampaignData = [
     {
@@ -35,37 +37,38 @@ const staticCampaignData = [
     },
     {
         id: 7,
-        value: "https://cdn.dsmcdn.com/ty1129/pimWidgetApi/mobile_20240111153218_2249025KadinMobile202401111801.jpg",
-        description: "İç Giyim"
+        value: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=2200&q=86",
+        description: "Kadın Ceket & Dış Giyim"
     },
     {
         id: 8,
-        value: "https://cdn.dsmcdn.com/ty1155/pimWidgetApi/mobile_20240202153542_2527400ElektronikMobile202402021801.jpg",
-        description: "Kahve Keyfi"
+        value: "https://images.unsplash.com/photo-1527719327859-c6ce80353573?auto=format&fit=crop&w=2200&q=86",
+        description: "Erkek Günlük Koleksiyon"
     },
     {
         id: 9,
-        value: "https://cdn.dsmcdn.com/ty1111/pimWidgetApi/mobile_20231229092657_2397375ElektronikMobile202312.jpg",
-        description: "Küçük Ev Aletleri"
+        value: "https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?auto=format&fit=crop&w=2200&q=86",
+        description: "Çocuk Moda Dünyası"
     },
     {
         id: 10,
-        value: "https://cdn.dsmcdn.com/ty1153/pimWidgetApi/mobile_20240131064937_SevginiziGosterenTakilar1.jpg",
-        description: "Sevgililer Günü"
+        value: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=2200&q=86",
+        description: "Ayakkabı Trendleri"
     },
     {
         id: 11,
-        value: "https://cdn.dsmcdn.com/ty1120/pimWidgetApi/mobile_20240105130028_2414392ElektronikMobile202401041901.jpg",
-        description: "Elektronik Alışverişi"
+        value: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=2200&q=86",
+        description: "Aksesuar Editi"
     },
     {
         id: 12,
-        value: "https://cdn.dsmcdn.com/ty1082/pimWidgetApi/mobile_20231207122821_2357602SupermarketMobile202312071302.jpg",
-        description: "Sevimli Dostlarımız"
+        value: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=2200&q=86",
+        description: "Spor Giyim Performans"
     },
 ];
 
 export const CampaignItems = () => {
+    const {t = (key) => key} = useContext(AppContext) || {};
     const [campaignData, setCampaignData] = useState(staticCampaignData);
     const [activeSlide, setActiveSlide] = useState(0);
 
@@ -100,6 +103,7 @@ export const CampaignItems = () => {
     };
 
     const heroSlides = useMemo(() => buildFilledList(campaignData, 6), [campaignData]);
+    const heroMiniSlides = useMemo(() => buildFilledList(campaignData.slice(2), 6), [campaignData]);
 
     useEffect(() => {
         if (heroSlides.length <= 1) {
@@ -120,10 +124,55 @@ export const CampaignItems = () => {
     }, [heroSlides, activeSlide]);
 
     const safeSlides = heroSlides.length > 0 ? heroSlides : buildFilledList(staticCampaignData, 1);
+    const safeMiniSlides = heroMiniSlides.length > 0 ? heroMiniSlides : safeSlides;
 
     const trendCards = useMemo(() => buildFilledList(campaignData, 4), [campaignData]);
     const mosaicCards = useMemo(() => buildFilledList(campaignData.slice(4), 5), [campaignData]);
     const campaignCards = useMemo(() => buildFilledList(campaignData, 12), [campaignData]);
+    const categoryCards = useMemo(() => {
+        const visualPool = buildFilledList(campaignData, Math.max(MEGA_MENU_CATEGORIES.length, 6));
+        return MEGA_MENU_CATEGORIES.map((category, index) => ({
+            id: category.id,
+            label: category.label,
+            image: visualPool[index]?.value || staticCampaignData[index % staticCampaignData.length].value,
+            subItems: category.items.slice(0, 3),
+            to: `/product/${encodeURIComponent(category.items[0]?.slug || '')}`
+        }));
+    }, [campaignData]);
+    const discountBanners = useMemo(() => ([
+        {
+            id: 'discount-1',
+            badge: '%40',
+            title: 'Sezon Sonu İndirimi',
+            text: 'Seçili ürünlerde sınırlı süre',
+            cta: 'Hemen İncele',
+            to: '/product/elbise'
+        },
+        {
+            id: 'discount-2',
+            badge: '3 AL 2 ÖDE',
+            title: 'Basic Ürünlerde Avantaj',
+            text: 'Favori parçaları sepete ekle',
+            cta: 'Kampanyayı Gör',
+            to: '/product/tisort'
+        },
+        {
+            id: 'discount-3',
+            badge: 'EK %20',
+            title: 'Sepette Ek İndirim',
+            text: 'Mobil uygulamaya özel fırsat',
+            cta: 'Alışverişe Başla',
+            to: '/product/sneaker'
+        },
+        {
+            id: 'discount-4',
+            badge: '12 TAKSİT',
+            title: 'Kartlara Özel Ödeme',
+            text: 'Yeni sezon ürünlerinde geçerli',
+            cta: 'Detayları Gör',
+            to: '/product/esofman'
+        }
+    ]), []);
 
     const nextSlide = () => {
         setActiveSlide((prev) => (prev + 1) % safeSlides.length);
@@ -136,28 +185,49 @@ export const CampaignItems = () => {
     return (
         <div className="catalog">
             <section className="hero-slider-section">
-                <div className="hero-slider-shell">
-                    <a href="/product" className="hero-slider-track" style={{transform: `translateX(-${activeSlide * 100}%)`}}>
-                        {safeSlides.map((slide, index) => (
-                            <article key={slide.id} className="hero-slide">
-                                <img
-                                    src={slide.value}
-                                    alt={slide.description}
-                                    loading={index === activeSlide ? "eager" : "lazy"}
-                                    decoding="async"
-                                    fetchPriority={index === activeSlide ? "high" : "low"}
-                                />
-                                <div className="hero-slide-overlay">
-                                    <span className="hero-pill">Trend Burada Özel</span>
-                                    <h2>{slide.description}</h2>
-                                    <p>Sezonun öne çıkan parçalarını kaçırmadan keşfedin.</p>
-                                </div>
-                            </article>
-                        ))}
-                    </a>
+                <div className="hero-slider-split">
+                    <div className="hero-slider-shell">
+                        <a href="/product" className="hero-slider-track" style={{transform: `translateX(-${activeSlide * 100}%)`}}>
+                            {safeSlides.map((slide, index) => (
+                                <article key={slide.id} className="hero-slide">
+                                    <img
+                                        src={slide.value}
+                                        alt={slide.description}
+                                        loading={index === activeSlide ? "eager" : "lazy"}
+                                        decoding="async"
+                                        fetchPriority={index === activeSlide ? "high" : "low"}
+                                    />
+                                    <div className="hero-slide-overlay">
+                                        <span className="hero-pill">{t('home.heroPill')}</span>
+                                        <h2>{slide.description}</h2>
+                                        <p>{t('home.heroText')}</p>
+                                    </div>
+                                </article>
+                            ))}
+                        </a>
 
-                    <button type="button" className="hero-nav prev" onClick={prevSlide} aria-label="Önceki slide">‹</button>
-                    <button type="button" className="hero-nav next" onClick={nextSlide} aria-label="Sonraki slide">›</button>
+                        <button type="button" className="hero-nav prev" onClick={prevSlide} aria-label={t('common.previousSlide')}>‹</button>
+                        <button type="button" className="hero-nav next" onClick={nextSlide} aria-label={t('common.nextSlide')}>›</button>
+                    </div>
+
+                    <div className="hero-mini-slider-shell">
+                        <a href="/product" className="hero-mini-slider-track" style={{transform: `translateX(-${activeSlide * 100}%)`}}>
+                            {safeMiniSlides.map((slide, index) => (
+                                <article key={`mini-${slide.id}`} className="hero-mini-slide">
+                                    <img
+                                        src={slide.value}
+                                        alt={slide.description}
+                                        loading={index === activeSlide ? "eager" : "lazy"}
+                                        decoding="async"
+                                    />
+                                    <div className="hero-mini-overlay">
+                                        <span>{t('home.specialOffers')}</span>
+                                        <strong>{slide.description}</strong>
+                                    </div>
+                                </article>
+                            ))}
+                        </a>
+                    </div>
                 </div>
 
                 <div className="hero-dots">
@@ -175,14 +245,55 @@ export const CampaignItems = () => {
 
             <section className="campaign-showcase-section">
                 <div className="section-head">
-                    <h3>Öne Çıkan Koleksiyonlar</h3>
-                    <a href="/product">Tüm Kampanyalar</a>
+                    <h3>{t('home.featuredCollections')}</h3>
+                    <a href="/product">{t('home.allCampaigns')}</a>
                 </div>
                 <div className="trend-card-grid">
                     {trendCards.map((item) => (
                         <a key={item.id} href="/product" className="trend-card">
                             <img src={item.value} alt={item.description} loading="lazy" decoding="async" />
                             <span className="campaign-caption">{item.description}</span>
+                        </a>
+                    ))}
+                </div>
+            </section>
+
+            <section className="category-spotlight-section">
+                <div className="section-head">
+                    <h3>{t('home.categorySpotlightTitle')}</h3>
+                    <a href="/product/elbise">{t('home.seeAll')}</a>
+                </div>
+
+                <div className="category-spotlight-grid">
+                    {categoryCards.map((category) => (
+                        <a key={category.id} href={category.to} className="category-spotlight-card">
+                            <img src={category.image} alt={category.label} loading="lazy" decoding="async"/>
+                            <div className="category-spotlight-overlay">
+                                <h4>{category.label}</h4>
+                                <div className="category-spotlight-tags">
+                                    {category.subItems.map((item) => (
+                                        <span key={item.slug}>{item.label}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        </a>
+                    ))}
+                </div>
+            </section>
+
+            <section className="discount-ribbon-section">
+                <div className="section-head">
+                    <h3>{t('home.discountTitle')}</h3>
+                    <a href="/product">{t('home.seeAll')}</a>
+                </div>
+
+                <div className="discount-ribbon-row">
+                    {discountBanners.map((banner) => (
+                        <a key={banner.id} href={banner.to} className="discount-ribbon-card">
+                            <span className="discount-badge">{banner.badge}</span>
+                            <h4>{banner.title}</h4>
+                            <p>{banner.text}</p>
+                            <span className="discount-link">{banner.cta}</span>
                         </a>
                     ))}
                 </div>
@@ -198,7 +309,7 @@ export const CampaignItems = () => {
                     />
                     <div>
                         <h3>{(mosaicCards[0] || safeSlides[0]).description}</h3>
-                        <p>Stiline uygun parçaları tek ekranda bul.</p>
+                        <p>{t('home.discoverTitle')}</p>
                     </div>
                 </a>
 
@@ -214,8 +325,8 @@ export const CampaignItems = () => {
 
             <section className="campaign-list">
                 <div className="section-head">
-                    <h3>Sana Özel Fırsatlar</h3>
-                    <a href="/product">Hepsini Gör</a>
+                    <h3>{t('home.specialOffers')}</h3>
+                    <a href="/product">{t('home.seeAll')}</a>
                 </div>
 
                 <div className="campaign-list-item">

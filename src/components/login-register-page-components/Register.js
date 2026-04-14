@@ -8,13 +8,13 @@ import {Password} from "primereact/password";
 import {Divider} from 'primereact/divider';
 import {Confirm} from "./RegisterConfirm";
 import AppContext from "../../AppContext";
-import {useHistory} from "react-router-dom";
 import {USE_DEMO_LOCAL_AUTH} from "../../constants/UrlConstans";
 import DemoAuthService from "../../service/DemoAuthService";
 
 
 export const Register = () => {
     const myContext = useContext(AppContext)
+    const t = myContext?.t || ((key) => key);
 
     const [confirmValue, setConfirmValue] = useState("");
 
@@ -32,12 +32,6 @@ export const Register = () => {
     const [wrongAccountInfo, setWrongAccountInfo] = useState(false);
     const [labelMessage, setLabelMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
-
-    const failMailLabelMessage = "Lütfen geçerli bir e-posta adresi giriniz";
-    const failNameLabelMessage = "Lütfen adınızı giriniz";
-    const failSurnameLabelMessage = "Lütfen soyadınızı giriniz";
-    const failPassLabelMessage = "Lütfen belirleyeceğiniz şifrenizi giriniz";
-    const failStrongPasswordMessage = "Lütfen daha uygun bir şifre belirleyin";
 
     const registerButtonClick = () => {
         const request = {
@@ -75,7 +69,7 @@ export const Register = () => {
 
                 if (response.success) {
                     setWrongAccountInfo(false);
-                    setSuccessMessage("Kayıt başarılı. Şimdi Giriş Yap sekmesinden giriş yapabilirsiniz.");
+                    setSuccessMessage(t('register.success'));
                     setMail("");
                     setPass("");
                     setFirstName("");
@@ -83,7 +77,7 @@ export const Register = () => {
                 } else {
                     setWrongAccountInfo(true);
                     setSuccessMessage("");
-                    setLabelMessage(response.message || "Kayıt esnasında hata oluştu.");
+                    setLabelMessage(response.message || t('register.genericError'));
                 }
                 return;
             }
@@ -100,19 +94,19 @@ export const Register = () => {
                     } else {
                         setWrongAccountInfo(true);
                         setSuccessMessage("");
-                        setLabelMessage("Kayıt esnasında hata oluştu.")
+                        setLabelMessage(t('register.genericError'))
                     }
                 } else {
                     setWrongAccountInfo(true);
                     setSuccessMessage("");
-                    setLabelMessage("Kayıt esnasında hata oluştu.")
+                    setLabelMessage(t('register.genericError'))
                 }
 
                 setLoading(false);
             }, (error) => {
                 setWrongAccountInfo(true);
                 setSuccessMessage("");
-                setLabelMessage("Kayıt esnasında hata oluştu.")
+                setLabelMessage(t('register.genericError'))
             })
         }
     }
@@ -122,25 +116,25 @@ export const Register = () => {
             setWrongAccountInfo(true);
             setSuccessMessage("");
             if (firstName === "") {
-                setLabelMessage(failNameLabelMessage)
+                setLabelMessage(t('register.invalidName'))
             } else if (lastName === "") {
-                setLabelMessage(failSurnameLabelMessage)
+                setLabelMessage(t('register.invalidSurname'))
             } else if (mail === "") {
-                setLabelMessage(failMailLabelMessage)
+                setLabelMessage(t('register.invalidEmail'))
             } else if (pass === "") {
-                setLabelMessage(failPassLabelMessage)
+                setLabelMessage(t('register.invalidPassword'))
             }
             return false;
         } else {
             if (!validator.isEmail(mail)) {
                 setWrongAccountInfo(true);
                 setSuccessMessage("");
-                setLabelMessage(failMailLabelMessage)
+                setLabelMessage(t('register.invalidEmail'))
                 return false;
             } else if (!validator.isStrongPassword(pass, {minLength: 7, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1})) {
                 setWrongAccountInfo(true);
                 setSuccessMessage("");
-                setLabelMessage(failStrongPasswordMessage)
+                setLabelMessage(t('register.weakPassword'))
                 return false;
             } else {
                 setWrongAccountInfo(false);
@@ -189,16 +183,16 @@ export const Register = () => {
         clearInterval(myContext.timer);
     }
 
-    const header = <h6>Pick a password</h6>;
+    const header = <h6>{t('register.password')}</h6>;
     const footer = (
         <React.Fragment>
             <Divider/>
-            <p className="mt-2">Suggestions</p>
+            <p className="mt-2">{t('common.suggestions')}</p>
             <ul className="pl-2 ml-2 mt-0" style={{lineHeight: '1.5'}}>
-                <li>At least one lowercase</li>
-                <li>At least one uppercase</li>
-                <li>At least one numeric</li>
-                <li>Minimum 7 characters</li>
+                <li>{t('common.passwordRuleLower')}</li>
+                <li>{t('common.passwordRuleUpper')}</li>
+                <li>{t('common.passwordRuleNumeric')}</li>
+                <li>{t('common.passwordRuleMin')}</li>
             </ul>
         </React.Fragment>
     );
@@ -209,9 +203,9 @@ export const Register = () => {
                 {failRegisterMessageLabel()}
                 {successRegisterMessageLabel()}
                 <div className="login-item">
-                    <label>Ad</label>
+                    <label>{t('register.name')}</label>
                     <InputText
-                        placeholder="Ad"
+                        placeholder={t('register.name')}
                         value={firstName}
                         type="text"
                         onChange={(e) => {
@@ -222,9 +216,9 @@ export const Register = () => {
                 </div>
 
                 <div className="login-item">
-                    <label>Soyad</label>
+                    <label>{t('register.surname')}</label>
                     <InputText
-                        placeholder="Soyad"
+                        placeholder={t('register.surname')}
                         value={lastName}
                         type="text"
                         onChange={(e) => {
@@ -235,9 +229,9 @@ export const Register = () => {
                 </div>
 
                 <div className="login-item">
-                    <label>E-Posta</label>
+                    <label>{t('register.email')}</label>
                     <InputText
-                        placeholder="E-Posta Adresi"
+                        placeholder={t('login.emailPlaceholder')}
                         value={mail}
                         type="text"
                         onChange={(e) => {
@@ -248,8 +242,8 @@ export const Register = () => {
                 </div>
 
                 <div className="login-item">
-                    <label>Şifre</label>
-                    <Password placeholder="Kullanıcı Şifresi"
+                    <label>{t('register.password')}</label>
+                    <Password placeholder={t('login.passwordPlaceholder')}
                               header={header} footer={footer}
                               value={pass}
                               toggleMask
@@ -259,22 +253,22 @@ export const Register = () => {
                                   setWrongAccountInfo(false);
                               }}
                     />
-                    <span className="password-validate-message">Şifreniz en az 7 karakter olmalı. harf ve karakter içermelidir.</span>
+                    <span className="password-validate-message">{t('register.passwordHint')}</span>
                 </div>
 
                 <div className="login-item">
-                    <Button className="login-submit-button" label={"Üye Ol"} onClick={registerButtonClick}/>
+                    <Button className="login-submit-button" label={t('register.submit')} onClick={registerButtonClick}/>
                 </div>
 
                 <div className="login-item social-login-section">
-                    <div className="social-login-divider">
-                        <span>veya</span>
-                    </div>
+                <div className="social-login-divider">
+                    <span>{t('register.or')}</span>
+                </div>
 
                     <div className="social-login-actions">
                         <Button type="button" className="social-login-button social-facebook">
                             <span className="social-facebook-icon pi pi-facebook" aria-hidden="true"/>
-                            <span className="social-label">Facebook ile Devam Et</span>
+                            <span className="social-label">{t('register.facebook')}</span>
                         </Button>
                         <Button type="button" className="social-login-button social-google">
                             <img
@@ -283,7 +277,7 @@ export const Register = () => {
                                 alt=""
                                 aria-hidden="true"
                             />
-                            <span className="social-label">Google ile Devam Et</span>
+                            <span className="social-label">{t('register.google')}</span>
                         </Button>
                     </div>
                 </div>

@@ -7,28 +7,72 @@ import AppContext from "./AppContext";
 import PromoService from "./service/PromoService";
 import {USE_STATIC_PROMO_IMAGES} from "./constants/UrlConstans";
 import {getParentCategoryIdBySlug, MEGA_MENU_CATEGORIES} from "./data/demoProductData";
+import {supportedLanguages} from "./i18n/i18n";
 
 const megaMenuCategories = MEGA_MENU_CATEGORIES;
+const CATEGORY_LABEL_TRANSLATIONS = {
+    kadin: {tr: 'Kadın', en: 'Women'},
+    erkek: {tr: 'Erkek', en: 'Men'},
+    cocuk: {tr: 'Çocuk', en: 'Kids'},
+    ayakkabi: {tr: 'Ayakkabı', en: 'Shoes'},
+    aksesuar: {tr: 'Aksesuar', en: 'Accessories'},
+    'spor-giyim': {tr: 'Spor Giyim', en: 'Sportswear'}
+};
+const SUBCATEGORY_LABEL_TRANSLATIONS = {
+    elbise: {tr: 'Elbise', en: 'Dress'},
+    tisort: {tr: 'Tişört', en: 'T-Shirt'},
+    gomlek: {tr: 'Gömlek', en: 'Shirt'},
+    pantolon: {tr: 'Pantolon', en: 'Pants'},
+    ceket: {tr: 'Ceket', en: 'Jacket'},
+    triko: {tr: 'Triko', en: 'Knitwear'},
+    'erkek-tisort': {tr: 'Tişört', en: 'T-Shirt'},
+    'erkek-gomlek': {tr: 'Gömlek', en: 'Shirt'},
+    jean: {tr: 'Jean', en: 'Jeans'},
+    'erkek-pantolon': {tr: 'Pantolon', en: 'Pants'},
+    sweatshirt: {tr: 'Sweatshirt', en: 'Sweatshirt'},
+    mont: {tr: 'Mont', en: 'Coat'},
+    'kiz-cocuk': {tr: 'Kız Çocuk', en: 'Girls'},
+    'erkek-cocuk': {tr: 'Erkek Çocuk', en: 'Boys'},
+    'bebek-giyim': {tr: 'Bebek Giyim', en: 'Baby Clothing'},
+    'okul-kombinleri': {tr: 'Okul Kombinleri', en: 'School Outfits'},
+    sneaker: {tr: 'Sneaker', en: 'Sneakers'},
+    bot: {tr: 'Bot', en: 'Boots'},
+    'topuklu-ayakkabi': {tr: 'Topuklu Ayakkabı', en: 'Heels'},
+    loafer: {tr: 'Loafer', en: 'Loafers'},
+    sandalet: {tr: 'Sandalet', en: 'Sandals'},
+    canta: {tr: 'Çanta', en: 'Bag'},
+    kemer: {tr: 'Kemer', en: 'Belt'},
+    cuzdan: {tr: 'Cüzdan', en: 'Wallet'},
+    taki: {tr: 'Takı', en: 'Jewelry'},
+    sapka: {tr: 'Şapka', en: 'Hat'},
+    esofman: {tr: 'Eşofman', en: 'Tracksuit'},
+    tayt: {tr: 'Tayt', en: 'Leggings'},
+    'spor-sutyeni': {tr: 'Spor Sütyeni', en: 'Sports Bra'},
+    hoodie: {tr: 'Hoodie', en: 'Hoodie'},
+    'kosu-urunleri': {tr: 'Koşu Ürünleri', en: 'Running Products'}
+};
 
 const staticMegaMenuPromoImages = [
-    "https://cdn.dsmcdn.com/ty403/campaign/banners/original/603949/e03b7e086a_1.jpg",
-    "https://cdn.dsmcdn.com/ty1157/pimWidgetApi/mobile_20240201202326_2522913EvYasamMobile202402011501.jpg",
-    "https://cdn.dsmcdn.com/ty1158/pimWidgetApi/mobile_20240205071956_2524256ElektronikMobile202402021201.jpg",
-    "https://cdn.dsmcdn.com/ty1137/pimWidgetApi/mobile_20240118070002_mobile20240108065243mobile2023.jpg",
-    "https://cdn.dsmcdn.com/ty1143/pimWidgetApi/mobile_20240124071226_2401147KadinMobile202401231802.jpg",
-    "https://cdn.dsmcdn.com/ty1138/pimWidgetApi/mobile_20240118065730_columbia.jpg",
-    "https://cdn.dsmcdn.com/ty1129/pimWidgetApi/mobile_20240111153218_2249025KadinMobile202401111801.jpg",
-    "https://cdn.dsmcdn.com/ty1155/pimWidgetApi/mobile_20240202153542_2527400ElektronikMobile202402021801.jpg",
-    "https://cdn.dsmcdn.com/ty1111/pimWidgetApi/mobile_20231229092657_2397375ElektronikMobile202312.jpg",
-    "https://cdn.dsmcdn.com/ty1153/pimWidgetApi/mobile_20240131064937_SevginiziGosterenTakilar1.jpg",
-    "https://cdn.dsmcdn.com/ty1120/pimWidgetApi/mobile_20240105130028_2414392ElektronikMobile202401041901.jpg",
-    "https://cdn.dsmcdn.com/ty1082/pimWidgetApi/mobile_20231207122821_2357602SupermarketMobile202312071302.jpg"
+    "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=2200&q=86",
+    "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=2200&q=86",
+    "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=2200&q=86",
+    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=2200&q=86",
+    "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=2200&q=86",
+    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=2200&q=86",
+    "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=2200&q=86",
+    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=2200&q=86",
+    "https://images.unsplash.com/photo-1519457431-44ccd64a579b?auto=format&fit=crop&w=2200&q=86",
+    "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=2200&q=86",
+    "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=2200&q=86",
+    "https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?auto=format&fit=crop&w=2200&q=86"
 ];
 
 export const AppTopBar = () => {
     const history = useHistory();
     const location = useLocation();
     const myContext = useContext(AppContext);
+    const t = myContext?.t || ((key) => key);
+    const language = myContext?.language || 'tr';
     const closeTimerRef = useRef(null);
     const profileMenuCloseTimerRef = useRef(null);
     const cartButtonAnchorRef = useRef(null);
@@ -63,8 +107,10 @@ export const AppTopBar = () => {
     useEffect(() => {
         if (localStorage.getItem('token')) {
             const storedUserStr = localStorage.getItem('user');
-            const user = JSON.parse(storedUserStr);
-            setUserFullName(user.name + ' ' + user.surname);
+            const user = storedUserStr ? JSON.parse(storedUserStr) : null;
+            if (user) {
+                setUserFullName(`${user.name || ''} ${user.surname || ''}`.trim());
+            }
         }
     }, []);
 
@@ -113,22 +159,22 @@ export const AppTopBar = () => {
     const topMenuItems = [
         {
             id: 1,
-            value: 'Kampanyalar',
+            value: t('topbar.campaigns'),
             to: '/'
         },
         {
             id: 2,
-            value: 'Siparişlerim',
+            value: t('topbar.orders'),
             to: '/hesabım/Siparislerim'
         },
         {
             id: 3,
-            value: 'Hakkımızda',
+            value: t('topbar.about'),
             to: '/'
         },
         {
             id: 4,
-            value: 'Yeni Sezon Ürünleri',
+            value: t('topbar.newSeason'),
             to: '/'
         }
     ];
@@ -136,35 +182,43 @@ export const AppTopBar = () => {
     const profileToolItem = [
         {
             id: 1,
-            name: 'Hesabım',
+            name: t('topbar.profileAccount'),
             icon: 'pi pi-user',
             to: '/hesabım/KullaniciBilgilerim?section=user-info'
         },
         {
             id: 2,
-            name: 'Siparişlerim',
+            name: t('topbar.profileOrders'),
             icon: 'pi pi-box',
             to: '/hesabım/KullaniciBilgilerim?section=orders'
         },
         {
             id: 3,
-            name: 'Adreslerim',
+            name: t('topbar.profileAddresses'),
             icon: 'pi pi-map',
             to: '/hesabım/KullaniciBilgilerim?section=address'
         },
         {
             id: 4,
-            name: 'Değerlendirmelerim',
+            name: t('topbar.profileReviews'),
             icon: 'pi pi-comment',
             to: '/hesabım/KullaniciBilgilerim?section=reviews'
         },
         {
             id: 5,
-            name: 'Satıcı Mesajlarım',
+            name: t('topbar.profileMessages'),
             icon: 'pi pi-envelope',
             to: '/hesabım/KullaniciBilgilerim?section=seller-messages'
         }
     ];
+    const localizedMegaMenuCategories = megaMenuCategories.map((category) => ({
+        ...category,
+        label: CATEGORY_LABEL_TRANSLATIONS[category.id]?.[language] || category.label,
+        items: category.items.map((item) => ({
+            ...item,
+            label: SUBCATEGORY_LABEL_TRANSLATIONS[item.slug]?.[language] || item.label
+        }))
+    }));
 
     const clearCloseTimer = () => {
         if (closeTimerRef.current) {
@@ -258,7 +312,7 @@ export const AppTopBar = () => {
                     onClick={clickLoginButton}
                     onFocus={openProfileMenu}
                     icon="pi pi-user"
-                    label={'Hesabım'}
+                    label={t('topbar.account')}
                     className="session-in top-bar-login-button p-button-text top-bar-button p-button-secondary p-button-outlined mr-3 mb-2"
                 />
             );
@@ -268,7 +322,7 @@ export const AppTopBar = () => {
             <Button
                 onClick={clickLoginButton}
                 icon="pi pi-user"
-                label={'Giriş Yap'}
+                label={t('topbar.login')}
                 className="session-out top-bar-login-button p-button-text top-bar-button p-button-secondary p-button-outlined mr-3 mb-2"
             />
         );
@@ -294,7 +348,7 @@ export const AppTopBar = () => {
             return (
                 <button type="button" className="account-dropdown-item is-logout" onClick={logOutClick}>
                     <i className="pi pi-sign-out" style={{fontWeight: 'bold'}}/>
-                    <span>Çıkış Yap</span>
+                    <span>{t('topbar.logout')}</span>
                 </button>
             );
         }
@@ -381,19 +435,30 @@ export const AppTopBar = () => {
         return () => window.removeEventListener('cart:add:fly', handleCartFly);
     }, [playFlyToCartAnimation]);
 
-    const activeCategory = megaMenuCategories.find((category) => category.id === activeMegaCategoryId) || megaMenuCategories[0];
+    const activeCategory = localizedMegaMenuCategories.find((category) => category.id === activeMegaCategoryId) || localizedMegaMenuCategories[0];
     const orderedMegaMenuCategories = [
         activeCategory,
-        ...megaMenuCategories.filter((category) => category.id !== activeCategory.id)
+        ...localizedMegaMenuCategories.filter((category) => category.id !== activeCategory.id)
     ];
 
     return (
         <div className="top-bar">
             <div className="top-bar-items">
                 <div className="top-menu">
-                    <ul>
-                        {topMenuItemBody()}
-                    </ul>
+                    <ul>{topMenuItemBody()}</ul>
+                    <div className="language-switcher" role="group" aria-label={t('topbar.language')}>
+                        <i className="pi pi-globe" aria-hidden="true"/>
+                        {supportedLanguages.map((lang) => (
+                            <button
+                                key={lang.value}
+                                type="button"
+                                className={`language-switcher-btn ${myContext?.language === lang.value ? 'is-active' : ''}`}
+                                onClick={() => myContext?.setLanguage && myContext.setLanguage(lang.value)}
+                            >
+                                {lang.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
                 <div className="top-bar-item">
                     <div className="top-bar-search">
@@ -403,7 +468,7 @@ export const AppTopBar = () => {
                         <div className="top-bar-search-input">
                             <div className="col-12 md:col-4">
                                 <div className="p-inputgroup search-input-group">
-                                    <InputText className="search-input" placeholder="Dilediğinizi Arayın"/>
+                                    <InputText className="search-input" placeholder={t('topbar.searchPlaceholder')}/>
                                     <Button icon="pi pi-search" className="search-button p-button-secondary p-button-text"/>
                                 </div>
                             </div>
@@ -432,13 +497,13 @@ export const AppTopBar = () => {
                     </div>
 
                     <div>
-                        <Button
-                            className="top-bar-button top-favorite-button p-button-secondary p-button-text"
-                            icon="pi pi-heart"
-                            onClick={clickFavoriteButton}
-                            label="Favoriler"
-                        />
-                    </div>
+                            <Button
+                                className="top-bar-button top-favorite-button p-button-secondary p-button-text"
+                                icon="pi pi-heart"
+                                onClick={clickFavoriteButton}
+                                label={t('topbar.favorites')}
+                            />
+                        </div>
 
                     <div ref={cartButtonAnchorRef} className="top-cart-button-anchor">
                         <button
@@ -452,13 +517,13 @@ export const AppTopBar = () => {
                                 {cartCount > 0 && (
                                     <span
                                         className={`top-cart-count-badge ${isCartBadgeBouncing ? 'is-bouncing' : ''}`}
-                                        aria-label={`Sepette ${cartCount} urun var`}
+                                        aria-label={t('topbar.cartAria', {count: cartCount})}
                                     >
                                         {cartBadgeLabel}
                                     </span>
                                 )}
                             </span>
-                            <span className="top-cart-label">Sepetim</span>
+                            <span className="top-cart-label">{t('topbar.cart')}</span>
                         </button>
                     </div>
 
@@ -467,16 +532,16 @@ export const AppTopBar = () => {
                 <div
                     className="mega-menu-wrapper"
                     onMouseEnter={clearCloseTimer}
-                    onMouseLeave={scheduleCloseMegaMenu}
-                    onBlur={handleMegaMenuBlur}
+                            onMouseLeave={scheduleCloseMegaMenu}
+                            onBlur={handleMegaMenuBlur}
                     onKeyDown={(event) => {
                         if (event.key === 'Escape') {
                             setIsMegaMenuOpen(false);
                         }
                     }}
                 >
-                    <div className="tab-menu-category" role="menubar" aria-label="Ürün kategorileri">
-                        {megaMenuCategories.map((category) => {
+                    <div className="tab-menu-category" role="menubar" aria-label={t('topbar.categoriesAria')}>
+                        {localizedMegaMenuCategories.map((category) => {
                             const isActive = activeMegaCategoryId === category.id;
                             return (
                                 <button
@@ -501,8 +566,8 @@ export const AppTopBar = () => {
                     >
                         <div className="mega-menu-main">
                             <div className="mega-menu-header">
-                                <span className="mega-menu-label">{activeCategory.label} Koleksiyonu</span>
-                                <a href="/" className="mega-menu-view-all">Tümünü Gör</a>
+                                <span className="mega-menu-label">{activeCategory.label} {t('topbar.collectionSuffix')}</span>
+                                <a href="/" className="mega-menu-view-all">{t('topbar.viewAll')}</a>
                             </div>
 
                             <div className="mega-menu-columns">
@@ -530,15 +595,15 @@ export const AppTopBar = () => {
                                     key={promoImageIndex}
                                     className="mega-menu-promo-image"
                                     src={promoImages[promoImageIndex]}
-                                    alt="Yeni sezon kampanya görseli"
+                                    alt={t('topbar.promoImageAlt')}
                                     loading="eager"
                                     decoding="async"
                                 />
                             </div>
-                            <span className="promo-badge">Yeni Sezon</span>
-                            <h4>Şehir Stiline Yeni Dokunuş</h4>
-                            <p>Premium kumaşlar, zamansız kesimler ve sınırlı stok fırsatlarıyla sezonun öne çıkan parçalarını keşfedin.</p>
-                            <a href="/" className="promo-cta">Koleksiyonu İncele</a>
+                            <span className="promo-badge">{t('topbar.promoBadge')}</span>
+                            <h4>{t('topbar.promoTitle')}</h4>
+                            <p>{t('topbar.promoText')}</p>
+                            <a href="/" className="promo-cta">{t('topbar.promoCta')}</a>
                         </aside>
                     </div>
                 </div>

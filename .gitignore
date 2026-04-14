@@ -12,6 +12,7 @@ package-lock.json
 
 # production
 /build
+cpanel-deploy.zip
 /idea
 /.idea
 

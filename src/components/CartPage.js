@@ -1,55 +1,56 @@
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useMemo, useState} from 'react';
 import CartService, {CART_UPDATED_EVENT} from "../service/CartService";
 import ProductService from "../service/ProductService";
 import {Carousel} from "primereact/carousel";
 import {useHistory} from "react-router-dom";
+import AppContext from "../AppContext";
 
-const formatPrice = (price) => `${Number(price || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TL`;
-
-const addressOptions = [
-    {
-        id: 'home',
-        label: 'Ev Adresi',
-        detail: 'Ataturk Mah. Cicek Sok. No:12 Kadikoy / Istanbul'
-    },
-    {
-        id: 'office',
-        label: 'Is Adresi',
-        detail: 'Maslak Mah. Buyukdere Cad. No:201 Sariyer / Istanbul'
-    }
-];
-
-const paymentOptions = [
-    {
-        id: 'card',
-        label: 'Kredi / Banka Karti',
-        detail: 'Tek cekim veya taksit secenekleri'
-    },
-    {
-        id: 'transfer',
-        label: 'Havale / EFT',
-        detail: 'Siparis oncesi banka transferi ile odeme'
-    },
-    {
-        id: 'door',
-        label: 'Kapida Odeme',
-        detail: 'Teslimatta odeme (ek hizmet bedeli uygulanabilir)'
-    }
-];
+const formatPrice = (price, locale) => `${Number(price || 0).toLocaleString(locale, {minimumFractionDigits: 2, maximumFractionDigits: 2})} TL`;
 
 const normalizeCardNumber = (value = '') => value.replace(/\D/g, '').slice(0, 16);
 const formatCardNumber = (value = '') => normalizeCardNumber(value).replace(/(\d{4})(?=\d)/g, '$1 ');
 
-const getInstallmentOptions = (total = 0) => {
+const getInstallmentOptions = (total = 0, t) => {
     return [1, 2, 3, 4, 5, 6].map((count) => ({
         value: count,
-        label: count === 1 ? 'Pesin' : `${count} taksit`,
+        label: count === 1 ? t('cart.cash') : t('cart.installmentLabel', {count}),
         amount: total / count
     }));
 };
 
 export const CartPage = () => {
+    const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
+    const locale = language === 'en' ? 'en-US' : 'tr-TR';
     const history = useHistory();
+    const addressOptions = useMemo(() => ([
+        {
+            id: 'home',
+            label: t('cart.homeAddress'),
+            detail: 'Atatürk Mah. Çiçek Sok. No:12 Kadıköy / İstanbul'
+        },
+        {
+            id: 'office',
+            label: t('cart.workAddress'),
+            detail: 'Maslak Mah. Büyükdere Cad. No:201 Sarıyer / İstanbul'
+        }
+    ]), [t]);
+    const paymentOptions = useMemo(() => ([
+        {
+            id: 'card',
+            label: t('cart.creditCard'),
+            detail: t('cart.cardDetail')
+        },
+        {
+            id: 'transfer',
+            label: t('cart.transfer'),
+            detail: t('cart.transferDetail')
+        },
+        {
+            id: 'door',
+            label: t('cart.door'),
+            detail: t('cart.doorDetail')
+        }
+    ]), [t]);
     const [items, setItems] = useState([]);
     const [suggestedProducts, setSuggestedProducts] = useState([]);
     const [selectedAddress, setSelectedAddress] = useState(addressOptions[0].id);
@@ -94,8 +95,8 @@ export const CartPage = () => {
     }, [items]);
 
     const summary = CartService.getCartSummary();
-    const installmentOptions = getInstallmentOptions(Number(summary.total || 0));
-    const selectedInstallmentLabel = installmentOptions.find((item) => item.value === selectedInstallment)?.label || 'Pesin';
+    const installmentOptions = getInstallmentOptions(Number(summary.total || 0), t);
+    const selectedInstallmentLabel = installmentOptions.find((item) => item.value === selectedInstallment)?.label || t('cart.cash');
 
     useEffect(() => {
         const hasSelected = installmentOptions.some((item) => item.value === selectedInstallment);
@@ -149,7 +150,7 @@ export const CartPage = () => {
 
     const approveDemoPayment = () => {
         if (otpCode !== '867245') {
-            setOtpError('Girdiginiz OTP kodu gecersiz. Demo kod: 867245');
+            setOtpError(t('cart.otpInvalid'));
             return;
         }
 
@@ -187,7 +188,7 @@ export const CartPage = () => {
                 <img src={product.img} alt={product.title}/>
                 <strong>{product.mark}</strong>
                 <span>{product.title}</span>
-                <b>{formatPrice(product.price)}</b>
+                <b>{formatPrice(product.price, locale)}</b>
             </a>
         );
     };
@@ -195,13 +196,13 @@ export const CartPage = () => {
     return (
         <div className="cart-page">
             <div className="cart-header">
-                <h1>Sepetim</h1>
-                <span>{items.length} urun</span>
+                <h1>{t('cart.title')}</h1>
+                <span>{t('cart.productCount', {count: items.length})}</span>
             </div>
 
             {completed && (
                 <div className="cart-success-banner">
-                    Siparisiniz alindi. Tesekkur ederiz.
+                    {t('cart.orderDone')}
                 </div>
             )}
 
@@ -209,7 +210,7 @@ export const CartPage = () => {
                 <section className="cart-items-section">
                     {items.length === 0 && (
                         <div className="cart-empty-state">
-                            Sepetinizde urun bulunmuyor.
+                            {t('cart.empty')}
                         </div>
                     )}
 
@@ -221,11 +222,11 @@ export const CartPage = () => {
                                 <strong>{item.mark}</strong>
                                 <h3>{item.title}</h3>
                                 <div className="cart-item-meta">
-                                    <span>Beden: {item.selectedSize || '-'}</span>
-                                    <span>Renk: {item.selectedColor || '-'}</span>
+                                    <span>{t('cart.size')}: {item.selectedSize || '-'}</span>
+                                    <span>{t('cart.color')}: {item.selectedColor || '-'}</span>
                                 </div>
                                 <div className="cart-item-price-row">
-                                    <span className="cart-item-price">{formatPrice(item.price)}</span>
+                                    <span className="cart-item-price">{formatPrice(item.price, locale)}</span>
                                 </div>
                             </div>
 
@@ -237,7 +238,7 @@ export const CartPage = () => {
                                     type="button"
                                     className="cart-remove-icon-button"
                                     onClick={() => removeItem(item.lineId)}
-                                    aria-label="Urunu sepetten kaldir"
+                                    aria-label={t('cart.removeAria')}
                                 >
                                     <i className="pi pi-trash"/>
                                 </button>
@@ -247,7 +248,7 @@ export const CartPage = () => {
 
                     {suggestedProducts.length > 0 && (
                         <section className="cart-suggest-section">
-                            <div className="cart-suggest-head">Bunlara da bakmak isteyebilirsiniz</div>
+                            <div className="cart-suggest-head">{t('cart.suggestTitle')}</div>
                             <Carousel
                                 value={suggestedProducts}
                                 itemTemplate={suggestedItemTemplate}
@@ -267,7 +268,7 @@ export const CartPage = () => {
 
                 <aside className="cart-checkout-section">
                     <div className="checkout-panel-card">
-                        <h3>Adres Secimi</h3>
+                        <h3>{t('cart.addressTitle')}</h3>
                         <div className="checkout-option-list">
                             {addressOptions.map((option) => (
                                 <label key={option.id} className={`checkout-option ${selectedAddress === option.id ? 'is-active' : ''}`}>
@@ -288,7 +289,7 @@ export const CartPage = () => {
                     </div>
 
                     <div className="checkout-panel-card">
-                        <h3>Odeme Yontemi</h3>
+                        <h3>{t('cart.paymentTitle')}</h3>
                         <div className="checkout-option-list">
                             {paymentOptions.map((option) => (
                                 <div key={option.id} className="checkout-option-item">
@@ -311,7 +312,7 @@ export const CartPage = () => {
                                             <div className="card-form-area">
                                                 <div className="card-form-grid">
                                                     <label className="card-form-field full">
-                                                        <span>Kart Numarasi</span>
+                                                        <span>{t('cart.cardNo')}</span>
                                                         <input
                                                             type="text"
                                                             placeholder="0000 0000 0000 0000"
@@ -321,7 +322,7 @@ export const CartPage = () => {
                                                     </label>
 
                                                     <label className="card-form-field full">
-                                                        <span>Kart Uzerindeki Isim Soyisim</span>
+                                                        <span>{t('cart.cardHolder')}</span>
                                                         <input
                                                             type="text"
                                                             placeholder="AD SOYAD"
@@ -331,7 +332,7 @@ export const CartPage = () => {
                                                     </label>
 
                                                     <label className="card-form-field">
-                                                        <span>Son Kullanma</span>
+                                                        <span>{t('cart.expiry')}</span>
                                                         <input
                                                             type="text"
                                                             placeholder="AA/YY"
@@ -358,7 +359,7 @@ export const CartPage = () => {
                                         onClick={() => setIsInstallmentOpen((prev) => !prev)}
                                     >
                                         <strong>
-                                            Taksit Secenekleri
+                                            {t('cart.installments')}
                                             <span className="installment-selected-label">({selectedInstallmentLabel})</span>
                                         </strong>
                                         <i className={`pi ${isInstallmentOpen ? 'pi-angle-up' : 'pi-angle-down'}`}/>
@@ -374,7 +375,7 @@ export const CartPage = () => {
                                                     onChange={() => setSelectedInstallment(item.value)}
                                                 />
                                                 <span>{item.label}</span>
-                                                <small>{formatPrice(item.amount)}</small>
+                                                <small>{formatPrice(item.amount, locale)}</small>
                                             </label>
                                         ))}
                                     </div>
@@ -388,11 +389,11 @@ export const CartPage = () => {
                     </div>
 
                     <div className="checkout-panel-card cart-summary-card">
-                        <h3>Siparis Ozeti</h3>
-                        <div className="summary-row"><span>Ara Toplam</span><strong>{formatPrice(summary.subtotal)}</strong></div>
-                        <div className="summary-row"><span>Kargo</span><strong>{summary.cargo === 0 ? 'Ucretsiz' : formatPrice(summary.cargo)}</strong></div>
-                        <div className="summary-row"><span>Indirim</span><strong>- {formatPrice(summary.discount)}</strong></div>
-                        <div className="summary-row total"><span>Toplam</span><strong>{formatPrice(summary.total)}</strong></div>
+                        <h3>{t('cart.summaryTitle')}</h3>
+                        <div className="summary-row"><span>{t('cart.subtotal')}</span><strong>{formatPrice(summary.subtotal, locale)}</strong></div>
+                        <div className="summary-row"><span>{t('cart.cargo')}</span><strong>{summary.cargo === 0 ? t('cart.free') : formatPrice(summary.cargo, locale)}</strong></div>
+                        <div className="summary-row"><span>{t('cart.discount')}</span><strong>- {formatPrice(summary.discount, locale)}</strong></div>
+                        <div className="summary-row total"><span>{t('cart.total')}</span><strong>{formatPrice(summary.total, locale)}</strong></div>
 
                         <button
                             type="button"
@@ -400,7 +401,7 @@ export const CartPage = () => {
                             onClick={completePurchase}
                             disabled={items.length === 0}
                         >
-                            Satin Al
+                            {t('cart.buy')}
                         </button>
                     </div>
                 </aside>
@@ -410,43 +411,43 @@ export const CartPage = () => {
                 <div className="bank-demo-modal-backdrop" onClick={closeBankModal}>
                     <div className="bank-demo-modal" onClick={(event) => event.stopPropagation()}>
                         <div className="bank-demo-head">
-                            <h3>TrendBank - Guvenli 3D Odeme</h3>
-                            <button type="button" onClick={closeBankModal}>Kapat</button>
+                            <h3>{t('cart.bankTitle')}</h3>
+                            <button type="button" onClick={closeBankModal}>{t('cart.close')}</button>
                         </div>
 
                         <div className="bank-demo-content">
                             <div className="bank-demo-info">
-                                Isleminizi tamamlamak icin cep telefonunuza gelen tek kullanimlik sifreyi girin.
+                                {t('cart.bankInfo')}
                             </div>
-                            <div className="bank-demo-row"><span>Tutar</span><strong>{formatPrice(summary.total)}</strong></div>
-                            <div className="bank-demo-row"><span>Kart</span><strong>**** **** **** {normalizeCardNumber(cardForm.cardNumber).slice(-4) || '0000'}</strong></div>
-                            <div className="bank-demo-row"><span>Taksit</span><strong>{selectedInstallment === 1 ? 'Pesin' : `${selectedInstallment} taksit`}</strong></div>
-                            <div className="bank-demo-row"><span>3D Secure Kodu</span><strong>867245</strong></div>
+                            <div className="bank-demo-row"><span>{t('cart.amount')}</span><strong>{formatPrice(summary.total, locale)}</strong></div>
+                            <div className="bank-demo-row"><span>{t('cart.card')}</span><strong>**** **** **** {normalizeCardNumber(cardForm.cardNumber).slice(-4) || '0000'}</strong></div>
+                            <div className="bank-demo-row"><span>{t('cart.installments')}</span><strong>{selectedInstallmentLabel}</strong></div>
+                            <div className="bank-demo-row"><span>{t('cart.secureCode')}</span><strong>867245</strong></div>
 
                             <div className="bank-otp-area">
-                                <label htmlFor="bank-otp-input">OTP Kodu</label>
+                                <label htmlFor="bank-otp-input">{t('cart.otp')}</label>
                                 <input
                                     id="bank-otp-input"
                                     type="text"
                                     value={otpCode}
                                     onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                                    placeholder="6 haneli kod"
+                                    placeholder={t('cart.otpPlaceholder')}
                                 />
                                 {otpError && <div className="bank-otp-error">{otpError}</div>}
                             </div>
 
-                            <p>Bu ekran demodur. Gercek banka islemi yapilmaz.</p>
+                            <p>{t('cart.demoText')}</p>
                         </div>
 
                         <div className="bank-demo-actions">
-                            <button type="button" className="cancel" onClick={closeBankModal}>Reddet</button>
+                            <button type="button" className="cancel" onClick={closeBankModal}>{t('cart.reject')}</button>
                             <button
                                 type="button"
                                 className="approve"
                                 onClick={approveDemoPayment}
                                 disabled={otpCode.length !== 6}
                             >
-                                Onayla ve Satin Al
+                                {t('cart.approveBuy')}
                             </button>
                         </div>
                     </div>

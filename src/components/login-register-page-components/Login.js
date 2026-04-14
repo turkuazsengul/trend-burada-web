@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
 import AuthService from "../../service/AuthService";
@@ -6,8 +6,10 @@ import {useHistory, useLocation} from "react-router-dom";
 import {Password} from 'primereact/password';
 import {USE_DEMO_LOCAL_AUTH} from "../../constants/UrlConstans";
 import DemoAuthService from "../../service/DemoAuthService";
+import AppContext from "../../AppContext";
 
 export const Login = () => {
+    const {t = (key) => key} = useContext(AppContext) || {};
     const history = useHistory();
     const location = useLocation();
 
@@ -17,8 +19,6 @@ export const Login = () => {
     const [wrongAccountInfo, setWrongAccountInfo] = useState(false);
     const [labelMessage, setLabelMessage] = useState("");
 
-    const failMailLabelMessage = "Lütfen geçerli bir e-posta adresi giriniz";
-    const failPasswordLabelMessage = "Lütfen şifrenizi giriniz";
     const redirectTarget = new URLSearchParams(location.search).get('redirect') || "/";
 
     const loginButtonOnClick = async () => {
@@ -32,7 +32,7 @@ export const Login = () => {
                     window.location.reload();
                 } catch (error) {
                     setWrongAccountInfo(true);
-                    setLabelMessage("Kullanıcı adı veya şifre hatalı")
+                    setLabelMessage(t('login.invalidCreds'))
                 }
                 return;
             }
@@ -44,7 +44,7 @@ export const Login = () => {
                 window.location.reload();
             }).catch((error) => {
                 setWrongAccountInfo(true);
-                setLabelMessage("Kullanıcı adı veya şifre hatalı")
+                setLabelMessage(t('login.invalidCreds'))
             })
         }
     }
@@ -53,9 +53,9 @@ export const Login = () => {
         if (username === "" || password === "") {
             setWrongAccountInfo(true);
             if (username === "") {
-                setLabelMessage(failMailLabelMessage)
+                setLabelMessage(t('login.invalidEmail'))
             } else if (password === "") {
-                setLabelMessage(failPasswordLabelMessage)
+                setLabelMessage(t('login.invalidPassword'))
             }
             return false;
         } else {
@@ -90,8 +90,8 @@ export const Login = () => {
         <div className="login">
             {failLoginMessageLabel()}
             <div className="login-item">
-                <label>E-Posta</label>
-                <InputText placeholder={"E-Posta Adresi"}
+                <label>{t('login.email')}</label>
+                <InputText placeholder={t('login.emailPlaceholder')}
                            value={username} type="text"
                            onChange={(e) => {
                                setUsername(e.target.value)
@@ -101,8 +101,8 @@ export const Login = () => {
             </div>
 
             <div className="login-item">
-                <label>Şifre</label>
-                <Password placeholder={"Kullanıcı Şifresi"}
+                <label>{t('login.password')}</label>
+                <Password placeholder={t('login.passwordPlaceholder')}
                           feedback={false}
                           value={password}
                           toggleMask
@@ -116,17 +116,17 @@ export const Login = () => {
 
             <div className="login-item">
                 <div className="forget-password">
-                    <Button className="login-forgot-button" onClick={forgetPasswordClick}>Şifremi Unuttum</Button>
+                    <Button className="login-forgot-button" onClick={forgetPasswordClick}>{t('login.forgot')}</Button>
                 </div>
             </div>
 
             <div className="login-item">
-                <Button className="login-submit-button" label={"Giriş Yap"} onClick={loginButtonOnClick}/>
+                <Button className="login-submit-button" label={t('login.submit')} onClick={loginButtonOnClick}/>
             </div>
 
             <div className="login-item social-login-section">
                 <div className="social-login-divider">
-                    <span>veya</span>
+                    <span>{t('login.or')}</span>
                 </div>
 
                 <div className="social-login-actions">
@@ -135,7 +135,7 @@ export const Login = () => {
                         className="social-login-button social-facebook"
                     >
                         <span className="social-facebook-icon pi pi-facebook" aria-hidden="true"/>
-                        <span className="social-label">Facebook ile Devam Et</span>
+                        <span className="social-label">{t('login.facebook')}</span>
                     </Button>
                     <Button
                         type="button"
@@ -147,7 +147,7 @@ export const Login = () => {
                             alt=""
                             aria-hidden="true"
                         />
-                        <span className="social-label">Google ile Devam Et</span>
+                        <span className="social-label">{t('login.google')}</span>
                     </Button>
                 </div>
             </div>

@@ -24,6 +24,7 @@ import AllOrderComp from "./components/customer-profile-components/MyOrderComp";
 import {FavoritesPage} from "./components/FavoritesPage";
 import CartService, {CART_UPDATED_EVENT} from "./service/CartService";
 import {CartPage} from "./components/CartPage";
+import {translate} from "./i18n/i18n";
 
 const AddressRedirect = () => <Redirect to="/hesabım/KullaniciBilgilerim?section=address"/>;
 
@@ -33,6 +34,7 @@ export const HomePage = () => {
     const [orderCount, setOrderCount] = useState(0);
     const [authenticated, setAuthenticated] = useState();
     const [timer, setTimer] = useState(null);
+    const [language, setLanguage] = useState(localStorage.getItem('tb_lang') || 'tr');
 
     useEffect(() => {
         const syncCartCount = () => {
@@ -49,6 +51,12 @@ export const HomePage = () => {
         orderCount: orderCount,
         timer: timer,
         authenticated: authenticated,
+        language,
+        t: (key, params) => translate(language, key, params),
+        setLanguage: (nextLanguage) => {
+            localStorage.setItem('tb_lang', nextLanguage);
+            setLanguage(nextLanguage);
+        },
         setOrderCount,
         setComponent,
         setAuthenticated,
