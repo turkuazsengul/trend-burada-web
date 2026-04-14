@@ -10,9 +10,14 @@ import {useHistory, useLocation} from "react-router-dom";
 import {Calendar} from "primereact/calendar";
 import {Toast} from "primereact/toast";
 import AppContext from "../../AppContext";
+import {InputTextarea} from "primereact/inputtextarea";
 
 const MyUserInfo = () => {
     const {t = (key) => key} = useContext(AppContext) || {};
+    const safeText = (key, fallback) => {
+        const value = t(key);
+        return value === key ? fallback : value;
+    };
     const DISABLE_INPUT_TOOLTIP_MESSAGE = t('profile.readonlyTooltip');
     const history = useHistory();
     const location = useLocation();
@@ -33,6 +38,18 @@ const MyUserInfo = () => {
     const [updateBtnDisabled, setUpdateBtnDisabled] = useState(true);
     const [passUpdateBtnDisabled, setPassUpdateBtnDisabled] = useState(true);
     const [activeSection, setActiveSection] = useState('user-info');
+    const [addresses, setAddresses] = useState([]);
+    const [showAddressForm, setShowAddressForm] = useState(false);
+    const [editingAddressId, setEditingAddressId] = useState(null);
+    const [addressForm, setAddressForm] = useState({
+        title: '',
+        fullName: '',
+        phone: '',
+        city: '',
+        district: '',
+        fullAddress: '',
+        type: 'home'
+    });
 
     const showMessage = (labelText, detailText, ref, severity) => {
         ref.current.show({severity: severity, summary: labelText, detail: detailText, life: 3000});
@@ -71,6 +88,55 @@ const MyUserInfo = () => {
 
         setActiveSection('user-info');
     }, [location.search, profileSections]);
+
+    const addressStorageKey = `tb_addresses_${userId || 'guest'}`;
+
+    useEffect(() => {
+        if (!userId) {
+            return;
+        }
+
+        const stored = localStorage.getItem(addressStorageKey);
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed)) {
+                    const normalized = parsed.map((item) => {
+                        if (item?.title === t('profile.homeAddressTitle') || item?.title === 'profile.homeAddressTitle') {
+                            return {...item, title: ''};
+                        }
+                        return item;
+                    });
+                    setAddresses(normalized);
+                    return;
+                }
+            } catch (e) {
+                // ignore invalid localStorage data
+            }
+        }
+
+        setAddresses([
+            {
+                id: `addr-${Date.now()}-1`,
+                title: '',
+                fullName: fullName || 'Kullanıcı',
+                phone: phoneNumber || '0(5__) ___ __ __',
+                city: 'İstanbul',
+                district: 'Kadıköy',
+                fullAddress: 'Moda Mah. Caferağa Sok. No:12 D:8',
+                type: 'home',
+                isDefault: true
+            }
+        ]);
+    }, [addressStorageKey, userId, fullName, phoneNumber, t]);
+
+    useEffect(() => {
+        if (!userId) {
+            return;
+        }
+
+        localStorage.setItem(addressStorageKey, JSON.stringify(addresses));
+    }, [addresses, userId, addressStorageKey]);
 
     const clickUserInformationUpdateBtn = () => {
         const user = {
@@ -314,6 +380,225 @@ const MyUserInfo = () => {
         );
     };
 
+    const clearAddressForm = () => {
+        setAddressForm({
+            title: '',
+            fullName: '',
+            phone: '',
+            city: '',
+            district: '',
+            fullAddress: '',
+            type: 'home'
+        });
+        setEditingAddressId(null);
+        setShowAddressForm(false);
+    };
+
+    const handleOpenNewAddressForm = () => {
+        setEditingAddressId(null);
+        setAddressForm({
+            title: '',
+            fullName: fullName || '',
+            phone: phoneNumber || '',
+            city: '',
+            district: '',
+            fullAddress: '',
+            type: 'home'
+        });
+        setShowAddressForm(true);
+    };
+
+    const handleEditAddress = (address) => {
+        setEditingAddressId(address.id);
+        setAddressForm({
+            title: address.title || '',
+            fullName: address.fullName || '',
+            phone: address.phone || '',
+            city: address.city || '',
+            district: address.district || '',
+            fullAddress: address.fullAddress || '',
+            type: address.type || 'home'
+        });
+        setShowAddressForm(true);
+    };
+
+    const handleAddressFieldChange = (field, value) => {
+        setAddressForm((prev) => ({...prev, [field]: value}));
+    };
+
+    const handleDeleteAddress = (addressId) => {
+        setAddresses((prev) => {
+            const next = prev.filter((item) => item.id !== addressId);
+            if (next.length > 0 && !next.some((item) => item.isDefault)) {
+                next[0] = {...next[0], isDefault: true};
+            }
+            return next;
+        });
+    };
+
+    const handleSetDefaultAddress = (addressId) => {
+        setAddresses((prev) => prev.map((item) => ({...item, isDefault: item.id === addressId})));
+    };
+
+    const handleAddressSave = () => {
+        if (!addressForm.title || !addressForm.fullName || !addressForm.phone || !addressForm.city || !addressForm.district || !addressForm.fullAddress) {
+            showMessage(t('profile.addressFormErrorTitle'), t('profile.addressFormErrorDetail'), toastCenter, 'warn');
+            return;
+        }
+
+        if (editingAddressId) {
+            setAddresses((prev) => prev.map((item) => (item.id === editingAddressId ? {...item, ...addressForm} : item)));
+        } else {
+            const isFirstAddress = addresses.length === 0;
+            setAddresses((prev) => [
+                ...prev,
+                {
+                    ...addressForm,
+                    id: `addr-${Date.now()}`,
+                    isDefault: isFirstAddress
+                }
+            ]);
+        }
+
+        clearAddressForm();
+    };
+
+    const renderAddressSection = () => {
+        return (
+            <>
+                <div className="process-row">
+                    <div className="process-header-item">{t('profile.sectionTitleAddress')}</div>
+                    <div className="address-toolbar">
+                        <p>{t('profile.sectionSubtitleAddress')}</p>
+                        <Button
+                            className="address-add-btn"
+                            icon="pi pi-plus"
+                            label={t('profile.addAddress')}
+                            onClick={handleOpenNewAddressForm}
+                        />
+                    </div>
+                </div>
+
+                <div className="process-row">
+                    {addresses.length === 0 ? (
+                        <div className="address-empty-state">{t('profile.addressEmpty')}</div>
+                    ) : (
+                        <div className="address-grid">
+                            {addresses.map((address) => (
+                                <div key={address.id} className={`address-card ${address.isDefault ? 'is-default' : ''}`}>
+                                    <div className="address-card-top">
+                                        <div className="address-card-title-group">
+                                            <div className="address-card-title-line">
+                                                <h4>{(address.title || '').trim() || safeText('profile.addressCardFallbackTitle', 'Teslimat Adresim')}</h4>
+                                                <span className={`address-type-tag ${address.type === 'work' ? 'is-work' : 'is-home'}`}>
+                                                    <i className={address.type === 'work' ? 'pi pi-briefcase' : 'pi pi-home'} />
+                                                    {address.type === 'work'
+                                                        ? safeText('profile.workAddressType', 'İş Adresi')
+                                                        : safeText('profile.homeAddressType', 'Ev Adresi')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {address.isDefault ? <div className="address-default-tag">{t('profile.defaultAddress')}</div> : null}
+                                    </div>
+
+                                    <div className="address-card-content">
+                                        <strong>{address.fullName}</strong>
+                                        <span>{address.phone}</span>
+                                        <span>{address.district} / {address.city}</span>
+                                        <p>{address.fullAddress}</p>
+                                    </div>
+
+                                    <div className="address-card-actions">
+                                        {!address.isDefault ? (
+                                            <button type="button" onClick={() => handleSetDefaultAddress(address.id)}>
+                                                {t('profile.setDefault')}
+                                            </button>
+                                        ) : <span className="address-action-placeholder"/>}
+                                        <button type="button" onClick={() => handleEditAddress(address)}>{t('profile.editAddress')}</button>
+                                        <button type="button" className="is-danger" onClick={() => handleDeleteAddress(address.id)}>{t('profile.deleteAddress')}</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {showAddressForm ? (
+                    <div className="process-row">
+                        <div className="address-form-panel">
+                            <h3>{editingAddressId ? t('profile.editAddressTitle') : t('profile.newAddressTitle')}</h3>
+
+                            <div className="address-form-grid">
+                                <div className="address-form-field">
+                                    <label>{t('profile.addressTitle')}</label>
+                                    <InputText value={addressForm.title} onChange={(e) => handleAddressFieldChange('title', e.target.value)}/>
+                                </div>
+                                <div className="address-form-field">
+                                    <label>{t('profile.addressType')}</label>
+                                    <div className="address-type-switch">
+                                        <button
+                                            type="button"
+                                            className={addressForm.type === 'home' ? 'is-active' : ''}
+                                            onClick={() => handleAddressFieldChange('type', 'home')}
+                                        >
+                                            {t('profile.homeType')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={addressForm.type === 'work' ? 'is-active' : ''}
+                                            onClick={() => handleAddressFieldChange('type', 'work')}
+                                        >
+                                            {t('profile.workType')}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="address-form-field">
+                                    <label>{t('profile.nameSurname')}</label>
+                                    <InputText value={addressForm.fullName} onChange={(e) => handleAddressFieldChange('fullName', e.target.value)}/>
+                                </div>
+                                <div className="address-form-field">
+                                    <label>{t('profile.phone')}</label>
+                                    <InputMask
+                                        mask="0(999)-999-99-99"
+                                        placeholder="0(5__) ___ __ __"
+                                        keyfilter="int"
+                                        value={addressForm.phone}
+                                        onChange={(e) => handleAddressFieldChange('phone', e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="address-form-field">
+                                    <label>{t('profile.city')}</label>
+                                    <InputText value={addressForm.city} onChange={(e) => handleAddressFieldChange('city', e.target.value)}/>
+                                </div>
+                                <div className="address-form-field">
+                                    <label>{t('profile.district')}</label>
+                                    <InputText value={addressForm.district} onChange={(e) => handleAddressFieldChange('district', e.target.value)}/>
+                                </div>
+                            </div>
+
+                            <div className="address-form-field">
+                                <label>{t('profile.fullAddressLabel')}</label>
+                                <InputTextarea
+                                    autoResize
+                                    rows={4}
+                                    value={addressForm.fullAddress}
+                                    onChange={(e) => handleAddressFieldChange('fullAddress', e.target.value)}
+                                />
+                            </div>
+
+                            <div className="address-form-actions">
+                                <Button label={t('profile.cancel')} className="p-button-text" onClick={clearAddressForm}/>
+                                <Button label={t('profile.saveAddress')} onClick={handleAddressSave}/>
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
+            </>
+        );
+    };
+
     const onChangeSection = (sectionKey) => {
         setActiveSection(sectionKey);
         history.replace(`${location.pathname}?section=${sectionKey}`);
@@ -333,7 +618,9 @@ const MyUserInfo = () => {
                     />
 
                     <div className="process-column">
-                        {activeSection === 'user-info' ? renderUserInfoSection() : renderPlaceholderSection()}
+                        {activeSection === 'user-info' && renderUserInfoSection()}
+                        {activeSection === 'address' && renderAddressSection()}
+                        {!['user-info', 'address'].includes(activeSection) && renderPlaceholderSection()}
                     </div>
                 </div>
             </div>

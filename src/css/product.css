@@ -1011,6 +1011,36 @@
     gap: 0.55rem;
 }
 
+.cart-address-empty-box {
+    border: 1px dashed #cbd8ea;
+    border-radius: 10px;
+    background: #f8fbff;
+    padding: 0.9rem;
+    display: grid;
+    gap: 0.7rem;
+}
+
+.cart-address-empty-box span {
+    color: #475569;
+    font-size: 1.02rem;
+}
+
+.cart-address-empty-box button {
+    justify-self: start;
+    border: 1px solid #d2dbeb;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 0.98rem;
+    font-weight: 700;
+    padding: 0.45rem 0.8rem;
+    cursor: pointer;
+}
+
+.cart-address-empty-box button:hover {
+    background: #f1f5fb;
+}
+
 .checkout-option-item {
     display: flex;
     flex-direction: column;
