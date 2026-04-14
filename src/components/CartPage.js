@@ -22,7 +22,7 @@ export const CartPage = () => {
     const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
     const locale = language === 'en' ? 'en-US' : 'tr-TR';
     const history = useHistory();
-    const addressOptions = useMemo(() => ([
+    const addressFallbackOptions = useMemo(() => ([
         {
             id: 'home',
             label: t('cart.homeAddress'),
@@ -53,7 +53,8 @@ export const CartPage = () => {
     ]), [t]);
     const [items, setItems] = useState([]);
     const [suggestedProducts, setSuggestedProducts] = useState([]);
-    const [selectedAddress, setSelectedAddress] = useState(addressOptions[0].id);
+    const [addressOptions, setAddressOptions] = useState([]);
+    const [selectedAddress, setSelectedAddress] = useState('');
     const [selectedPayment, setSelectedPayment] = useState(paymentOptions[0].id);
     const [completed, setCompleted] = useState(false);
     const [selectedInstallment, setSelectedInstallment] = useState(1);
@@ -81,6 +82,71 @@ export const CartPage = () => {
         window.addEventListener(CART_UPDATED_EVENT, onCartUpdate);
         return () => window.removeEventListener(CART_UPDATED_EVENT, onCartUpdate);
     }, []);
+
+    useEffect(() => {
+        const userRaw = localStorage.getItem('user');
+        let userId = 'guest';
+        if (userRaw) {
+            try {
+                const parsedUser = JSON.parse(userRaw);
+                userId = parsedUser?.pkId || parsedUser?.id || 'guest';
+            } catch (e) {
+                userId = 'guest';
+            }
+        }
+
+        const addressStorageKey = `tb_addresses_${userId}`;
+        const addressRaw = localStorage.getItem(addressStorageKey);
+        if (!addressRaw) {
+            setAddressOptions(addressFallbackOptions);
+            return;
+        }
+
+        try {
+            const parsedAddresses = JSON.parse(addressRaw);
+            if (!Array.isArray(parsedAddresses) || parsedAddresses.length === 0) {
+                setAddressOptions(addressFallbackOptions);
+                return;
+            }
+
+            const mapTypeLabel = (type) => type === 'work' ? t('cart.workAddress') : t('cart.homeAddress');
+
+            const mapped = parsedAddresses.map((item, index) => {
+                const city = String(item?.city || '').trim();
+                const district = String(item?.district || '').trim();
+                const fullAddress = String(item?.fullAddress || '').trim();
+                const location = [district, city].filter(Boolean).join(' / ');
+                const detail = [fullAddress, location].filter(Boolean).join(' - ');
+                const title = String(item?.title || '').trim();
+
+                return {
+                    id: item?.id || `saved-address-${index}`,
+                    label: title || mapTypeLabel(item?.type),
+                    detail: detail || t('cart.addressDetailFallback'),
+                    isDefault: Boolean(item?.isDefault)
+                };
+            });
+
+            setAddressOptions(mapped);
+        } catch (e) {
+            setAddressOptions(addressFallbackOptions);
+        }
+    }, [addressFallbackOptions, t]);
+
+    useEffect(() => {
+        if (addressOptions.length === 0) {
+            setSelectedAddress('');
+            return;
+        }
+
+        const stillExists = addressOptions.some((option) => option.id === selectedAddress);
+        if (stillExists) {
+            return;
+        }
+
+        const defaultOption = addressOptions.find((option) => option.isDefault) || addressOptions[0];
+        setSelectedAddress(defaultOption.id);
+    }, [addressOptions, selectedAddress]);
 
     useEffect(() => {
         const firstItem = items[0];
@@ -269,23 +335,35 @@ export const CartPage = () => {
                 <aside className="cart-checkout-section">
                     <div className="checkout-panel-card">
                         <h3>{t('cart.addressTitle')}</h3>
-                        <div className="checkout-option-list">
-                            {addressOptions.map((option) => (
-                                <label key={option.id} className={`checkout-option ${selectedAddress === option.id ? 'is-active' : ''}`}>
-                                    <input
-                                        type="radio"
-                                        name="address"
-                                        value={option.id}
-                                        checked={selectedAddress === option.id}
-                                        onChange={() => setSelectedAddress(option.id)}
-                                    />
-                                    <span className="checkout-option-text">
-                                        <strong>{option.label}</strong>
-                                        <small>{option.detail}</small>
-                                    </span>
-                                </label>
-                            ))}
-                        </div>
+                        {addressOptions.length === 0 ? (
+                            <div className="cart-address-empty-box">
+                                <span>{t('cart.noAddressInAccount')}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => history.push('/hesabım/KullaniciBilgilerim?section=address')}
+                                >
+                                    {t('cart.goAddressPage')}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="checkout-option-list">
+                                {addressOptions.map((option) => (
+                                    <label key={option.id} className={`checkout-option ${selectedAddress === option.id ? 'is-active' : ''}`}>
+                                        <input
+                                            type="radio"
+                                            name="address"
+                                            value={option.id}
+                                            checked={selectedAddress === option.id}
+                                            onChange={() => setSelectedAddress(option.id)}
+                                        />
+                                        <span className="checkout-option-text">
+                                            <strong>{option.label}</strong>
+                                            <small>{option.detail}</small>
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <div className="checkout-panel-card">
