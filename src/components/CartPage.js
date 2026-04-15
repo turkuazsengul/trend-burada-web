@@ -1,9 +1,9 @@
 import React, {useContext, useEffect, useMemo, useState} from 'react';
 import CartService, {CART_UPDATED_EVENT} from "../service/CartService";
 import ProductService from "../service/ProductService";
-import {Carousel} from "primereact/carousel";
 import {useHistory} from "react-router-dom";
 import AppContext from "../AppContext";
+import UserActivityService from "../service/UserActivityService";
 
 const formatPrice = (price, locale) => `${Number(price || 0).toLocaleString(locale, {minimumFractionDigits: 2, maximumFractionDigits: 2})} TL`;
 
@@ -20,20 +20,13 @@ const getInstallmentOptions = (total = 0, t) => {
 
 export const CartPage = () => {
     const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
+    const text = (key, fallback) => {
+        const value = t(key);
+        return value === key ? fallback : value;
+    };
     const locale = language === 'en' ? 'en-US' : 'tr-TR';
     const history = useHistory();
-    const addressFallbackOptions = useMemo(() => ([
-        {
-            id: 'home',
-            label: t('cart.homeAddress'),
-            detail: 'Atatürk Mah. Çiçek Sok. No:12 Kadıköy / İstanbul'
-        },
-        {
-            id: 'office',
-            label: t('cart.workAddress'),
-            detail: 'Maslak Mah. Büyükdere Cad. No:201 Sarıyer / İstanbul'
-        }
-    ]), [t]);
+    const addressFallbackOptions = useMemo(() => ([]), []);
     const paymentOptions = useMemo(() => ([
         {
             id: 'card',
@@ -53,6 +46,10 @@ export const CartPage = () => {
     ]), [t]);
     const [items, setItems] = useState([]);
     const [suggestedProducts, setSuggestedProducts] = useState([]);
+    const [recentlyViewed, setRecentlyViewed] = useState([]);
+    const [recentlyViewedFallback, setRecentlyViewedFallback] = useState([]);
+    const [campaignProducts, setCampaignProducts] = useState([]);
+    const discountRates = [10, 20, 30, 40];
     const [addressOptions, setAddressOptions] = useState([]);
     const [selectedAddress, setSelectedAddress] = useState('');
     const [selectedPayment, setSelectedPayment] = useState(paymentOptions[0].id);
@@ -62,12 +59,25 @@ export const CartPage = () => {
     const [bankModalOpen, setBankModalOpen] = useState(false);
     const [otpCode, setOtpCode] = useState('');
     const [otpError, setOtpError] = useState('');
+    const [checkoutStep, setCheckoutStep] = useState(1);
+    const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+    const [newAddressForm, setNewAddressForm] = useState({
+        title: '',
+        city: '',
+        district: '',
+        phone: '',
+        fullAddress: '',
+        type: 'home'
+    });
     const [cardForm, setCardForm] = useState({
         cardNumber: '',
         holderName: '',
         expiry: '',
         cvv: ''
     });
+    const [viewedStart, setViewedStart] = useState(0);
+    const [recoStart, setRecoStart] = useState(0);
+    const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
 
     const reloadCart = () => {
         setItems(CartService.getCartItems());
@@ -81,6 +91,34 @@ export const CartPage = () => {
 
         window.addEventListener(CART_UPDATED_EVENT, onCartUpdate);
         return () => window.removeEventListener(CART_UPDATED_EVENT, onCartUpdate);
+    }, []);
+
+    useEffect(() => {
+        setRecentlyViewed(UserActivityService.getViewedProducts());
+    }, []);
+
+    useEffect(() => {
+        ProductService.getProductsByCategory('kadin').then((list) => {
+            if (Array.isArray(list) && list.length > 0) {
+                setRecentlyViewedFallback(list.slice(0, 12));
+            } else {
+                setRecentlyViewedFallback([]);
+            }
+        }).catch(() => setRecentlyViewedFallback([]));
+    }, []);
+
+    useEffect(() => {
+        ProductService.getAllProducts().then((list) => {
+            const safeList = Array.isArray(list) ? list : [];
+            const sorted = [...safeList].sort((a, b) => Number(b?.discountRate || 0) - Number(a?.discountRate || 0));
+            setCampaignProducts(sorted.slice(0, 12));
+        }).catch(() => setCampaignProducts([]));
+    }, []);
+
+    useEffect(() => {
+        const onResize = () => setViewportWidth(window.innerWidth);
+        window.addEventListener('resize', onResize, {passive: true});
+        return () => window.removeEventListener('resize', onResize);
     }, []);
 
     useEffect(() => {
@@ -98,14 +136,14 @@ export const CartPage = () => {
         const addressStorageKey = `tb_addresses_${userId}`;
         const addressRaw = localStorage.getItem(addressStorageKey);
         if (!addressRaw) {
-            setAddressOptions(addressFallbackOptions);
+            setAddressOptions([]);
             return;
         }
 
         try {
             const parsedAddresses = JSON.parse(addressRaw);
             if (!Array.isArray(parsedAddresses) || parsedAddresses.length === 0) {
-                setAddressOptions(addressFallbackOptions);
+                setAddressOptions([]);
                 return;
             }
 
@@ -129,7 +167,7 @@ export const CartPage = () => {
 
             setAddressOptions(mapped);
         } catch (e) {
-            setAddressOptions(addressFallbackOptions);
+            setAddressOptions([]);
         }
     }, [addressFallbackOptions, t]);
 
@@ -163,6 +201,11 @@ export const CartPage = () => {
     const summary = CartService.getCartSummary();
     const installmentOptions = getInstallmentOptions(Number(summary.total || 0), t);
     const selectedInstallmentLabel = installmentOptions.find((item) => item.value === selectedInstallment)?.label || t('cart.cash');
+    const isCardFormValid = normalizeCardNumber(cardForm.cardNumber).length === 16
+        && String(cardForm.holderName || '').trim().length >= 4
+        && String(cardForm.expiry || '').trim().length >= 5
+        && String(cardForm.cvv || '').trim().length >= 3;
+    const isPaymentContinueDisabled = selectedPayment === 'card' ? !isCardFormValid : false;
 
     useEffect(() => {
         const hasSelected = installmentOptions.some((item) => item.value === selectedInstallment);
@@ -195,11 +238,7 @@ export const CartPage = () => {
         }
 
         if (selectedPayment === 'card') {
-            const isCardValid = normalizeCardNumber(cardForm.cardNumber).length === 16
-                && String(cardForm.holderName || '').trim().length >= 4
-                && String(cardForm.expiry || '').trim().length >= 5
-                && String(cardForm.cvv || '').trim().length >= 3;
-            if (!isCardValid) {
+            if (!isCardFormValid) {
                 return;
             }
         }
@@ -207,6 +246,100 @@ export const CartPage = () => {
         setOtpCode('');
         setOtpError('');
         setBankModalOpen(true);
+    };
+
+    const handleGoToAddressStep = () => {
+        if (items.length === 0) {
+            return;
+        }
+        setCheckoutStep(2);
+    };
+
+    const handleAddressContinue = () => {
+        if (!selectedAddress) {
+            return;
+        }
+        setCheckoutStep(3);
+    };
+
+    const handlePaymentContinue = () => {
+        if (selectedPayment === 'card') {
+            if (!isCardFormValid) {
+                return;
+            }
+        }
+
+        setCheckoutStep(4);
+    };
+
+    const handleNewAddressField = (field, value) => {
+        setNewAddressForm((prev) => ({...prev, [field]: value}));
+    };
+
+    const handleCreateAddress = () => {
+        if (!newAddressForm.title || !newAddressForm.city || !newAddressForm.district || !newAddressForm.phone || !newAddressForm.fullAddress) {
+            return;
+        }
+
+        const userRaw = localStorage.getItem('user');
+        let userId = 'guest';
+        if (userRaw) {
+            try {
+                const parsedUser = JSON.parse(userRaw);
+                userId = parsedUser?.pkId || parsedUser?.id || 'guest';
+            } catch (e) {
+                userId = 'guest';
+            }
+        }
+
+        const addressStorageKey = `tb_addresses_${userId}`;
+        const currentRaw = localStorage.getItem(addressStorageKey);
+        let current = [];
+        if (currentRaw) {
+            try {
+                const parsed = JSON.parse(currentRaw);
+                if (Array.isArray(parsed)) {
+                    current = parsed;
+                }
+            } catch (e) {
+                current = [];
+            }
+        }
+
+        const created = {
+            id: `saved-address-${Date.now()}`,
+            title: newAddressForm.title,
+            fullName: 'Teslimat',
+            phone: newAddressForm.phone,
+            city: newAddressForm.city,
+            district: newAddressForm.district,
+            fullAddress: newAddressForm.fullAddress,
+            type: newAddressForm.type,
+            isDefault: current.length === 0
+        };
+
+        const nextStorage = [...current, created];
+        localStorage.setItem(addressStorageKey, JSON.stringify(nextStorage));
+
+        const detail = `${created.fullAddress} - ${created.district} / ${created.city}`;
+        const mapped = {
+            id: created.id,
+            label: created.title,
+            detail,
+            isDefault: created.isDefault
+        };
+
+        setAddressOptions((prev) => [...prev, mapped]);
+        setSelectedAddress(created.id);
+        setShowNewAddressForm(false);
+        setNewAddressForm({
+            title: '',
+            city: '',
+            district: '',
+            phone: '',
+            fullAddress: '',
+            type: 'home'
+        });
     };
 
     const closeBankModal = () => {
@@ -219,6 +352,25 @@ export const CartPage = () => {
             setOtpError(t('cart.otpInvalid'));
             return;
         }
+
+        const selectedAddressOption = addressOptions.find((item) => item.id === selectedAddress);
+        UserActivityService.addOrder({
+            items: items.map((item) => ({
+                id: item.id,
+                title: item.title,
+                mark: item.mark,
+                img: item.img,
+                quantity: item.quantity,
+                price: item.price,
+                selectedSize: item.selectedSize,
+                selectedColor: item.selectedColor
+            })),
+            summary,
+            paymentType: selectedPayment,
+            installment: selectedInstallment,
+            address: selectedAddressOption || null,
+            status: 'prepared'
+        });
 
         CartService.clearCart();
         setCompleted(true);
@@ -248,7 +400,7 @@ export const CartPage = () => {
         setCardForm((prev) => ({...prev, [key]: value}));
     };
 
-    const suggestedItemTemplate = (product) => {
+    const recentItemTemplate = (product) => {
         return (
             <a href={`/detail/${product.id}`} className="cart-suggest-card">
                 <img src={product.img} alt={product.title}/>
@@ -259,24 +411,74 @@ export const CartPage = () => {
         );
     };
 
+    const selectedAddressOption = addressOptions.find((item) => item.id === selectedAddress);
+    const visibleRecentlyViewed = recentlyViewed.length > 0 ? recentlyViewed : recentlyViewedFallback;
+    const viewedItems = visibleRecentlyViewed.slice(0, 12);
+    const recommendationProducts = (suggestedProducts.length > 0 ? suggestedProducts : campaignProducts).slice(0, 12);
+    const hasSideRoomForRecommendations = viewedItems.length > 0 && viewedItems.length <= 3;
+    const viewedVisibleCount = viewportWidth <= 768 ? 1 : (viewportWidth <= 1200 ? 2 : (hasSideRoomForRecommendations ? 2 : 4));
+    const recoVisibleCount = viewportWidth <= 768 ? 1 : (hasSideRoomForRecommendations ? 2 : 4);
+    const enableViewedSlider = viewedItems.length > viewedVisibleCount;
+    const enableRecoSlider = recommendationProducts.length > recoVisibleCount;
+    const viewedPanelStyle = viewedItems.length > 0
+        ? {
+            maxWidth: `calc(${viewedItems.length} * 17.2rem + ${Math.max(viewedItems.length - 1, 0)} * 0.65rem + 2.1rem)`
+        }
+        : undefined;
+    const buildLoopWindow = (list, start, visibleCount) => {
+        const safeList = Array.isArray(list) ? list : [];
+        if (safeList.length <= visibleCount) {
+            return safeList;
+        }
+        return Array.from({length: visibleCount}).map((_, index) => safeList[(start + index) % safeList.length]);
+    };
+    const viewedWindow = buildLoopWindow(viewedItems, viewedStart, viewedVisibleCount);
+    const recoWindow = buildLoopWindow(recommendationProducts, recoStart, recoVisibleCount);
+    const shiftLoop = (setter, list, step) => {
+        const length = Array.isArray(list) ? list.length : 0;
+        if (length === 0) {
+            return;
+        }
+        setter((prev) => (prev + step + length) % length);
+    };
+
     return (
         <div className="cart-page">
-            <div className="cart-header">
-                <h1>{t('cart.title')}</h1>
-                <span>{t('cart.productCount', {count: items.length})}</span>
-            </div>
-
             {completed && (
                 <div className="cart-success-banner">
                     {t('cart.orderDone')}
                 </div>
             )}
 
-            <div className="cart-layout">
+            <div className="cart-header">
+                <div className="cart-header-left">
+                    <h1>{t('cart.title')}</h1>
+                    <span>{t('cart.productCount', {count: items.length})}</span>
+                </div>
+                {items.length > 0 && (
+                    <div className="cart-header-right">
+                        <div className="checkout-steps-chip">
+                            <span className={checkoutStep >= 1 ? 'is-active' : ''}>{text('cart.stepSummary', 'Özet')}</span>
+                            <span className={checkoutStep >= 2 ? 'is-active' : ''}>{text('cart.stepAddress', 'Adres')}</span>
+                            <span className={checkoutStep >= 3 ? 'is-active' : ''}>{text('cart.stepPayment', 'Ödeme')}</span>
+                            <span className={checkoutStep >= 4 ? 'is-active' : ''}>{text('cart.stepConfirm', 'Onay')}</span>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className={`cart-layout ${items.length === 0 ? 'is-empty' : ''}`}>
                 <section className="cart-items-section">
                     {items.length === 0 && (
                         <div className="cart-empty-state">
-                            {t('cart.empty')}
+                            <div>{t('cart.empty')}</div>
+                            <button
+                                type="button"
+                                className="cart-empty-cta"
+                                onClick={() => history.push('/')}
+                            >
+                                {text('cart.startShopping', 'Alışverişe Başla')}
+                            </button>
                         </div>
                     )}
 
@@ -312,177 +514,387 @@ export const CartPage = () => {
                         </article>
                     ))}
 
-                    {suggestedProducts.length > 0 && (
-                        <section className="cart-suggest-section">
-                            <div className="cart-suggest-head">{t('cart.suggestTitle')}</div>
-                            <Carousel
-                                value={suggestedProducts}
-                                itemTemplate={suggestedItemTemplate}
-                                numVisible={4}
-                                numScroll={2}
-                                circular
-                                showIndicators={false}
-                                responsiveOptions={[
-                                    {breakpoint: '1280px', numVisible: 3, numScroll: 1},
-                                    {breakpoint: '920px', numVisible: 2, numScroll: 1},
-                                    {breakpoint: '640px', numVisible: 1, numScroll: 1}
-                                ]}
-                            />
-                        </section>
-                    )}
-                </section>
-
-                <aside className="cart-checkout-section">
-                    <div className="checkout-panel-card">
-                        <h3>{t('cart.addressTitle')}</h3>
-                        {addressOptions.length === 0 ? (
-                            <div className="cart-address-empty-box">
-                                <span>{t('cart.noAddressInAccount')}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => history.push('/hesabım/KullaniciBilgilerim?section=address')}
-                                >
-                                    {t('cart.goAddressPage')}
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="checkout-option-list">
-                                {addressOptions.map((option) => (
-                                    <label key={option.id} className={`checkout-option ${selectedAddress === option.id ? 'is-active' : ''}`}>
-                                        <input
-                                            type="radio"
-                                            name="address"
-                                            value={option.id}
-                                            checked={selectedAddress === option.id}
-                                            onChange={() => setSelectedAddress(option.id)}
-                                        />
-                                        <span className="checkout-option-text">
-                                            <strong>{option.label}</strong>
-                                            <small>{option.detail}</small>
-                                        </span>
-                                    </label>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="checkout-panel-card">
-                        <h3>{t('cart.paymentTitle')}</h3>
-                        <div className="checkout-option-list">
-                            {paymentOptions.map((option) => (
-                                <div key={option.id} className="checkout-option-item">
-                                    <label className={`checkout-option ${selectedPayment === option.id ? 'is-active' : ''}`}>
-                                        <input
-                                            type="radio"
-                                            name="payment"
-                                            value={option.id}
-                                            checked={selectedPayment === option.id}
-                                            onChange={() => setSelectedPayment(option.id)}
-                                        />
-                                        <span className="checkout-option-text">
-                                            <strong>{option.label}</strong>
-                                            <small>{option.detail}</small>
-                                        </span>
-                                    </label>
-
-                                    {option.id === 'card' && selectedPayment === 'card' && (
-                                        <div className="checkout-option-extend">
-                                            <div className="card-form-area">
-                                                <div className="card-form-grid">
-                                                    <label className="card-form-field full">
-                                                        <span>{t('cart.cardNo')}</span>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="0000 0000 0000 0000"
-                                                            value={cardForm.cardNumber}
-                                                            onChange={(event) => onCardFieldChange('cardNumber', event.target.value)}
-                                                        />
-                                                    </label>
-
-                                                    <label className="card-form-field full">
-                                                        <span>{t('cart.cardHolder')}</span>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="AD SOYAD"
-                                                            value={cardForm.holderName}
-                                                            onChange={(event) => onCardFieldChange('holderName', event.target.value)}
-                                                        />
-                                                    </label>
-
-                                                    <label className="card-form-field">
-                                                        <span>{t('cart.expiry')}</span>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="AA/YY"
-                                                            value={cardForm.expiry}
-                                                            onChange={(event) => onCardFieldChange('expiry', event.target.value)}
-                                                        />
-                                                    </label>
-
-                                                    <label className="card-form-field">
-                                                        <span>CVV</span>
-                                                        <input
-                                                            type="password"
-                                                            placeholder="***"
-                                                            value={cardForm.cvv}
-                                                            onChange={(event) => onCardFieldChange('cvv', event.target.value)}
-                                                        />
-                                                    </label>
-                                                </div>
-
-                                <div className="installment-area">
-                                    <button
-                                        type="button"
-                                        className="installment-toggle"
-                                        onClick={() => setIsInstallmentOpen((prev) => !prev)}
-                                    >
-                                        <strong>
-                                            {t('cart.installments')}
-                                            <span className="installment-selected-label">({selectedInstallmentLabel})</span>
-                                        </strong>
-                                        <i className={`pi ${isInstallmentOpen ? 'pi-angle-up' : 'pi-angle-down'}`}/>
-                                    </button>
-
-                                    <div className={`installment-list ${isInstallmentOpen ? 'is-open' : ''}`}>
-                                        {installmentOptions.map((item) => (
-                                            <label key={item.value} className={`installment-option ${selectedInstallment === item.value ? 'is-active' : ''}`}>
-                                                <input
-                                                    type="radio"
-                                                    name="installment"
-                                                    checked={selectedInstallment === item.value}
-                                                    onChange={() => setSelectedInstallment(item.value)}
-                                                />
-                                                <span>{item.label}</span>
-                                                <small>{formatPrice(item.amount, locale)}</small>
-                                            </label>
+                    <section className={`cart-personalized-row ${hasSideRoomForRecommendations ? 'split' : 'stacked'}`}>
+                        <section className={`cart-suggest-section cart-viewed-panel ${hasSideRoomForRecommendations ? 'is-compact' : ''}`} style={hasSideRoomForRecommendations ? viewedPanelStyle : undefined}>
+                                <div className="cart-suggest-head">{text('cart.recentlyViewedTitle', 'Önceden İncelediklerim')}</div>
+                            {viewedItems.length > 0 ? (
+                                <div className={`cart-viewed-track-shell ${enableViewedSlider ? 'is-slider' : ''}`}>
+                                    {enableViewedSlider && (
+                                        <button
+                                            type="button"
+                                            className="cart-viewed-nav prev"
+                                            onClick={() => shiftLoop(setViewedStart, viewedItems, -1)}
+                                            aria-label={text('cart.prev', 'Önceki')}
+                                        >
+                                            <i className="pi pi-angle-left"/>
+                                        </button>
+                                    )}
+                                    <div className={`cart-viewed-grid is-loop`} style={{'--loop-col-count': viewedWindow.length}}>
+                                        {viewedWindow.map((product) => (
+                                            <div key={product.id} className="cart-viewed-item">
+                                                {recentItemTemplate(product)}
+                                            </div>
                                         ))}
                                     </div>
-                                </div>
-                            </div>
-                        </div>
+                                    {enableViewedSlider && (
+                                        <button
+                                            type="button"
+                                            className="cart-viewed-nav next"
+                                            onClick={() => shiftLoop(setViewedStart, viewedItems, 1)}
+                                            aria-label={text('cart.next', 'Sonraki')}
+                                        >
+                                            <i className="pi pi-angle-right"/>
+                                        </button>
                                     )}
                                 </div>
+                            ) : (
+                                <div className="cart-empty-state">
+                                    {text('cart.recentlyViewedEmpty', 'Henüz incelediğin ürün yok. Ürünleri keşfettikçe burada listelenecek.')}
+                                </div>
+                            )}
+                        </section>
+
+                        {recommendationProducts.length > 0 && (
+                            <section className="cart-suggest-section cart-reco-panel">
+                                <div className="cart-suggest-head">{text('cart.suggestTitle', 'Sizin İçin Öneriler')}</div>
+                                <div className={`cart-viewed-track-shell ${enableRecoSlider ? 'is-slider' : ''}`}>
+                                    {enableRecoSlider && (
+                                        <button
+                                            type="button"
+                                            className="cart-viewed-nav prev"
+                                            onClick={() => shiftLoop(setRecoStart, recommendationProducts, -1)}
+                                            aria-label={text('cart.prev', 'Önceki')}
+                                        >
+                                            <i className="pi pi-angle-left"/>
+                                        </button>
+                                    )}
+                                    <div
+                                        className="cart-viewed-grid cart-reco-grid is-loop"
+                                        style={{'--loop-col-count': Math.max(recoWindow.length, 1)}}
+                                    >
+                                        {recoWindow.map((product) => (
+                                        <div key={`reco-${product.id}`} className="cart-viewed-item">
+                                            {recentItemTemplate(product)}
+                                        </div>
+                                    ))}
+                                    </div>
+                                    {enableRecoSlider && (
+                                        <button
+                                            type="button"
+                                            className="cart-viewed-nav next"
+                                            onClick={() => shiftLoop(setRecoStart, recommendationProducts, 1)}
+                                            aria-label={text('cart.next', 'Sonraki')}
+                                        >
+                                            <i className="pi pi-angle-right"/>
+                                        </button>
+                                    )}
+                                </div>
+                            </section>
+                        )}
+                    </section>
+
+                    <section className="cart-discount-circles">
+                        <div className="cart-suggest-head cart-discount-title">{text('cart.discountHubTitle', 'Size Özel İndirim Fırsatları')}</div>
+                        <div className="cart-discount-circle-row">
+                            {discountRates.map((rate, index) => (
+                                <a
+                                    key={rate}
+                                    href={`/product/indirim?discount=${rate}`}
+                                    className={`cart-discount-circle c${index + 1}`}
+                                >
+                                    <strong>%{rate}</strong>
+                                    <span>{text('cart.discountCircleLabel', 'İndirim')}</span>
+                                </a>
                             ))}
                         </div>
-                    </div>
+                    </section>
 
-                    <div className="checkout-panel-card cart-summary-card">
-                        <h3>{t('cart.summaryTitle')}</h3>
-                        <div className="summary-row"><span>{t('cart.subtotal')}</span><strong>{formatPrice(summary.subtotal, locale)}</strong></div>
-                        <div className="summary-row"><span>{t('cart.cargo')}</span><strong>{summary.cargo === 0 ? t('cart.free') : formatPrice(summary.cargo, locale)}</strong></div>
-                        <div className="summary-row"><span>{t('cart.discount')}</span><strong>- {formatPrice(summary.discount, locale)}</strong></div>
-                        <div className="summary-row total"><span>{t('cart.total')}</span><strong>{formatPrice(summary.total, locale)}</strong></div>
+                    <section className="cart-campaign-strip">
+                        {campaignProducts.slice(0, 6).map((product) => (
+                            <a key={product.id} href={`/detail/${product.id}`} className="cart-campaign-card is-product">
+                                <img src={product.img} alt={product.title}/>
+                                <div className="cart-campaign-content">
+                                    <strong>{product.mark}</strong>
+                                    <span>{product.title}</span>
+                                    <b>{formatPrice(product.price, locale)}</b>
+                                </div>
+                            </a>
+                        ))}
+                    </section>
+                </section>
 
-                        <button
-                            type="button"
-                            className="checkout-complete-button"
-                            onClick={completePurchase}
-                            disabled={items.length === 0}
-                        >
-                            {t('cart.buy')}
-                        </button>
-                    </div>
-                </aside>
+                {items.length > 0 && <aside className="cart-checkout-section">
+                    {checkoutStep === 1 && (
+                        <div className="checkout-panel-card cart-summary-card">
+                            <h3>{t('cart.summaryTitle')}</h3>
+                            <div className="summary-row"><span>{t('cart.subtotal')}</span><strong>{formatPrice(summary.subtotal, locale)}</strong></div>
+                            <div className="summary-row"><span>{t('cart.cargo')}</span><strong>{summary.cargo === 0 ? t('cart.free') : formatPrice(summary.cargo, locale)}</strong></div>
+                            <div className="summary-row"><span>{t('cart.discount')}</span><strong>- {formatPrice(summary.discount, locale)}</strong></div>
+                            <div className="summary-row total"><span>{t('cart.total')}</span><strong>{formatPrice(summary.total, locale)}</strong></div>
+                            <button
+                                type="button"
+                                className="checkout-complete-button"
+                                onClick={handleGoToAddressStep}
+                                disabled={items.length === 0}
+                            >
+                                {t('cart.buy')}
+                            </button>
+                        </div>
+                    )}
+
+                    {checkoutStep === 2 && (
+                        <div className="checkout-panel-card">
+                            <h3>{t('cart.addressTitle')}</h3>
+                            {addressOptions.length === 0 ? (
+                                <div className="cart-address-empty-box">
+                                    <span>{t('cart.noAddressInAccount')}</span>
+                                </div>
+                            ) : (
+                                <div className="checkout-option-list">
+                                    {addressOptions.map((option) => (
+                                        <label key={option.id} className={`checkout-option ${selectedAddress === option.id ? 'is-active' : ''}`}>
+                                            <input
+                                                type="radio"
+                                                name="address"
+                                                value={option.id}
+                                                checked={selectedAddress === option.id}
+                                                onChange={() => setSelectedAddress(option.id)}
+                                            />
+                                            <span className="checkout-option-text">
+                                                <strong>{option.label}</strong>
+                                                <small>{option.detail}</small>
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="checkout-step-actions">
+                                <button type="button" className="checkout-outline-btn" onClick={() => setShowNewAddressForm((prev) => !prev)}>
+                                    {text('cart.addAddressInline', 'Yeni Adres Ekle')}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="checkout-complete-button"
+                                    onClick={handleAddressContinue}
+                                    disabled={!selectedAddress}
+                                >
+                                    {text('cart.continuePayment', 'Ödemeye Geç')}
+                                </button>
+                            </div>
+
+                            {showNewAddressForm && (
+                                <div className="inline-address-form">
+                                    <div className="inline-address-grid">
+                                        <label>
+                                            <span>{text('cart.addressFormTitle', 'Adres Başlığı')}</span>
+                                            <input
+                                                type="text"
+                                                value={newAddressForm.title}
+                                                onChange={(e) => handleNewAddressField('title', e.target.value)}
+                                            />
+                                        </label>
+                                        <label>
+                                            <span>{text('cart.addressPhone', 'Telefon')}</span>
+                                            <input
+                                                type="text"
+                                                value={newAddressForm.phone}
+                                                onChange={(e) => handleNewAddressField('phone', e.target.value)}
+                                            />
+                                        </label>
+                                        <label>
+                                            <span>{text('cart.addressCity', 'İl')}</span>
+                                            <input
+                                                type="text"
+                                                value={newAddressForm.city}
+                                                onChange={(e) => handleNewAddressField('city', e.target.value)}
+                                            />
+                                        </label>
+                                        <label>
+                                            <span>{text('cart.addressDistrict', 'İlçe')}</span>
+                                            <input
+                                                type="text"
+                                                value={newAddressForm.district}
+                                                onChange={(e) => handleNewAddressField('district', e.target.value)}
+                                            />
+                                        </label>
+                                        <label className="full">
+                                            <span>{text('cart.addressFull', 'Açık Adres')}</span>
+                                            <input
+                                                type="text"
+                                                value={newAddressForm.fullAddress}
+                                                onChange={(e) => handleNewAddressField('fullAddress', e.target.value)}
+                                            />
+                                        </label>
+                                    </div>
+                                    <div className="checkout-step-actions">
+                                        <button type="button" className="checkout-outline-btn" onClick={() => setShowNewAddressForm(false)}>
+                                            {text('cart.cancel', 'Vazgeç')}
+                                        </button>
+                                        <button type="button" className="checkout-complete-button" onClick={handleCreateAddress}>
+                                            {text('cart.saveAddress', 'Adresi Kaydet')}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {checkoutStep === 3 && (
+                        <div className="checkout-panel-card">
+                            <h3>{t('cart.paymentTitle')}</h3>
+                            <div className="checkout-option-list">
+                                {paymentOptions.map((option) => (
+                                    <div key={option.id} className="checkout-option-item">
+                                        <label className={`checkout-option ${selectedPayment === option.id ? 'is-active' : ''}`}>
+                                            <input
+                                                type="radio"
+                                                name="payment"
+                                                value={option.id}
+                                                checked={selectedPayment === option.id}
+                                                onChange={() => setSelectedPayment(option.id)}
+                                            />
+                                            <span className="checkout-option-text">
+                                                <strong>{option.label}</strong>
+                                                <small>{option.detail}</small>
+                                            </span>
+                                        </label>
+
+                                        {option.id === 'card' && selectedPayment === 'card' && (
+                                            <div className="checkout-option-extend">
+                                                <div className="card-form-area">
+                                                    <div className="card-form-grid">
+                                                        <label className="card-form-field full">
+                                                            <span>{t('cart.cardNo')}</span>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="0000 0000 0000 0000"
+                                                                value={cardForm.cardNumber}
+                                                                onChange={(event) => onCardFieldChange('cardNumber', event.target.value)}
+                                                            />
+                                                        </label>
+
+                                                        <label className="card-form-field full">
+                                                            <span>{t('cart.cardHolder')}</span>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="AD SOYAD"
+                                                                value={cardForm.holderName}
+                                                                onChange={(event) => onCardFieldChange('holderName', event.target.value)}
+                                                            />
+                                                        </label>
+
+                                                        <label className="card-form-field">
+                                                            <span>{t('cart.expiry')}</span>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="AA/YY"
+                                                                value={cardForm.expiry}
+                                                                onChange={(event) => onCardFieldChange('expiry', event.target.value)}
+                                                            />
+                                                        </label>
+
+                                                        <label className="card-form-field">
+                                                            <span>CVV</span>
+                                                            <input
+                                                                type="password"
+                                                                placeholder="***"
+                                                                value={cardForm.cvv}
+                                                                onChange={(event) => onCardFieldChange('cvv', event.target.value)}
+                                                            />
+                                                        </label>
+                                                    </div>
+
+                                                    <div className="installment-area">
+                                                        <button
+                                                            type="button"
+                                                            className="installment-toggle"
+                                                            onClick={() => setIsInstallmentOpen((prev) => !prev)}
+                                                        >
+                                                            <strong>
+                                                                {t('cart.installments')}
+                                                                <span className="installment-selected-label">({selectedInstallmentLabel})</span>
+                                                            </strong>
+                                                            <i className={`pi ${isInstallmentOpen ? 'pi-angle-up' : 'pi-angle-down'}`}/>
+                                                        </button>
+
+                                                        <div className={`installment-list ${isInstallmentOpen ? 'is-open' : ''}`}>
+                                                            {installmentOptions.map((item) => (
+                                                                <label key={item.value} className={`installment-option ${selectedInstallment === item.value ? 'is-active' : ''}`}>
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="installment"
+                                                                        checked={selectedInstallment === item.value}
+                                                                        onChange={() => setSelectedInstallment(item.value)}
+                                                                    />
+                                                                    <span>{item.label}</span>
+                                                                    <small>{formatPrice(item.amount, locale)}</small>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="checkout-step-actions">
+                                <button type="button" className="checkout-outline-btn" onClick={() => setCheckoutStep(2)}>
+                                    {text('cart.back', 'Geri')}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="checkout-complete-button"
+                                    onClick={handlePaymentContinue}
+                                    disabled={isPaymentContinueDisabled}
+                                >
+                                    {text('cart.continueConfirm', 'Onaya Geç')}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {checkoutStep === 4 && (
+                        <div className="checkout-panel-card cart-summary-card">
+                            <h3>{text('cart.finalCheckTitle', 'Son Kontrol')}</h3>
+                            <div className="checkout-review-box">
+                                <div className="checkout-review-row">
+                                    <span>{t('cart.addressTitle')}</span>
+                                    <strong>{selectedAddressOption?.label || '-'}</strong>
+                                </div>
+                                <div className="checkout-review-row">
+                                    <span>{t('cart.paymentTitle')}</span>
+                                    <strong>{paymentOptions.find((item) => item.id === selectedPayment)?.label || '-'}</strong>
+                                </div>
+                                {selectedPayment === 'card' && (
+                                    <div className="checkout-review-row">
+                                        <span>{t('cart.card')}</span>
+                                        <strong>**** **** **** {normalizeCardNumber(cardForm.cardNumber).slice(-4) || '0000'}</strong>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="summary-row"><span>{t('cart.subtotal')}</span><strong>{formatPrice(summary.subtotal, locale)}</strong></div>
+                            <div className="summary-row"><span>{t('cart.cargo')}</span><strong>{summary.cargo === 0 ? t('cart.free') : formatPrice(summary.cargo, locale)}</strong></div>
+                            <div className="summary-row"><span>{t('cart.discount')}</span><strong>- {formatPrice(summary.discount, locale)}</strong></div>
+                            <div className="summary-row total"><span>{t('cart.total')}</span><strong>{formatPrice(summary.total, locale)}</strong></div>
+
+                            <div className="checkout-step-actions">
+                                <button type="button" className="checkout-outline-btn" onClick={() => setCheckoutStep(3)}>
+                                    {text('cart.back', 'Geri')}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="checkout-complete-button"
+                                    onClick={completePurchase}
+                                    disabled={items.length === 0}
+                                >
+                                    {t('cart.buy')}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </aside>}
             </div>
 
             {bankModalOpen && (

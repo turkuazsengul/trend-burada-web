@@ -7,6 +7,7 @@ import {MEGA_MENU_CATEGORIES} from "../../data/demoProductData";
 import {ProductFeedbackPanel} from "./ProductFeedbackPanel";
 import CartService from "../../service/CartService";
 import AppContext from "../../AppContext";
+import UserActivityService from "../../service/UserActivityService";
 
 const resolveCategoryKeyFromId = (productId = '') => {
     const normalized = String(productId).toLowerCase();
@@ -300,6 +301,13 @@ export const ProductDetail = ({match}) => {
             }
         };
     }, [productId]);
+
+    useEffect(() => {
+        if (!product?.id) {
+            return;
+        }
+        UserActivityService.addViewedProduct(product);
+    }, [product]);
 
     const categoryKey = useMemo(() => resolveCategoryKeyFromId(productId), [productId]);
 

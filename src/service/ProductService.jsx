@@ -325,6 +325,27 @@ const getFacetsByCategory = (categoryKey) => {
         });
 };
 
+const getAllProducts = () => {
+    if (USE_STATIC_PRODUCT_DATA || !PRODUCT_LIST_URL) {
+        const allKeys = getAllCategoryKeys();
+        const allProducts = allKeys.flatMap((key) => getStaticProductsByCategory(key));
+        return Promise.resolve(allProducts);
+    }
+
+    return axios.get(PRODUCT_LIST_URL)
+        .then((response) => unwrapList(response?.data).map(normalizeProduct).filter(Boolean))
+        .catch((error) => {
+            console.log('error ' + error);
+            const allKeys = getAllCategoryKeys();
+            return allKeys.flatMap((key) => getStaticProductsByCategory(key));
+        });
+};
+
+const getFacetsByProducts = (products) => {
+    const safeProducts = Array.isArray(products) ? products : [];
+    return Promise.resolve(getStaticFacetsByProducts(safeProducts));
+};
+
 const getProductById = (productId) => {
     if (!productId) {
         return Promise.resolve(null);
@@ -359,6 +380,8 @@ const getRelatedProductsByProductId = (productId, limit = 10) => {
 export default {
     getProductsByCategory,
     getFacetsByCategory,
+    getAllProducts,
+    getFacetsByProducts,
     getProductById,
     getRelatedProductsByProductId
 };
