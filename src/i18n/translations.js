@@ -109,6 +109,9 @@ export const translations = {
             categories: 'Kategoriler',
             searchPlaceholder: '{{title}} ara',
             noResult: 'Sonuç bulunamadı',
+            showFilters: 'Filtreleri Göster',
+            hideFilters: 'Filtreleri Gizle',
+            clearFilters: 'Temizle',
             brand: 'Marka',
             size: 'Beden',
             color: 'Renk',
@@ -238,6 +241,17 @@ export const translations = {
             liveHelp: 'Canlı Yardım',
             howToReturn: 'Nasıl İade Ederim',
             guide: 'İşlem Rehberi'
+        },
+        breadcrumb: {
+            home: 'Anasayfa',
+            products: 'Ürünler',
+            productDetail: 'Ürün Detayı',
+            cart: 'Sepetim',
+            favorites: 'Favorilerim',
+            account: 'Hesabım',
+            login: 'Giriş',
+            back: 'Geri',
+            ariaLabel: 'Sayfa yolu'
         },
         profile: {
             accountFallback: 'Hesabım',
@@ -430,6 +444,9 @@ export const translations = {
             categories: 'Categories',
             searchPlaceholder: 'Search {{title}}',
             noResult: 'No results found',
+            showFilters: 'Show Filters',
+            hideFilters: 'Hide Filters',
+            clearFilters: 'Clear',
             brand: 'Brand',
             size: 'Size',
             color: 'Color',
@@ -559,6 +576,17 @@ export const translations = {
             liveHelp: 'Live Support',
             howToReturn: 'How to Return',
             guide: 'Process Guide'
+        },
+        breadcrumb: {
+            home: 'Home',
+            products: 'Products',
+            productDetail: 'Product Detail',
+            cart: 'My Cart',
+            favorites: 'Favorites',
+            account: 'My Account',
+            login: 'Sign In',
+            back: 'Back',
+            ariaLabel: 'Breadcrumb'
         },
         profile: {
             accountFallback: 'My Account',
