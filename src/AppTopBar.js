@@ -465,6 +465,55 @@ export const AppTopBar = () => {
                         <div className="top-bar-logo">
                             <span><a href="/">TREND BURADA</a></span>
                         </div>
+                        <div className="top-bar-actions">
+                            <div
+                                className="account-menu-wrapper"
+                                onMouseEnter={openProfileMenu}
+                                onMouseLeave={scheduleCloseProfileMenu}
+                                onBlur={handleProfileMenuBlur}
+                            >
+                                {getLoginButtonLabel()}
+
+                                {localStorage.getItem('token') && (
+                                    <div className={`account-dropdown-panel ${isProfileMenuOpen ? 'is-open' : ''}`}>
+                                        <div className="account-dropdown-header">{userFullName}</div>
+                                        <div className="account-dropdown-list">
+                                            {profileActionList()}
+                                            {logoutButtonBody()}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <Button
+                                className="top-bar-button top-favorite-button p-button-secondary p-button-text"
+                                icon="pi pi-heart"
+                                onClick={clickFavoriteButton}
+                                label={t('topbar.favorites')}
+                            />
+
+                            <div ref={cartButtonAnchorRef} className="top-cart-button-anchor">
+                                <button
+                                    type="button"
+                                    className="top-bar-button top-cart-button top-cart-custom"
+                                    onClick={clickBoxButton}
+                                    aria-label="Sepetim"
+                                >
+                                    <span className="top-cart-icon-wrap" aria-hidden="true">
+                                        <i className="pi pi-shopping-cart"/>
+                                        {cartCount > 0 && (
+                                            <span
+                                                className={`top-cart-count-badge ${isCartBadgeBouncing ? 'is-bouncing' : ''}`}
+                                                aria-label={t('topbar.cartAria', {count: cartCount})}
+                                            >
+                                                {cartBadgeLabel}
+                                            </span>
+                                        )}
+                                    </span>
+                                    <span className="top-cart-label">{t('topbar.cart')}</span>
+                                </button>
+                            </div>
+                        </div>
                         <div className="top-bar-search-input">
                             <div className="col-12 md:col-4">
                                 <div className="p-inputgroup search-input-group">
@@ -474,59 +523,6 @@ export const AppTopBar = () => {
                             </div>
                         </div>
                     </div>
-
-                    <div>
-                        <div
-                            className="account-menu-wrapper"
-                            onMouseEnter={openProfileMenu}
-                            onMouseLeave={scheduleCloseProfileMenu}
-                            onBlur={handleProfileMenuBlur}
-                        >
-                            {getLoginButtonLabel()}
-
-                            {localStorage.getItem('token') && (
-                                <div className={`account-dropdown-panel ${isProfileMenuOpen ? 'is-open' : ''}`}>
-                                    <div className="account-dropdown-header">{userFullName}</div>
-                                    <div className="account-dropdown-list">
-                                        {profileActionList()}
-                                        {logoutButtonBody()}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div>
-                            <Button
-                                className="top-bar-button top-favorite-button p-button-secondary p-button-text"
-                                icon="pi pi-heart"
-                                onClick={clickFavoriteButton}
-                                label={t('topbar.favorites')}
-                            />
-                        </div>
-
-                    <div ref={cartButtonAnchorRef} className="top-cart-button-anchor">
-                        <button
-                            type="button"
-                            className="top-bar-button top-cart-button top-cart-custom"
-                            onClick={clickBoxButton}
-                            aria-label="Sepetim"
-                        >
-                            <span className="top-cart-icon-wrap" aria-hidden="true">
-                                <i className="pi pi-shopping-cart"/>
-                                {cartCount > 0 && (
-                                    <span
-                                        className={`top-cart-count-badge ${isCartBadgeBouncing ? 'is-bouncing' : ''}`}
-                                        aria-label={t('topbar.cartAria', {count: cartCount})}
-                                    >
-                                        {cartBadgeLabel}
-                                    </span>
-                                )}
-                            </span>
-                            <span className="top-cart-label">{t('topbar.cart')}</span>
-                        </button>
-                    </div>
-
                 </div>
 
                 <div
