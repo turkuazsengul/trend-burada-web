@@ -51,7 +51,6 @@ export const ProductPage = ({match}) => {
     const [products, setProducts] = useState([]);
     const [serviceFacets, setServiceFacets] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
     const [selectedFilters, setSelectedFilters] = useState({
         mark: [],
@@ -69,7 +68,6 @@ export const ProductPage = ({match}) => {
     useEffect(() => {
         setLoading(true);
         setSelectedFilters({});
-        setIsMobileFilterOpen(false);
 
         Promise.all([
             ProductService.getProductsByCategory(categoryKey),
@@ -223,7 +221,12 @@ export const ProductPage = ({match}) => {
         setSelectedFilters({});
     };
 
-    const hasActiveFilter = Object.values(selectedFilters || {}).some((values) => Array.isArray(values) && values.length > 0);
+    const handleReplaceFilterGroup = (filterKey, nextValues) => {
+        setSelectedFilters((prev) => ({
+            ...prev,
+            [filterKey]: Array.isArray(nextValues) ? nextValues : []
+        }));
+    };
 
     return (
         <div className="catalog product-page-shell">
@@ -231,11 +234,13 @@ export const ProductPage = ({match}) => {
                 ref={catalogRef}
                 className="product-catalog"
             >
-                <aside className={`product-filter ${isMobileFilterOpen ? 'is-mobile-open' : ''}`}>
+                <aside className="product-filter">
                     <ProductFilter
                         filterItemList={filters}
                         selectedFilters={selectedFilters}
                         onFilterChange={handleFilterChange}
+                        onReplaceFilterGroup={handleReplaceFilterGroup}
+                        onClearAllFilters={clearAllFilters}
                         menuItems={menuItems}
                         activeMenuKey={categoryKey}
                     />
@@ -243,27 +248,16 @@ export const ProductPage = ({match}) => {
 
                 <section ref={productContentRef} className="product-content">
                     <div className="product-toolbar">
-                        <div className="product-toolbar-left">
-                            <button
-                                type="button"
-                                className="product-filter-toggle-btn"
-                                onClick={() => setIsMobileFilterOpen((prev) => !prev)}
-                            >
-                                <i className={`pi ${isMobileFilterOpen ? 'pi-sliders-h' : 'pi-filter'}`}/>
-                                <span>
-                                    {isMobileFilterOpen ? t('productFilter.hideFilters') : t('productFilter.showFilters')}
-                                </span>
-                            </button>
-                            {hasActiveFilter && (
-                                <button
-                                    type="button"
-                                    className="product-filter-clear-btn"
-                                    onClick={clearAllFilters}
-                                >
-                                    {t('productFilter.clearFilters')}
-                                </button>
-                            )}
-                        </div>
+                        <ProductFilter
+                            mobileMode
+                            filterItemList={filters}
+                            selectedFilters={selectedFilters}
+                            onFilterChange={handleFilterChange}
+                            onReplaceFilterGroup={handleReplaceFilterGroup}
+                            onClearAllFilters={clearAllFilters}
+                            menuItems={menuItems}
+                            activeMenuKey={categoryKey}
+                        />
                         <span>{t('productList.listingCount', {count: filteredProducts.length})}</span>
                     </div>
 

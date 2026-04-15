@@ -1,5 +1,7 @@
 .catalog {
     width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
 }
 
 .hero-slider-section {
@@ -11,6 +13,8 @@
     grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
     gap: 1rem;
     align-items: stretch;
+    width: 100%;
+    max-width: 100%;
 }
 
 .hero-slider-shell {
@@ -21,6 +25,7 @@
     border-radius: 14px;
     background: #e8edf4;
     box-shadow: 0 16px 30px rgba(15, 23, 42, 0.09);
+    max-width: 100%;
 }
 
 .hero-slider-track {
@@ -127,6 +132,7 @@
     border-radius: 14px;
     background: #e8edf4;
     box-shadow: 0 14px 28px rgba(15, 23, 42, 0.09);
+    max-width: 100%;
 }
 
 .hero-mini-slider-track {
@@ -241,6 +247,8 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.2rem;
+    width: 100%;
+    max-width: 100%;
 }
 
 .category-spotlight-card {
@@ -374,6 +382,8 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1.3rem;
+    width: 100%;
+    max-width: 100%;
 }
 
 .trend-card {
@@ -407,6 +417,8 @@
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
     gap: 1.4rem;
+    width: 100%;
+    max-width: 100%;
 }
 
 .discovery-lead {
@@ -457,6 +469,8 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
+    width: 100%;
+    max-width: 100%;
 }
 
 .discovery-card {
@@ -517,6 +531,15 @@
     margin-top: 0.2rem;
 }
 
+.hero-slider-split > *,
+.category-spotlight-grid > *,
+.trend-card-grid > *,
+.discovery-section > *,
+.discovery-grid > *,
+.campaign-list-item > * {
+    min-width: 0;
+}
+
 .campaign-item {
     display: block;
     width: 100%;
@@ -563,12 +586,14 @@
     letter-spacing: 0.01em;
 }
 
-.campaign-list .campaign-item:hover {
-    border-color: #d6bee9;
-}
+@media (hover: hover) and (pointer: fine) {
+    .campaign-list .campaign-item:hover {
+        border-color: #d6bee9;
+    }
 
-.campaign-list .campaign-item:hover .campaign-item-img {
-    transform: scale(1.03);
+    .campaign-list .campaign-item:hover .campaign-item-img {
+        transform: scale(1.03);
+    }
 }
 
 @media (max-width: 1280px) {
@@ -603,11 +628,15 @@
 
 @media (max-width: 768px) {
     .hero-slider-shell {
-        height: 34rem;
+        height: auto;
+        aspect-ratio: 16 / 11;
+        border-radius: 10px;
     }
 
     .hero-mini-slider-shell {
-        height: 25rem;
+        height: auto;
+        aspect-ratio: 16 / 9;
+        border-radius: 10px;
     }
 
     .hero-slide-overlay h2 {
@@ -618,6 +647,11 @@
         left: 1.2rem;
         right: 1.2rem;
         bottom: 1.2rem;
+    }
+
+    .hero-slide img,
+    .hero-mini-slide img {
+        object-position: center center;
     }
 
     .trend-card-grid,
@@ -649,24 +683,37 @@
     }
 
     .campaign-item .campaign-item-img {
-        height: 16.5rem;
+        height: 15rem;
+        object-position: center center;
     }
 
     .campaign-caption {
         font-size: 1.16rem;
         line-height: 1.38;
     }
+
+    .trend-card img {
+        height: 13rem;
+        object-position: center center;
+    }
+
+    .discovery-lead {
+        min-height: 21rem;
+    }
+
+    .discovery-card,
+    .discovery-card img {
+        min-height: 13rem;
+    }
 }
 
 @media (max-width: 480px) {
     .hero-slider-shell {
-        height: 28rem;
-        border-radius: 10px;
+        aspect-ratio: 16 / 12;
     }
 
     .hero-mini-slider-shell {
-        height: 22rem;
-        border-radius: 10px;
+        aspect-ratio: 16 / 10;
     }
 
     .hero-slide-overlay h2 {
@@ -684,6 +731,6 @@
     }
 
     .discovery-lead {
-        min-height: 22rem;
+        min-height: 19rem;
     }
 }
