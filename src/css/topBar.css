@@ -841,6 +841,15 @@
 
 @media (max-width: 1024px) {
     .top-bar {
+        position: sticky;
+        top: 0;
+        z-index: 120;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(6px);
+        border-bottom: 1px solid #e8edf5;
+    }
+
+    .top-bar {
         margin-top: 1rem;
         margin-bottom: 0.7rem;
     }
@@ -879,7 +888,7 @@
 
     .top-bar .top-bar-item .top-bar-button .p-button-label,
     .top-cart-label {
-        font-size: 1.2rem;
+        display: none;
     }
 
     .top-bar .top-bar-item .top-bar-button .p-button-icon,
@@ -949,6 +958,15 @@
     .top-bar .top-bar-item > div:nth-child(3),
     .top-bar .top-bar-item > div:nth-child(4) {
         justify-content: center !important;
+    }
+
+    .top-bar .top-bar-item .top-bar-button,
+    .top-cart-custom {
+        width: 4rem;
+        min-width: 4rem;
+        height: 3.8rem;
+        justify-content: center;
+        padding: 0;
     }
 
     .top-bar .top-bar-item .top-bar-button .p-button-label,

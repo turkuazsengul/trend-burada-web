@@ -25,6 +25,8 @@ import {FavoritesPage} from "./components/FavoritesPage";
 import CartService, {CART_UPDATED_EVENT} from "./service/CartService";
 import {CartPage} from "./components/CartPage";
 import {translate} from "./i18n/i18n";
+import {AppBreadcrumb} from "./components/AppBreadcrumb";
+import './css/breadcrumb.css'
 
 const AddressRedirect = () => <Redirect to="/hesabım/KullaniciBilgilerim?section=address"/>;
 
@@ -69,6 +71,7 @@ export const HomePage = () => {
         <div className="home-layout">
             <AppContext.Provider value={userSettings}>
                 <AppTopBar/>
+                <AppBreadcrumb/>
                 <div className="container-items">
                     <div className={`container ${isCartRoute ? 'container-full' : ''}`}>
                         <Switch>
