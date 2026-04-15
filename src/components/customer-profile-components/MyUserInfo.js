@@ -11,6 +11,7 @@ import {Calendar} from "primereact/calendar";
 import {Toast} from "primereact/toast";
 import AppContext from "../../AppContext";
 import {InputTextarea} from "primereact/inputtextarea";
+import UserActivityService from "../../service/UserActivityService";
 
 const MyUserInfo = () => {
     const {t = (key) => key} = useContext(AppContext) || {};
@@ -29,6 +30,7 @@ const MyUserInfo = () => {
     const [fullName, setFullName] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
+    const [gender, setGender] = useState("");
     const [email, setEmail] = useState("");
     const [birthDate, setBirthDate] = useState(null);
     const [phoneNumber, setPhoneNumber] = useState("");
@@ -38,8 +40,21 @@ const MyUserInfo = () => {
     const [updateBtnDisabled, setUpdateBtnDisabled] = useState(true);
     const [passUpdateBtnDisabled, setPassUpdateBtnDisabled] = useState(true);
     const [activeSection, setActiveSection] = useState('user-info');
+    const [compactProfileNav, setCompactProfileNav] = useState(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+    const [accountSubTab, setAccountSubTab] = useState('membership');
+    const [newPhoneNumber, setNewPhoneNumber] = useState("");
+    const [phoneOtpModalOpen, setPhoneOtpModalOpen] = useState(false);
+    const [phoneOtpCode, setPhoneOtpCode] = useState("");
+    const [phoneOtpError, setPhoneOtpError] = useState("");
+    const [contactPrefs, setContactPrefs] = useState({
+        email: true,
+        sms: false,
+        push: false
+    });
     const [addresses, setAddresses] = useState([]);
     const [showAddressForm, setShowAddressForm] = useState(false);
+    const [orderHistory, setOrderHistory] = useState([]);
+    const [viewedProducts, setViewedProducts] = useState([]);
     const [editingAddressId, setEditingAddressId] = useState(null);
     const [addressForm, setAddressForm] = useState({
         title: '',
@@ -66,7 +81,9 @@ const MyUserInfo = () => {
             setFirstName(user.name || "")
             setEmail(user.email || "")
             setLastName(user.surname || "")
+            setGender(user.gender || "")
             setFullName(`${user.name || ''} ${user.surname || ''}`.trim())
+            setNewPhoneNumber(user.gsm_no || "")
         } else {
             localStorage.removeItem("token");
             history.push("/login");
@@ -88,6 +105,16 @@ const MyUserInfo = () => {
 
         setActiveSection('user-info');
     }, [location.search, profileSections]);
+
+    useEffect(() => {
+        const onResize = () => {
+            setCompactProfileNav(window.innerWidth <= 768);
+        };
+
+        onResize();
+        window.addEventListener('resize', onResize, {passive: true});
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
 
     const addressStorageKey = `tb_addresses_${userId || 'guest'}`;
 
@@ -138,6 +165,14 @@ const MyUserInfo = () => {
         localStorage.setItem(addressStorageKey, JSON.stringify(addresses));
     }, [addresses, userId, addressStorageKey]);
 
+    useEffect(() => {
+        if (!userId) {
+            return;
+        }
+        setOrderHistory(UserActivityService.getOrders());
+        setViewedProducts(UserActivityService.getViewedProducts());
+    }, [userId, activeSection]);
+
     const clickUserInformationUpdateBtn = () => {
         const user = {
             pkId: userId,
@@ -145,7 +180,8 @@ const MyUserInfo = () => {
             dob: birthDate,
             name: firstName,
             email: email,
-            surname: lastName
+            surname: lastName,
+            gender: gender
         };
 
         UserService.updateUser(user).then((response) => {
@@ -162,6 +198,56 @@ const MyUserInfo = () => {
             }
         })
     }
+
+    const PHONE_OTP_DEMO_CODE = '428613';
+
+    const handleSendPhoneOtp = () => {
+        const digits = String(newPhoneNumber || '').replace(/\D/g, '');
+        if (digits.length !== 11) {
+            showMessage(
+                safeText('profile.phoneInvalidTitle', 'Geçersiz Telefon'),
+                safeText('profile.phoneInvalidDetail', 'Lütfen geçerli bir cep telefonu numarası girin.'),
+                toastCenter,
+                'warn'
+            );
+            return;
+        }
+
+        setPhoneOtpCode('');
+        setPhoneOtpError('');
+        setPhoneOtpModalOpen(true);
+    };
+
+    const handleApprovePhoneOtp = () => {
+        if (phoneOtpCode !== PHONE_OTP_DEMO_CODE) {
+            setPhoneOtpError(safeText('profile.phoneOtpInvalid', 'Doğrulama kodu hatalı. Demo kod: 428613'));
+            return;
+        }
+
+        setPhoneNumber(newPhoneNumber);
+        setUpdateBtnDisabled(false);
+        setPhoneOtpModalOpen(false);
+        setPhoneOtpError('');
+        setPhoneOtpCode('');
+
+        try {
+            const storedUserStr = localStorage.getItem("user");
+            const user = storedUserStr ? JSON.parse(storedUserStr) : null;
+            if (user) {
+                user.gsm_no = newPhoneNumber;
+                localStorage.setItem("user", JSON.stringify(user));
+            }
+        } catch (e) {
+            // no-op
+        }
+
+        showMessage(
+            safeText('profile.phoneUpdatedTitle', 'Başarılı'),
+            safeText('profile.phoneUpdatedDetail', 'Cep telefonu numaranız güncellendi.'),
+            toastCenter,
+            'success'
+        );
+    };
 
     const sectionMeta = {
         'user-info': {title: t('profile.accountInfoTitle'), subtitle: t('profile.accountInfoSubtitle')},
@@ -211,13 +297,33 @@ const MyUserInfo = () => {
                         {t('profile.accountInfoTitle')}
                     </div>
                 </div>
-                <div className="process-row">
-                    <div className="process-user-form-layer">
+                <div className="process-row user-info-layout user-info-shell">
+                    <div className="user-info-tabs">
+                        <button
+                            type="button"
+                            className={`user-info-tab ${accountSubTab === 'membership' ? 'is-active' : ''}`}
+                            onClick={() => setAccountSubTab('membership')}
+                        >
+                            {safeText('profile.membershipInfo', 'Üyelik Bilgilerim')}
+                        </button>
+                        <button
+                            type="button"
+                            className={`user-info-tab ${accountSubTab === 'password' ? 'is-active' : ''}`}
+                            onClick={() => setAccountSubTab('password')}
+                        >
+                            {safeText('profile.passwordUpdate', 'Şifre Değişikliği')}
+                        </button>
+                        <button
+                            type="button"
+                            className={`user-info-tab ${accountSubTab === 'contact' ? 'is-active' : ''}`}
+                            onClick={() => setAccountSubTab('contact')}
+                        >
+                            {safeText('profile.contactPreferences', 'İletişim Tercihlerim')}
+                        </button>
+                    </div>
+
+                    {accountSubTab === 'membership' ? (
                         <div className="user-detail">
-                            <div className="user-detail-header">
-                                <label>{t('profile.membershipInfo')}</label>
-                                <hr/>
-                            </div>
                             <div className="user-detail-body">
                                 <div className="detail-row-1">
                                     <div className="user-detail-item">
@@ -227,10 +333,7 @@ const MyUserInfo = () => {
                                             tooltipOptions={{position: 'top'}}
                                             value={firstName}
                                             disabled={true}
-                                            onChange={(e) => {
-                                                setFirstName(e.target.value)
-                                            }}
-
+                                            onChange={(e) => setFirstName(e.target.value)}
                                         />
                                     </div>
                                     <div className="user-detail-item">
@@ -238,9 +341,7 @@ const MyUserInfo = () => {
                                         <InputText
                                             value={lastName}
                                             disabled={true}
-                                            onChange={(e) => {
-                                                setLastName(e.target.value)
-                                            }}
+                                            onChange={(e) => setLastName(e.target.value)}
                                         />
                                     </div>
                                 </div>
@@ -251,48 +352,72 @@ const MyUserInfo = () => {
                                         <InputText
                                             disabled={true}
                                             value={email}
-                                            onChange={(e) => {
-                                                setEmail(e.target.value)
-                                            }}
+                                            onChange={(e) => setEmail(e.target.value)}
                                         />
                                     </div>
                                     <div className="user-detail-item">
-                                        <div className="header-item">{t('profile.phone')}</div>
-                                        <InputMask
-                                            mask="0(999)-999-99-99"
-                                            placeholder="(___)-___-__-__"
-                                            keyfilter="int"
-                                            value={phoneNumber}
-                                            onClick={() => {
-                                                setPhoneNumber("")
-                                            }}
-                                            onChange={(e) => {
-                                                setPhoneNumber(e.target.value)
-                                                setUpdateBtnDisabled(false)
-                                            }}
-                                        />
+                                        <div className="header-item">{safeText('profile.gender', 'Cinsiyet')}</div>
+                                        <div className="gender-check-list">
+                                            <label className="gender-check-item">
+                                                <input
+                                                    type="radio"
+                                                    name="profile-gender"
+                                                    checked={gender === 'female'}
+                                                    onChange={() => {
+                                                        setGender('female');
+                                                        setUpdateBtnDisabled(false);
+                                                    }}
+                                                />
+                                                <span>{safeText('profile.genderFemale', 'Kadın')}</span>
+                                            </label>
+                                            <label className="gender-check-item">
+                                                <input
+                                                    type="radio"
+                                                    name="profile-gender"
+                                                    checked={gender === 'male'}
+                                                    onChange={() => {
+                                                        setGender('male');
+                                                        setUpdateBtnDisabled(false);
+                                                    }}
+                                                />
+                                                <span>{safeText('profile.genderMale', 'Erkek')}</span>
+                                            </label>
+                                            <label className="gender-check-item">
+                                                <input
+                                                    type="radio"
+                                                    name="profile-gender"
+                                                    checked={gender === 'unspecified' || !gender}
+                                                    onChange={() => {
+                                                        setGender('unspecified');
+                                                        setUpdateBtnDisabled(false);
+                                                    }}
+                                                />
+                                                <span>{safeText('profile.genderUnspecified', 'Belirtmek İstemiyorum')}</span>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="detail-row-3">
                                     <div className="user-detail-item">
                                         <div className="header-item">{t('profile.birthDate')}</div>
-                                        <div>
-                                            <Calendar
-                                                dateFormat={"dd.mm.yy"}
-                                                id="buttondisplay"
-                                                value={birthDate}
-                                                onChange={(e) => {
-                                                    setBirthDate(e.value)
-                                                    setUpdateBtnDisabled(false)
-                                                }}/>
-                                        </div>
+                                        <Calendar
+                                            dateFormat={"dd.mm.yy"}
+                                            id="buttondisplay"
+                                            value={birthDate}
+                                            placeholder={safeText('profile.birthDatePlaceholder', 'GG.AA.YYYY')}
+                                            onChange={(e) => {
+                                                setBirthDate(e.value)
+                                                setUpdateBtnDisabled(false)
+                                            }}
+                                        />
                                     </div>
                                 </div>
                                 <div className="detail-row-4">
                                     <div className="user-detail-item">
                                         <div className="user-detail-button">
                                             <Button
+                                                className="profile-action-btn"
                                                 onClick={clickUserInformationUpdateBtn}
                                                 label={t('profile.update')}
                                                 disabled={updateBtnDisabled}
@@ -301,16 +426,42 @@ const MyUserInfo = () => {
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
+                            <div className="user-subsection-divider"/>
+
+                            <div className="contact-preference-box phone-update-box">
+                                <h4>{safeText('profile.contactInfo', 'İletişim Bilgisi')}</h4>
+                                <p>{safeText('profile.phoneTabInfo', 'Telefon numaranızı doğrulama kodu ile güvenli şekilde güncelleyebilirsiniz.')}</p>
+
+                                <div className="phone-update-grid">
+                                    <label className="phone-update-field">
+                                        <span>{safeText('profile.phoneTab', 'Cep Telefonu')}</span>
+                                        <InputMask
+                                            mask="0(999)-999-99-99"
+                                            placeholder="0(5__) ___ __ __"
+                                            keyfilter="int"
+                                            value={newPhoneNumber}
+                                            onChange={(e) => setNewPhoneNumber(e.value)}
+                                        />
+                                    </label>
+                                </div>
+
+                                <div className="user-detail-button">
+                                    <Button
+                                        className="profile-action-btn"
+                                        label={safeText('profile.sendPhoneOtp', 'SMS Kodu Gönder')}
+                                        onClick={handleSendPhoneOtp}
+                                    />
+                                </div>
                             </div>
                         </div>
+                    ) : null}
 
-                        <div className="divider"></div>
-
+                    {accountSubTab === 'password' ? (
                         <div className="password-change">
-                            <div className="password-header">
-                                <label>{t('profile.passwordUpdate')}</label>
-                                <hr/>
+                            <div className="password-change-info">
+                                {safeText('profile.passwordHintAccount', 'Şifreniz en az bir harf, rakam veya özel karakter içermeli ve en az 8 karakterden oluşmalıdır.')}
                             </div>
                             <div className="password-change-body">
                                 <div className="password-row-1">
@@ -320,7 +471,7 @@ const MyUserInfo = () => {
                                             feedback={false}
                                             value={currentPassword}
                                             toggleMask
-                                            style={{width: '100%', fontSize: '1px', marginRight: "0rem"}}
+                                            className="account-password-input"
                                             onChange={(e) => {
                                                 setCurrentPassword(e.target.value)
                                                 setPassUpdateBtnDisabled(false)
@@ -335,7 +486,7 @@ const MyUserInfo = () => {
                                         <Password
                                             value={newPassword}
                                             toggleMask
-                                            style={{width: '100%', fontSize: '1px', marginRight: "0rem"}}
+                                            className="account-password-input"
                                             onChange={(e) => {
                                                 setNewPassword(e.target.value)
                                                 setPassUpdateBtnDisabled(false)
@@ -351,7 +502,7 @@ const MyUserInfo = () => {
                                             feedback={false}
                                             value={againNewPassword}
                                             toggleMask
-                                            style={{width: '100%', fontSize: '1px', marginRight: "0rem"}}
+                                            className="account-password-input"
                                             onChange={(e) => {
                                                 setAgainNewPassword(e.target.value)
                                                 setPassUpdateBtnDisabled(false)
@@ -364,6 +515,7 @@ const MyUserInfo = () => {
                                     <div className="password-item">
                                         <div className="user-detail-button">
                                             <Button
+                                                className="profile-action-btn"
                                                 label={t('profile.update')}
                                                 disabled={passUpdateBtnDisabled}
                                                 size="large"
@@ -371,10 +523,48 @@ const MyUserInfo = () => {
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
-                    </div>
+                    ) : null}
+
+                    {accountSubTab === 'contact' ? (
+                        <div className="contact-preference-box">
+                            <h4>{safeText('profile.contactPreferences', 'İletişim Tercihlerim')}</h4>
+                            <p>{safeText('profile.contactPrefText', 'Kampanya, bildirim ve fırsat mesajları için tercihlerinizi buradan yönetebilirsiniz.')}</p>
+                            <label className="contact-preference-item">
+                                <input
+                                    type="checkbox"
+                                    checked={contactPrefs.email}
+                                    onChange={(e) => setContactPrefs((prev) => ({...prev, email: e.target.checked}))}
+                                />
+                                <span>{safeText('profile.contactByEmail', 'E-posta ile bilgilendirme')}</span>
+                            </label>
+                            <label className="contact-preference-item">
+                                <input
+                                    type="checkbox"
+                                    checked={contactPrefs.sms}
+                                    onChange={(e) => setContactPrefs((prev) => ({...prev, sms: e.target.checked}))}
+                                />
+                                <span>{safeText('profile.contactBySms', 'SMS ile bilgilendirme')}</span>
+                            </label>
+                            <label className="contact-preference-item">
+                                <input
+                                    type="checkbox"
+                                    checked={contactPrefs.push}
+                                    onChange={(e) => setContactPrefs((prev) => ({...prev, push: e.target.checked}))}
+                                />
+                                <span>{safeText('profile.contactByPush', 'Uygulama bildirimi')}</span>
+                            </label>
+                            <div className="user-detail-button">
+                                <Button
+                                    className="profile-action-btn"
+                                    label={t('profile.update')}
+                                    onClick={() => showMessage('Bilgi', 'İletişim tercihleriniz demo olarak güncellendi.', toastCenter, 'info')}
+                                />
+                            </div>
+                        </div>
+                    ) : null}
+
                 </div>
             </>
         );
@@ -599,6 +789,68 @@ const MyUserInfo = () => {
         );
     };
 
+    const renderOrdersSection = () => {
+        return (
+            <div className="process-row">
+                <div className="process-header-item">{t('profile.sectionTitleOrders')}</div>
+                {orderHistory.length === 0 ? (
+                    <div className="profile-placeholder-panel">
+                        <p>{safeText('profile.noOrdersText', 'Henüz sipariş bulunmuyor.')}</p>
+                    </div>
+                ) : (
+                    <div className="profile-order-list">
+                        {orderHistory.map((order) => (
+                            <div key={order.id} className="profile-order-card">
+                                <div className="profile-order-head">
+                                    <strong>#{order.id}</strong>
+                                    <span>{new Date(order.createdAt).toLocaleDateString('tr-TR')}</span>
+                                </div>
+                                <div className="profile-order-items">
+                                    {(order.items || []).slice(0, 3).map((item) => (
+                                        <div key={`${order.id}-${item.id}`} className="profile-order-item">
+                                            <img src={item.img} alt={item.title}/>
+                                            <div>
+                                                <strong>{item.mark}</strong>
+                                                <span>{item.title}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="profile-order-foot">
+                                    <span>{safeText('profile.orderTotal', 'Toplam')}</span>
+                                    <strong>{Number(order?.summary?.total || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TL</strong>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderViewedSection = () => {
+        return (
+            <div className="process-row">
+                <div className="process-header-item">{t('profile.sectionTitleHistory')}</div>
+                {viewedProducts.length === 0 ? (
+                    <div className="profile-placeholder-panel">
+                        <p>{safeText('profile.noViewedText', 'Henüz incelediğiniz ürün bulunmuyor.')}</p>
+                    </div>
+                ) : (
+                    <div className="profile-viewed-grid">
+                        {viewedProducts.slice(0, 16).map((item) => (
+                            <a key={item.id} href={`/detail/${item.id}`} className="profile-viewed-card">
+                                <img src={item.img} alt={item.title}/>
+                                <strong>{item.mark}</strong>
+                                <span>{item.title}</span>
+                            </a>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     const onChangeSection = (sectionKey) => {
         setActiveSection(sectionKey);
         history.replace(`${location.pathname}?section=${sectionKey}`);
@@ -608,22 +860,77 @@ const MyUserInfo = () => {
 
         <div className="catalog">
             <div className="container-items">
+                <Toast ref={toastCenter} position="center"/>
                 <div className="my-account-page">
-                    <Toast ref={toastCenter} position="center"/>
-
                     <ProfileNavigation
                         userFullName={fullName}
                         activeSection={activeSection}
                         onChangeSection={onChangeSection}
+                        compact={compactProfileNav}
                     />
 
                     <div className="process-column">
                         {activeSection === 'user-info' && renderUserInfoSection()}
                         {activeSection === 'address' && renderAddressSection()}
-                        {!['user-info', 'address'].includes(activeSection) && renderPlaceholderSection()}
+                        {activeSection === 'orders' && renderOrdersSection()}
+                        {activeSection === 'history' && renderViewedSection()}
+                        {!['user-info', 'address', 'orders', 'history'].includes(activeSection) && renderPlaceholderSection()}
                     </div>
                 </div>
             </div>
+
+            {phoneOtpModalOpen && (
+                <div className="bank-demo-modal-backdrop" onClick={() => setPhoneOtpModalOpen(false)}>
+                    <div className="bank-demo-modal phone-otp-modal" onClick={(event) => event.stopPropagation()}>
+                        <div className="bank-demo-head">
+                            <h3>{safeText('profile.phoneOtpTitle', 'SMS Doğrulama')}</h3>
+                            <button type="button" onClick={() => setPhoneOtpModalOpen(false)}>
+                                {safeText('common.close', 'Kapat')}
+                            </button>
+                        </div>
+
+                        <div className="bank-demo-content">
+                            <div className="bank-demo-info">
+                                {safeText('profile.phoneOtpInfo', 'Numaranızı doğrulamak için telefonunuza SMS kodu gönderildi.')}
+                            </div>
+                            <div className="bank-demo-row">
+                                <span>{safeText('profile.newPhone', 'Yeni Telefon')}</span>
+                                <strong>{newPhoneNumber || '-'}</strong>
+                            </div>
+                            <div className="bank-demo-row">
+                                <span>{safeText('profile.phoneOtpDemoCode', 'Demo SMS Kodu')}</span>
+                                <strong>{PHONE_OTP_DEMO_CODE}</strong>
+                            </div>
+
+                            <div className="bank-otp-area">
+                                <label htmlFor="phone-otp-input">{safeText('profile.phoneOtpCode', 'SMS Kodu')}</label>
+                                <input
+                                    id="phone-otp-input"
+                                    type="text"
+                                    value={phoneOtpCode}
+                                    onChange={(event) => setPhoneOtpCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    placeholder={safeText('profile.phoneOtpPlaceholder', '6 haneli kod')}
+                                />
+                                {phoneOtpError && <div className="bank-otp-error">{phoneOtpError}</div>}
+                            </div>
+                        </div>
+
+                        <div className="bank-demo-actions">
+                            <button type="button" className="cancel" onClick={() => setPhoneOtpModalOpen(false)}>
+                                {safeText('profile.cancel', 'Vazgeç')}
+                            </button>
+                            <button
+                                type="button"
+                                className="approve"
+                                onClick={handleApprovePhoneOtp}
+                                disabled={phoneOtpCode.length !== 6}
+                            >
+                                {safeText('profile.phoneOtpApprove', 'Onayla')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

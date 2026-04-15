@@ -1,4 +1,5 @@
 import React, {useContext, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
+import {useLocation} from "react-router-dom";
 import {ProductFilter} from "./ProductFilter";
 import {ProductCard} from "./ProductCard";
 import ProductService from "../../service/ProductService";
@@ -43,7 +44,11 @@ const matchesPriceRange = (price, rangeValue) => {
 export const ProductPage = ({match}) => {
     const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
     const locale = language === 'en' ? 'en-US' : 'tr-TR';
-    const categoryKey = normalizeCategoryKey(match.params.id || 'elbise');
+    const location = useLocation();
+    const routeKey = normalizeCategoryKey(match.params.id || 'elbise');
+    const isDiscountRoute = routeKey === 'indirim';
+    const categoryKey = isDiscountRoute ? 'elbise' : routeKey;
+    const discountQuery = Number(new URLSearchParams(location.search).get('discount') || 0);
     const menuItems = useMemo(() => getMenuItemsByCategory(categoryKey), [categoryKey]);
     const catalogRef = useRef(null);
     const productContentRef = useRef(null);
@@ -69,14 +74,18 @@ export const ProductPage = ({match}) => {
         setLoading(true);
         setSelectedFilters({});
 
-        Promise.all([
-            ProductService.getProductsByCategory(categoryKey),
-            ProductService.getFacetsByCategory(categoryKey)
-        ]).then(([productList, facetList]) => {
-            setProducts(Array.isArray(productList) ? productList : []);
-            setServiceFacets(Array.isArray(facetList) ? facetList : []);
+        const productSource = isDiscountRoute
+            ? ProductService.getAllProducts()
+            : ProductService.getProductsByCategory(categoryKey);
+
+        productSource.then((productList) => {
+            const safeProducts = Array.isArray(productList) ? productList : [];
+            setProducts(safeProducts);
+            return ProductService.getFacetsByProducts(safeProducts).then((facetList) => {
+                setServiceFacets(Array.isArray(facetList) ? facetList : []);
+            });
         }).finally(() => setLoading(false));
-    }, [categoryKey]);
+    }, [categoryKey, isDiscountRoute]);
 
     useLayoutEffect(() => {
         const updateFooterVisibility = () => {
@@ -192,6 +201,10 @@ export const ProductPage = ({match}) => {
         };
 
         return products.filter((product) => {
+            if (isDiscountRoute && discountQuery > 0 && Number(product.discountRate || 0) < discountQuery) {
+                return false;
+            }
+
             return Object.entries(selectedFilters).every(([key, values]) => {
                 if (!Array.isArray(values) || values.length === 0) {
                     return true;
@@ -200,7 +213,7 @@ export const ProductPage = ({match}) => {
                 return values.some((value) => matchesFilter(product, key, value));
             });
         });
-    }, [products, selectedFilters]);
+    }, [products, selectedFilters, isDiscountRoute, discountQuery]);
 
     const handleFilterChange = (filterKey, value) => {
         setSelectedFilters((prev) => {

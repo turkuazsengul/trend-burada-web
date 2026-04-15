@@ -982,3 +982,31 @@
         margin-bottom: 1rem;
     }
 }
+
+@media (max-width: 1024px) {
+    .top-bar,
+    .top-bar-items,
+    .top-bar .top-bar-item,
+    .top-bar .top-bar-search,
+    .top-bar-actions,
+    .account-menu-wrapper {
+        overflow: visible;
+    }
+
+    .account-dropdown-panel {
+        left: auto;
+        right: 0;
+        top: calc(100% + 0.55rem);
+        width: min(92vw, 28rem);
+        max-height: min(70vh, 46rem);
+        overflow-y: auto;
+        border-radius: 12px;
+    }
+}
+
+@media (max-width: 640px) {
+    .account-dropdown-panel {
+        right: -0.3rem;
+        width: min(94vw, 30rem);
+    }
+}
