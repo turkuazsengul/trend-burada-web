@@ -513,114 +513,6 @@ export const CartPage = () => {
                             </div>
                         </article>
                     ))}
-
-                    <section className={`cart-personalized-row ${hasSideRoomForRecommendations ? 'split' : 'stacked'}`}>
-                        <section className={`cart-suggest-section cart-viewed-panel ${hasSideRoomForRecommendations ? 'is-compact' : ''}`} style={hasSideRoomForRecommendations ? viewedPanelStyle : undefined}>
-                                <div className="cart-suggest-head">{text('cart.recentlyViewedTitle', 'Önceden İncelediklerim')}</div>
-                            {viewedItems.length > 0 ? (
-                                <div className={`cart-viewed-track-shell ${enableViewedSlider ? 'is-slider' : ''}`}>
-                                    {enableViewedSlider && (
-                                        <button
-                                            type="button"
-                                            className="cart-viewed-nav prev"
-                                            onClick={() => shiftLoop(setViewedStart, viewedItems, -1)}
-                                            aria-label={text('cart.prev', 'Önceki')}
-                                        >
-                                            <i className="pi pi-angle-left"/>
-                                        </button>
-                                    )}
-                                    <div className={`cart-viewed-grid is-loop`} style={{'--loop-col-count': viewedWindow.length}}>
-                                        {viewedWindow.map((product) => (
-                                            <div key={product.id} className="cart-viewed-item">
-                                                {recentItemTemplate(product)}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {enableViewedSlider && (
-                                        <button
-                                            type="button"
-                                            className="cart-viewed-nav next"
-                                            onClick={() => shiftLoop(setViewedStart, viewedItems, 1)}
-                                            aria-label={text('cart.next', 'Sonraki')}
-                                        >
-                                            <i className="pi pi-angle-right"/>
-                                        </button>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="cart-empty-state">
-                                    {text('cart.recentlyViewedEmpty', 'Henüz incelediğin ürün yok. Ürünleri keşfettikçe burada listelenecek.')}
-                                </div>
-                            )}
-                        </section>
-
-                        {recommendationProducts.length > 0 && (
-                            <section className="cart-suggest-section cart-reco-panel">
-                                <div className="cart-suggest-head">{text('cart.suggestTitle', 'Sizin İçin Öneriler')}</div>
-                                <div className={`cart-viewed-track-shell ${enableRecoSlider ? 'is-slider' : ''}`}>
-                                    {enableRecoSlider && (
-                                        <button
-                                            type="button"
-                                            className="cart-viewed-nav prev"
-                                            onClick={() => shiftLoop(setRecoStart, recommendationProducts, -1)}
-                                            aria-label={text('cart.prev', 'Önceki')}
-                                        >
-                                            <i className="pi pi-angle-left"/>
-                                        </button>
-                                    )}
-                                    <div
-                                        className="cart-viewed-grid cart-reco-grid is-loop"
-                                        style={{'--loop-col-count': Math.max(recoWindow.length, 1)}}
-                                    >
-                                        {recoWindow.map((product) => (
-                                        <div key={`reco-${product.id}`} className="cart-viewed-item">
-                                            {recentItemTemplate(product)}
-                                        </div>
-                                    ))}
-                                    </div>
-                                    {enableRecoSlider && (
-                                        <button
-                                            type="button"
-                                            className="cart-viewed-nav next"
-                                            onClick={() => shiftLoop(setRecoStart, recommendationProducts, 1)}
-                                            aria-label={text('cart.next', 'Sonraki')}
-                                        >
-                                            <i className="pi pi-angle-right"/>
-                                        </button>
-                                    )}
-                                </div>
-                            </section>
-                        )}
-                    </section>
-
-                    <section className="cart-discount-circles">
-                        <div className="cart-suggest-head cart-discount-title">{text('cart.discountHubTitle', 'Size Özel İndirim Fırsatları')}</div>
-                        <div className="cart-discount-circle-row">
-                            {discountRates.map((rate, index) => (
-                                <a
-                                    key={rate}
-                                    href={`/product/indirim?discount=${rate}`}
-                                    className={`cart-discount-circle c${index + 1}`}
-                                >
-                                    <strong>%{rate}</strong>
-                                    <span>{text('cart.discountCircleLabel', 'İndirim')}</span>
-                                </a>
-                            ))}
-                        </div>
-                    </section>
-
-                    <section className="cart-campaign-strip">
-                        {campaignProducts.slice(0, 6).map((product) => (
-                            <a key={product.id} href={`/detail/${product.id}`} className="cart-campaign-card is-product">
-                                <img src={product.img} alt={product.title}/>
-                                <div className="cart-campaign-content">
-                                    <strong>{product.mark}</strong>
-                                    <span>{product.title}</span>
-                                    <b>{formatPrice(product.price, locale)}</b>
-                                </div>
-                            </a>
-                        ))}
-                    </section>
                 </section>
 
                 {items.length > 0 && <aside className="cart-checkout-section">
@@ -896,6 +788,114 @@ export const CartPage = () => {
                     )}
                 </aside>}
             </div>
+
+            <section className={`cart-personalized-row ${hasSideRoomForRecommendations ? 'split' : 'stacked'}`}>
+                <section className={`cart-suggest-section cart-viewed-panel ${hasSideRoomForRecommendations ? 'is-compact' : ''}`} style={hasSideRoomForRecommendations ? viewedPanelStyle : undefined}>
+                    <div className="cart-suggest-head">{text('cart.recentlyViewedTitle', 'Önceden İncelediklerim')}</div>
+                    {viewedItems.length > 0 ? (
+                        <div className={`cart-viewed-track-shell ${enableViewedSlider ? 'is-slider' : ''}`}>
+                            {enableViewedSlider && (
+                                <button
+                                    type="button"
+                                    className="cart-viewed-nav prev"
+                                    onClick={() => shiftLoop(setViewedStart, viewedItems, -1)}
+                                    aria-label={text('cart.prev', 'Önceki')}
+                                >
+                                    <i className="pi pi-angle-left"/>
+                                </button>
+                            )}
+                            <div className={`cart-viewed-grid is-loop`} style={{'--loop-col-count': viewedWindow.length}}>
+                                {viewedWindow.map((product) => (
+                                    <div key={product.id} className="cart-viewed-item">
+                                        {recentItemTemplate(product)}
+                                    </div>
+                                ))}
+                            </div>
+                            {enableViewedSlider && (
+                                <button
+                                    type="button"
+                                    className="cart-viewed-nav next"
+                                    onClick={() => shiftLoop(setViewedStart, viewedItems, 1)}
+                                    aria-label={text('cart.next', 'Sonraki')}
+                                >
+                                    <i className="pi pi-angle-right"/>
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="cart-empty-state">
+                            {text('cart.recentlyViewedEmpty', 'Henüz incelediğin ürün yok. Ürünleri keşfettikçe burada listelenecek.')}
+                        </div>
+                    )}
+                </section>
+
+                {recommendationProducts.length > 0 && (
+                    <section className="cart-suggest-section cart-reco-panel">
+                        <div className="cart-suggest-head">{text('cart.suggestTitle', 'Sizin İçin Öneriler')}</div>
+                        <div className={`cart-viewed-track-shell ${enableRecoSlider ? 'is-slider' : ''}`}>
+                            {enableRecoSlider && (
+                                <button
+                                    type="button"
+                                    className="cart-viewed-nav prev"
+                                    onClick={() => shiftLoop(setRecoStart, recommendationProducts, -1)}
+                                    aria-label={text('cart.prev', 'Önceki')}
+                                >
+                                    <i className="pi pi-angle-left"/>
+                                </button>
+                            )}
+                            <div
+                                className="cart-viewed-grid cart-reco-grid is-loop"
+                                style={{'--loop-col-count': Math.max(recoWindow.length, 1)}}
+                            >
+                                {recoWindow.map((product) => (
+                                    <div key={`reco-${product.id}`} className="cart-viewed-item">
+                                        {recentItemTemplate(product)}
+                                    </div>
+                                ))}
+                            </div>
+                            {enableRecoSlider && (
+                                <button
+                                    type="button"
+                                    className="cart-viewed-nav next"
+                                    onClick={() => shiftLoop(setRecoStart, recommendationProducts, 1)}
+                                    aria-label={text('cart.next', 'Sonraki')}
+                                >
+                                    <i className="pi pi-angle-right"/>
+                                </button>
+                            )}
+                        </div>
+                    </section>
+                )}
+            </section>
+
+            <section className="cart-discount-circles">
+                <div className="cart-suggest-head cart-discount-title">{text('cart.discountHubTitle', 'Size Özel İndirim Fırsatları')}</div>
+                <div className="cart-discount-circle-row">
+                    {discountRates.map((rate, index) => (
+                        <a
+                            key={rate}
+                            href={`/product/indirim?discount=${rate}`}
+                            className={`cart-discount-circle c${index + 1}`}
+                        >
+                            <strong>%{rate}</strong>
+                            <span>{text('cart.discountCircleLabel', 'İndirim')}</span>
+                        </a>
+                    ))}
+                </div>
+            </section>
+
+            <section className="cart-campaign-strip">
+                {campaignProducts.slice(0, 6).map((product) => (
+                    <a key={product.id} href={`/detail/${product.id}`} className="cart-campaign-card is-product">
+                        <img src={product.img} alt={product.title}/>
+                        <div className="cart-campaign-content">
+                            <strong>{product.mark}</strong>
+                            <span>{product.title}</span>
+                            <b>{formatPrice(product.price, locale)}</b>
+                        </div>
+                    </a>
+                ))}
+            </section>
 
             {bankModalOpen && (
                 <div className="bank-demo-modal-backdrop" onClick={closeBankModal}>

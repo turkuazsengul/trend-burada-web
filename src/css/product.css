@@ -3173,6 +3173,29 @@
         overflow: hidden;
     }
 
+    .cart-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .cart-items-section {
+        order: 1;
+        width: 100%;
+    }
+
+    .cart-checkout-section {
+        order: 2;
+        width: 100%;
+        margin-top: 0.2rem;
+        position: static !important;
+        top: auto !important;
+    }
+
+    .checkout-panel-card {
+        width: 100%;
+    }
+
     .cart-suggest-section {
         margin-top: 1.1rem;
         padding: 0.62rem;
@@ -3295,7 +3318,7 @@
     }
 
     .cart-item-card img {
-        height: 18rem;
+        height: 15.5rem;
     }
 
     .cart-item-qty {
