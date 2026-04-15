@@ -41,22 +41,26 @@ jobs:
           echo "branch=${GITHUB_REF_NAME}" >> build/deploy-check.txt
           cat build/deploy-check.txt
 
-      - name: Upload build artifact (debug)
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-debug
-          path: build/
+      - name: Create deploy zip
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-8)
+          mkdir -p deploy-package
+          ZIP_NAME="trendburada-v${VERSION}-${SHORT_SHA}.zip"
+          (cd build && zip -r "../deploy-package/${ZIP_NAME}" .)
+          echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
 
       - name: Debug build output
         run: |
           echo "Deploy target dir: ${{ secrets.FTP_SERVER_DIR }}"
-          ls -la build | sed -n '1,200p'
+          ls -la deploy-package | sed -n '1,200p'
+          echo "Zip file: ${ZIP_NAME}"
 
       - name: Upload deploy artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cpanel-build
-          path: build/
+          name: cpanel-zip
+          path: deploy-package/
           if-no-files-found: error
           retention-days: 1
 
@@ -69,8 +73,8 @@ jobs:
       - name: Download deploy artifact
         uses: actions/download-artifact@v4
         with:
-          name: cpanel-build
-          path: build/
+          name: cpanel-zip
+          path: deploy-package/
 
       - name: Validate FTP target directory
         run: |
@@ -91,6 +95,6 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
           port: 21
-          local-dir: ./build/
+          local-dir: ./deploy-package/
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
           dangerous-clean-slate: false

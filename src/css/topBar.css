@@ -969,6 +969,11 @@
         position: static;
         transform: none !important;
         margin-top: 0.7rem;
+        display: none;
+    }
+
+    .fashion-mega-menu-panel.is-open {
+        display: grid;
     }
 
     .mega-menu-columns {
