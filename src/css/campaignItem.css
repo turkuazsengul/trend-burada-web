@@ -1,11 +1,13 @@
 .catalog {
     width: 100%;
     max-width: 100%;
-    overflow-x: clip;
+    overflow-x: hidden;
 }
 
 .hero-slider-section {
     margin-top: 1rem;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .hero-slider-split {
@@ -15,6 +17,7 @@
     align-items: stretch;
     width: 100%;
     max-width: 100%;
+    overflow-x: hidden;
 }
 
 .hero-slider-shell {
@@ -233,13 +236,10 @@
 }
 
 .campaign-showcase-section {
-    content-visibility: auto;
-    contain-intrinsic-size: 1px 420px;
+    width: 100%;
 }
 
 .category-spotlight-section {
-    content-visibility: auto;
-    contain-intrinsic-size: 1px 520px;
     margin-top: 1.8rem;
 }
 
@@ -309,8 +309,6 @@
 }
 
 .discount-ribbon-section {
-    content-visibility: auto;
-    contain-intrinsic-size: 1px 240px;
     margin-top: 1.6rem;
 }
 
@@ -384,6 +382,7 @@
     gap: 1.3rem;
     width: 100%;
     max-width: 100%;
+    overflow-x: hidden;
 }
 
 .trend-card {
@@ -410,15 +409,13 @@
 }
 
 .discovery-section {
-    content-visibility: auto;
-    contain-intrinsic-size: 1px 520px;
-
     margin-top: 1.8rem;
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
     gap: 1.4rem;
     width: 100%;
     max-width: 100%;
+    overflow-x: hidden;
 }
 
 .discovery-lead {
@@ -471,6 +468,7 @@
     gap: 1rem;
     width: 100%;
     max-width: 100%;
+    overflow-x: hidden;
 }
 
 .discovery-card {
@@ -515,8 +513,6 @@
 }
 
 .campaign-list {
-    content-visibility: auto;
-    contain-intrinsic-size: 1px 900px;
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -529,6 +525,7 @@
     gap: 1.4rem;
     width: 100%;
     margin-top: 0.2rem;
+    overflow-x: hidden;
 }
 
 .hero-slider-split > *,

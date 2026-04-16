@@ -16,6 +16,7 @@ import './css/register-confirm.css'
 import './css/product.css'
 import {AuthenticatedRoute} from "./AuthenticatedRoute";
 import {ProductPage} from "./components/product-components/ProductPage";
+import {SearchResultsPage} from "./components/product-components/SearchResultsPage";
 import {ProductDetail} from "./components/product-components/ProductDetail";
 import MyOrderComp from "./components/customer-profile-components/MyOrderComp";
 import UserDetailComp from "./components/customer-profile-components/MyUserInfo";
@@ -27,11 +28,14 @@ import {CartPage} from "./components/CartPage";
 import {translate} from "./i18n/i18n";
 import {AppBreadcrumb} from "./components/AppBreadcrumb";
 import './css/breadcrumb.css'
+import './css/responsive-shell.css'
+import {useResponsiveMode} from "./hooks/useResponsiveMode";
 
 const AddressRedirect = () => <Redirect to="/hesabım/KullaniciBilgilerim?section=address"/>;
 
 export const HomePage = () => {
     const location = useLocation();
+    const {isMobile, isTablet, viewportWidth} = useResponsiveMode();
     const [component, setComponent] = useState(<CampaignItems/>);
     const [orderCount, setOrderCount] = useState(0);
     const [authenticated, setAuthenticated] = useState();
@@ -53,6 +57,9 @@ export const HomePage = () => {
         orderCount: orderCount,
         timer: timer,
         authenticated: authenticated,
+        isMobile,
+        isTablet,
+        viewportWidth,
         language,
         t: (key, params) => translate(language, key, params),
         setLanguage: (nextLanguage) => {
@@ -67,8 +74,18 @@ export const HomePage = () => {
 
     const isCartRoute = (location?.pathname || '').startsWith('/sepetim');
 
+    useEffect(() => {
+        document.body.classList.toggle('app-mode-mobile', isMobile);
+        document.body.classList.toggle('app-mode-tablet', isTablet);
+
+        return () => {
+            document.body.classList.remove('app-mode-mobile');
+            document.body.classList.remove('app-mode-tablet');
+        };
+    }, [isMobile, isTablet]);
+
     return (
-        <div className="home-layout">
+        <div className={`home-layout ${isMobile ? 'home-layout-mobile' : ''} ${isTablet ? 'home-layout-tablet' : ''}`}>
             <AppContext.Provider value={userSettings}>
                 <AppTopBar/>
                 <AppBreadcrumb/>
@@ -78,6 +95,7 @@ export const HomePage = () => {
                             <Route path="/" exact component={CampaignItems}/>
                             <Route path="/login" exact component={LoginPage}/>
                             <Route path="/product/:id" exact component={ProductPage}/>
+                            <Route path="/arama" exact component={SearchResultsPage}/>
                             <AuthenticatedRoute key="favorites" exact path="/favoriler" component={FavoritesPage}/>
                             <Route path="/detail/:id" exact component={ProductDetail}/>
                             <Route path="/sepetim" exact component={CartPage}/>

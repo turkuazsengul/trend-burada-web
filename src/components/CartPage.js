@@ -19,7 +19,7 @@ const getInstallmentOptions = (total = 0, t) => {
 };
 
 export const CartPage = () => {
-    const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
+    const {t = (key) => key, language = 'tr', isMobile = false} = useContext(AppContext) || {};
     const text = (key, fallback) => {
         const value = t(key);
         return value === key ? fallback : value;
@@ -747,7 +747,7 @@ export const CartPage = () => {
     );
 
     return (
-        <div className="cart-page">
+        <div className={`cart-page ${isMobile ? 'cart-page-mobile-mode' : ''}`}>
             {completed && (
                 <div className="cart-success-banner">
                     {t('cart.orderDone')}

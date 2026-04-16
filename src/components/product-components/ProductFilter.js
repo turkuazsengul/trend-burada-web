@@ -1,4 +1,5 @@
 import React, {useContext, useEffect, useMemo, useState} from 'react';
+import {createPortal} from 'react-dom';
 import {Accordion, AccordionTab} from 'primereact/accordion';
 import AppContext from "../../AppContext";
 
@@ -59,9 +60,18 @@ export const ProductFilter = ({
     onClearAllFilters,
     menuItems = [],
     activeMenuKey = '',
-    mobileMode = false
+    mobileMode = false,
+    sortValue = 'recommended',
+    onSortChange
 }) => {
     const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
+    const sortOptions = useMemo(() => ([
+        {value: 'recommended', label: t('productFilter.sortRecommended')},
+        {value: 'price-asc', label: t('productFilter.sortPriceAsc')},
+        {value: 'price-desc', label: t('productFilter.sortPriceDesc')},
+        {value: 'rating-desc', label: t('productFilter.sortRatingDesc')},
+        {value: 'newest', label: t('productFilter.sortNewest')}
+    ]), [t]);
 
     const allGroups = useMemo(() => {
         const base = [...filterItemList].map((group) => {
@@ -74,6 +84,11 @@ export const ProductFilter = ({
 
         if (menuItems.length > 0) {
             return [
+                ...(mobileMode ? [{
+                    key: '__sort',
+                    title: t('productFilter.sorting'),
+                    options: sortOptions
+                }] : []),
                 {
                     key: '__categories',
                     title: t('productFilter.categories'),
@@ -86,8 +101,15 @@ export const ProductFilter = ({
             ];
         }
 
-        return base;
-    }, [filterItemList, menuItems, t, language]);
+        return [
+            ...(mobileMode ? [{
+                key: '__sort',
+                title: t('productFilter.sorting'),
+                options: sortOptions
+            }] : []),
+            ...base
+        ];
+    }, [filterItemList, menuItems, t, language, sortOptions, mobileMode]);
 
     const defaultActiveIndexes = useMemo(() => {
         const alwaysOpenKeys = new Set(['__categories', 'mark', 'brand']);
@@ -100,6 +122,10 @@ export const ProductFilter = ({
     const [groupSearchTerms, setGroupSearchTerms] = useState({});
     const [activeMobileGroupKey, setActiveMobileGroupKey] = useState('');
     const [mobileDraftValues, setMobileDraftValues] = useState([]);
+    const [isMobileFilterScreenOpen, setIsMobileFilterScreenOpen] = useState(false);
+    const [mobileScreenDraftFilters, setMobileScreenDraftFilters] = useState({});
+    const [mobileScreenDraftCategory, setMobileScreenDraftCategory] = useState('');
+    const [mobileScreenOpenKeys, setMobileScreenOpenKeys] = useState(['__categories']);
 
     useEffect(() => {
         setActiveIndexes(defaultActiveIndexes);
@@ -116,6 +142,24 @@ export const ProductFilter = ({
     }, [allGroups]);
 
     useEffect(() => {
+        if (!isMobileFilterScreenOpen) {
+            return undefined;
+        }
+
+        const previousOverflow = document.body.style.overflow;
+        const previousTouchAction = document.body.style.touchAction;
+        document.body.classList.add('mobile-filter-screen-open');
+        document.body.style.overflow = 'hidden';
+        document.body.style.touchAction = 'none';
+
+        return () => {
+            document.body.classList.remove('mobile-filter-screen-open');
+            document.body.style.overflow = previousOverflow;
+            document.body.style.touchAction = previousTouchAction;
+        };
+    }, [isMobileFilterScreenOpen]);
+
+    useEffect(() => {
         if (!mobileMode) {
             return;
         }
@@ -125,15 +169,78 @@ export const ProductFilter = ({
             return;
         }
 
+        if (activeMobileGroupKey === '__sort') {
+            setMobileDraftValues(sortValue ? [sortValue] : ['recommended']);
+            return;
+        }
+
         if (activeMobileGroupKey === '__categories') {
             setMobileDraftValues(activeMenuKey ? [activeMenuKey] : []);
             return;
         }
 
         setMobileDraftValues(selectedFilters[activeMobileGroupKey] || []);
-    }, [mobileMode, activeMobileGroupKey, selectedFilters, activeMenuKey]);
+    }, [mobileMode, activeMobileGroupKey, selectedFilters, activeMenuKey, sortValue]);
 
     const hasActiveFilter = Object.values(selectedFilters || {}).some((values) => Array.isArray(values) && values.length > 0);
+    const chipGroups = allGroups.filter((group) => group.key !== '__sort');
+
+    const toggleScreenDraftValue = (groupKey, value) => {
+        if (groupKey === '__categories') {
+            setMobileScreenDraftCategory(value);
+            return;
+        }
+
+        setMobileScreenDraftFilters((prev) => {
+            const current = prev[groupKey] || [];
+            const nextValues = current.includes(value)
+                ? current.filter((item) => item !== value)
+                : [...current, value];
+
+            return {
+                ...prev,
+                [groupKey]: nextValues
+            };
+        });
+    };
+
+    const openMobileFilterScreen = () => {
+        setActiveMobileGroupKey('');
+        setMobileScreenDraftFilters({...selectedFilters});
+        setMobileScreenDraftCategory(activeMenuKey || '');
+        setMobileScreenOpenKeys(['__categories']);
+        setIsMobileFilterScreenOpen(true);
+    };
+
+    const applyMobileFilterScreen = () => {
+        if (onReplaceFilterGroup) {
+            allGroups
+                .filter((group) => group.key !== '__sort' && group.key !== '__categories')
+                .forEach((group) => {
+                    onReplaceFilterGroup(group.key, mobileScreenDraftFilters[group.key] || []);
+                });
+        }
+
+        if (mobileScreenDraftCategory && mobileScreenDraftCategory !== activeMenuKey) {
+            window.location.href = `/product/${mobileScreenDraftCategory}`;
+            return;
+        }
+
+        setIsMobileFilterScreenOpen(false);
+    };
+
+    const clearMobileFilterScreen = () => {
+        setMobileScreenDraftFilters({});
+        setMobileScreenDraftCategory(activeMenuKey || '');
+    };
+
+    const toggleMobileScreenSection = (groupKey) => {
+        setMobileScreenOpenKeys((prev) => (
+            prev.includes(groupKey)
+                ? prev.filter((item) => item !== groupKey)
+                : [...prev, groupKey]
+        ));
+    };
 
     const handleGroupSearchChange = (groupKey, value) => {
         setGroupSearchTerms((prev) => ({
@@ -185,7 +292,7 @@ export const ProductFilter = ({
 
         const toggleMobileDraftValue = (value) => {
             setMobileDraftValues((prev) => {
-                if (activeMobileGroupKey === '__categories') {
+                if (activeMobileGroupKey === '__categories' || activeMobileGroupKey === '__sort') {
                     return [value];
                 }
 
@@ -197,6 +304,14 @@ export const ProductFilter = ({
 
         const applyMobileGroup = () => {
             if (!activeMobileGroupKey) {
+                return;
+            }
+
+            if (activeMobileGroupKey === '__sort') {
+                if (onSortChange) {
+                    onSortChange(mobileDraftValues[0] || 'recommended');
+                }
+                setActiveMobileGroupKey('');
                 return;
             }
 
@@ -215,10 +330,93 @@ export const ProductFilter = ({
             setActiveMobileGroupKey('');
         };
 
+        const mobileFilterScreen = isMobileFilterScreenOpen ? (
+                    <div className="mobile-filter-screen">
+                        <div className="mobile-filter-screen-head">
+                            <button type="button" className="mobile-filter-screen-back" onClick={() => setIsMobileFilterScreenOpen(false)}>
+                                <i className="pi pi-angle-left" aria-hidden="true"/>
+                            </button>
+                            <strong>{t('productFilter.filtering')}</strong>
+                        </div>
+
+                        <div className="mobile-filter-screen-body">
+                            {chipGroups.map((group) => {
+                                const searchTerm = (groupSearchTerms[group.key] || '').trim().toLowerCase();
+                                const visibleScreenOptions = searchTerm
+                                    ? group.options.filter((option) => String(option.label || '').toLowerCase().includes(searchTerm))
+                                    : group.options;
+                                const selectedValues = group.key === '__categories'
+                                    ? (mobileScreenDraftCategory ? [mobileScreenDraftCategory] : [])
+                                    : (mobileScreenDraftFilters[group.key] || []);
+                                const isSectionOpen = mobileScreenOpenKeys.includes(group.key);
+
+                                return (
+                                    <div key={group.key} className="mobile-filter-screen-section">
+                                        <button
+                                            type="button"
+                                            className="mobile-filter-screen-toggle"
+                                            onClick={() => toggleMobileScreenSection(group.key)}
+                                        >
+                                            <span className="mobile-filter-screen-title">{group.title}</span>
+                                            <i className={`pi ${isSectionOpen ? 'pi-angle-up' : 'pi-angle-down'}`} aria-hidden="true"/>
+                                        </button>
+
+                                        {isSectionOpen && (
+                                            <>
+                                                <div className="facet-search-area">
+                                                    <input
+                                                        type="text"
+                                                        className="facet-search-input"
+                                                        placeholder={t('productFilter.searchPlaceholder', {title: group.title})}
+                                                        value={groupSearchTerms[group.key] || ''}
+                                                        onChange={(event) => handleGroupSearchChange(group.key, event.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="facet-options-scroll mobile-filter-screen-options">
+                                                    <div className="filter-options-list">
+                                                        {renderOptions(group, visibleScreenOptions, selectedValues, (value) => toggleScreenDraftValue(group.key, value))}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="mobile-filter-screen-actions">
+                            <button type="button" className="mobile-filter-cancel" onClick={clearMobileFilterScreen}>
+                                {t('productFilter.clearFilters')}
+                            </button>
+                            <button type="button" className="mobile-filter-apply" onClick={applyMobileFilterScreen}>
+                                {t('productFilter.apply')}
+                            </button>
+                        </div>
+                    </div>
+        ) : null;
+
         return (
             <div className="mobile-filter-shell">
+                <div className="mobile-filter-utility-row">
+                    <button
+                        type="button"
+                        className={`mobile-filter-utility-btn ${activeMobileGroupKey === '__sort' ? 'is-active' : ''}`}
+                        onClick={() => setActiveMobileGroupKey((prev) => (prev === '__sort' ? '' : '__sort'))}
+                    >
+                        <i className="pi pi-sort-alt" aria-hidden="true"/>
+                        <span>{t('productFilter.sorting')}</span>
+                    </button>
+                    <button
+                        type="button"
+                        className={`mobile-filter-utility-btn ${isMobileFilterScreenOpen ? 'is-active' : ''}`}
+                        onClick={openMobileFilterScreen}
+                    >
+                        <i className="pi pi-sliders-h" aria-hidden="true"/>
+                        <span>{t('productFilter.filtering')}</span>
+                    </button>
+                </div>
                 <div className="mobile-filter-strip" role="tablist" aria-label={t('productFilter.mobileFilterAria')}>
-                    {allGroups.map((group) => {
+                    {chipGroups.map((group) => {
                         const count = group.key === '__categories'
                             ? (activeMenuKey ? 1 : 0)
                             : (selectedFilters[group.key] || []).length;
@@ -232,6 +430,7 @@ export const ProductFilter = ({
                             >
                                 <span>{group.title}</span>
                                 {count > 0 && <b>{count}</b>}
+                                <i className={`pi ${activeMobileGroupKey === group.key ? 'pi-angle-up' : 'pi-angle-down'}`}/>
                             </button>
                         );
                     })}
@@ -244,30 +443,22 @@ export const ProductFilter = ({
                 </div>
 
                 {activeGroup && (
-                    <div
-                        className="mobile-filter-overlay"
-                        onClick={() => setActiveMobileGroupKey('')}
-                    >
-                        <div
-                            className="mobile-filter-panel"
-                            onClick={(event) => event.stopPropagation()}
-                        >
+                        <div className="mobile-filter-panel">
                             <div className="mobile-filter-panel-head">
                                 <strong>{activeGroup.title}</strong>
-                                <button type="button" onClick={() => setActiveMobileGroupKey('')}>
-                                    <i className="pi pi-times"/>
-                                </button>
                             </div>
 
-                            <div className="facet-search-area">
-                                <input
-                                    type="text"
-                                    className="facet-search-input"
-                                    placeholder={t('productFilter.searchPlaceholder', {title: activeGroup.title})}
-                                    value={groupSearchTerms[activeGroup.key] || ''}
-                                    onChange={(event) => handleGroupSearchChange(activeGroup.key, event.target.value)}
-                                />
-                            </div>
+                            {activeGroup.key !== '__sort' && (
+                                <div className="facet-search-area">
+                                    <input
+                                        type="text"
+                                        className="facet-search-input"
+                                        placeholder={t('productFilter.searchPlaceholder', {title: activeGroup.title})}
+                                        value={groupSearchTerms[activeGroup.key] || ''}
+                                        onChange={(event) => handleGroupSearchChange(activeGroup.key, event.target.value)}
+                                    />
+                                </div>
+                            )}
 
                             <div className="facet-options-scroll mobile-facet-options-scroll">
                                 <div className="filter-options-list">
@@ -276,16 +467,24 @@ export const ProductFilter = ({
                             </div>
 
                             <div className="mobile-filter-panel-actions">
-                                <button type="button" className="mobile-filter-cancel" onClick={() => setActiveMobileGroupKey('')}>
-                                    {t('productFilter.cancel')}
+                                <button type="button" className="mobile-filter-cancel" onClick={() => {
+                                    if (activeMobileGroupKey === '__sort' && onSortChange) {
+                                        onSortChange('recommended');
+                                    } else if (activeMobileGroupKey !== '__categories' && onReplaceFilterGroup) {
+                                        onReplaceFilterGroup(activeMobileGroupKey, []);
+                                    }
+                                    setActiveMobileGroupKey('');
+                                }}>
+                                    {t('productFilter.clearFilters')}
                                 </button>
                                 <button type="button" className="mobile-filter-apply" onClick={applyMobileGroup}>
                                     {t('productFilter.apply')}
                                 </button>
                             </div>
                         </div>
-                    </div>
                 )}
+
+                {typeof document !== 'undefined' && mobileFilterScreen ? createPortal(mobileFilterScreen, document.body) : null}
             </div>
         );
     }

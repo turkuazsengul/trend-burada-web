@@ -6,7 +6,7 @@ import AppContext from "../AppContext";
 const formatPrice = (price, locale) => `${Number(price || 0).toLocaleString(locale)} TL`;
 
 export const FavoritesPage = () => {
-    const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
+    const {t = (key) => key, language = 'tr', isMobile = false} = useContext(AppContext) || {};
     const locale = language === 'en' ? 'en-US' : 'tr-TR';
     const [favorites, setFavorites] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export const FavoritesPage = () => {
     }, [favorites, locale]);
 
     return (
-        <div className="catalog favorites-page">
+        <div className={`catalog favorites-page ${isMobile ? 'favorites-page-mobile-mode' : ''}`}>
             <div className="favorites-header">
                 <h1>{t('favorites.title')}</h1>
                 <span>{t('favorites.productCount', {count: favoriteProducts.length})}</span>

@@ -250,7 +250,7 @@ const resolveColorHex = (colorName = '') => {
 };
 
 export const ProductDetail = ({match}) => {
-    const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
+    const {t = (key) => key, language = 'tr', isMobile = false} = useContext(AppContext) || {};
     const locale = language === 'en' ? 'en-US' : 'tr-TR';
     const productId = match?.params?.id;
     const toastTimerRef = useRef(null);
@@ -409,6 +409,199 @@ export const ProductDetail = ({match}) => {
         return <div className="product-empty-state">{t('productDetail.notFound')}</div>;
     }
 
+    if (isMobile) {
+        return (
+            <div className="product-detail-page product-detail-mobile-page">
+                <section className="product-detail-mobile-gallery">
+                    <img src={selectedImage || product.img} alt={product.title} className="product-detail-mobile-hero"/>
+                    <div className="product-detail-mobile-thumbs">
+                        {galleryImages.map((imageUrl) => (
+                            <button
+                                key={imageUrl}
+                                type="button"
+                                className={`product-detail-mobile-thumb ${selectedImage === imageUrl ? 'is-active' : ''}`}
+                                onClick={() => setSelectedImage(imageUrl)}
+                                aria-label={t('productDetail.selectImageAria')}
+                            >
+                                <img src={imageUrl} alt={product.title}/>
+                            </button>
+                        ))}
+                    </div>
+                </section>
+
+                <section className="product-detail-mobile-summary">
+                    <h1 className="product-detail-title-line">
+                        <span className="product-detail-title-brand">{product.mark}</span>
+                        <span className="product-detail-title-text">{product.title}</span>
+                    </h1>
+
+                    <div className="product-detail-rating-row">
+                        <Rating value={product.rating} readOnly cancel={false}/>
+                        <span>{Number(product.rating || 0).toFixed(1)}</span>
+                        <button
+                            type="button"
+                            className="detail-link-button product-detail-review-count"
+                            onClick={() => openFeedbackSection('reviews')}
+                        >
+                            ({product.reviewCount || 0} {t('productDetail.reviewsLabel')})
+                        </button>
+                        <button
+                            type="button"
+                            className="detail-link-button"
+                            onClick={() => openFeedbackSection('qa')}
+                        >
+                            {questionAnswers.length} {t('productDetail.qaLabel')}
+                        </button>
+                    </div>
+
+                    <div className="product-detail-price-area">
+                        <span className="detail-old-price">{formatPrice(product.oldPrice, locale)}</span>
+                        <div className="detail-current-price">{formatPrice(product.price, locale)}</div>
+                        {product.discountRate > 0 && <span className="detail-discount">{t('productDetail.discount', {count: product.discountRate})}</span>}
+                    </div>
+
+                    <div className="product-detail-badges">
+                        {product.isFastDelivery && <span className="detail-badge fast">{t('productDetail.fastDelivery')}</span>}
+                        {product.isFreeCargo && <span className="detail-badge cargo">{t('productDetail.freeCargo')}</span>}
+                        <span className="detail-badge neutral">{product.installmentText}</span>
+                    </div>
+
+                    {sizeOptions.length > 0 && (
+                        <div className="product-detail-size-block">
+                            <div className="product-detail-size-head">
+                                <span>{t('productDetail.size')}</span>
+                                {selectedSize && <strong>{selectedSize}</strong>}
+                            </div>
+                            <div className="product-detail-size-options">
+                                {sizeOptions.map((sizeItem) => (
+                                    <button
+                                        key={sizeItem}
+                                        type="button"
+                                        className={`product-detail-size-option ${selectedSize === sizeItem ? 'is-active' : ''}`}
+                                        onClick={() => setSelectedSize(sizeItem)}
+                                        aria-pressed={selectedSize === sizeItem}
+                                    >
+                                        {sizeItem}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {colorOptions.length > 0 && (
+                        <div className="product-detail-color-block">
+                            <div className="product-detail-size-head">
+                                <span>{t('productDetail.color')}</span>
+                                {selectedColor && <strong>{selectedColor}</strong>}
+                            </div>
+                            <div className="product-detail-color-options">
+                                {colorOptions.map((colorItem) => (
+                                    <button
+                                        key={colorItem.name}
+                                        type="button"
+                                        className={`product-detail-color-option ${selectedColor === colorItem.name ? 'is-active' : ''}`}
+                                        onClick={() => setSelectedColor(colorItem.name)}
+                                        aria-label={`${t('productDetail.color')}: ${colorItem.name}`}
+                                        aria-pressed={selectedColor === colorItem.name}
+                                    >
+                                        <span
+                                            className="product-detail-color-dot"
+                                            style={{backgroundColor: resolveColorHex(colorItem.name)}}
+                                            aria-hidden="true"
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="product-detail-panel-grid product-detail-mobile-panels">
+                        <div className="product-detail-panel-item">
+                            <div className="panel-label">{t('productDetail.seller')}</div>
+                            <div className="panel-value">{product.mark} {t('productDetail.sellerStoreSuffix')}</div>
+                            <div className="panel-sub">{t('productDetail.sellerScore')}: {product.sellerScore || 0}</div>
+                        </div>
+                        <div className="product-detail-panel-item">
+                            <div className="panel-label">{t('productDetail.estimatedDelivery')}</div>
+                            <div className="panel-value">{buildDeliveryLabel(language, t)}</div>
+                            <div className="panel-sub">{t('productDetail.allDeliveredNote')}</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="product-detail-mobile-accordions">
+                    <details className="product-detail-mobile-accordion" open>
+                        <summary>{t('productDetail.productFeatures')}</summary>
+                        <div className="product-detail-mobile-accordion-content">
+                            <div className="product-detail-attributes-grid">
+                                {productAttributes.map((attribute) => (
+                                    <div key={`${attribute.label}-${attribute.value}`} className="product-detail-attribute-item">
+                                        <span className="attribute-key">{attribute.label}</span>
+                                        <span className="attribute-value">{attribute.value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <ul className="product-detail-highlights">
+                                {productHighlights.map((item) => (
+                                    <li key={item}>{item}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    </details>
+
+                    <details className="product-detail-mobile-accordion">
+                        <summary>{t('productDetail.summary')}</summary>
+                        <div className="product-detail-mobile-accordion-content">
+                            <p>{t('productDetail.summaryText', {title: product.title})}</p>
+                        </div>
+                    </details>
+
+                    <details className="product-detail-mobile-accordion">
+                        <summary>{t('productDetail.feedbackTitle')}</summary>
+                        <div className="product-detail-mobile-accordion-content">
+                            <ProductFeedbackPanel
+                                product={product}
+                                mode={activeFeedbackMode}
+                                reviews={reviews}
+                                questionAnswers={questionAnswers}
+                                onModeChange={setActiveFeedbackMode}
+                            />
+                        </div>
+                    </details>
+
+                    <details className="product-detail-mobile-accordion">
+                        <summary>{t('productDetail.related')}</summary>
+                        <div className="product-detail-mobile-accordion-content">
+                            {relatedProducts.length > 0 ? (
+                                <Carousel
+                                    value={relatedProducts}
+                                    numVisible={1}
+                                    numScroll={1}
+                                    itemTemplate={(item) => relatedProductTemplate(item, locale)}
+                                    circular
+                                    showIndicators={false}
+                                />
+                            ) : (
+                                <div className="product-empty-state">{t('productDetail.relatedEmpty')}</div>
+                            )}
+                        </div>
+                    </details>
+                </section>
+
+                <div className="product-detail-mobile-action-bar">
+                    <div className="product-detail-mobile-price">
+                        <span className="mobile-price-label">{t('productDetail.discount', {count: product.discountRate || 0})}</span>
+                        <strong>{formatPrice(product.price, locale)}</strong>
+                        <small>{buildDeliveryLabel(language, t)}</small>
+                    </div>
+                    <button type="button" className="product-detail-mobile-add-button" onClick={addToCart}>
+                        {t('productDetail.addToCart')}
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="product-detail-page">
             <div className="product-detail-main">
@@ -438,8 +631,10 @@ export const ProductDetail = ({match}) => {
                         <span>{product.title}</span>
                     </div>
 
-                    <h1>{product.title}</h1>
-                    <div className="product-detail-brand">{product.mark}</div>
+                    <h1 className="product-detail-title-line">
+                        <span className="product-detail-title-brand">{product.mark}</span>
+                        <span className="product-detail-title-text">{product.title}</span>
+                    </h1>
 
                     <div className="product-detail-rating-row">
                         <Rating value={product.rating} readOnly cancel={false}/>
@@ -556,23 +751,6 @@ export const ProductDetail = ({match}) => {
                     </div>
 
                     {cartMessageVisible && <div className="detail-cart-feedback">{t('productDetail.addedToCart')}</div>}
-
-                    <section className="product-detail-features-block">
-                        <h2>{t('productDetail.productFeatures')}</h2>
-                        <div className="product-detail-attributes-grid">
-                            {productAttributes.map((attribute) => (
-                                <div key={`${attribute.label}-${attribute.value}`} className="product-detail-attribute-item">
-                                    <span className="attribute-key">{attribute.label}</span>
-                                    <span className="attribute-value">{attribute.value}</span>
-                                </div>
-                            ))}
-                        </div>
-                        <ul className="product-detail-highlights">
-                            {productHighlights.map((item) => (
-                                <li key={item}>{item}</li>
-                            ))}
-                        </ul>
-                    </section>
                 </div>
 
                 <aside className="product-detail-side">
@@ -599,6 +777,34 @@ export const ProductDetail = ({match}) => {
                     </div>
                 </aside>
             </div>
+
+            <div className="product-detail-mobile-action-bar">
+                <div className="product-detail-mobile-price">
+                    <span className="mobile-price-label">{t('productDetail.discount', {count: product.discountRate || 0})}</span>
+                    <strong>{formatPrice(product.price, locale)}</strong>
+                    <small>{buildDeliveryLabel(language, t)}</small>
+                </div>
+                <button type="button" className="product-detail-mobile-add-button" onClick={addToCart}>
+                    {t('productDetail.addToCart')}
+                </button>
+            </div>
+
+            <section className="product-detail-features-block">
+                <h2>{t('productDetail.productFeatures')}</h2>
+                <div className="product-detail-attributes-grid">
+                    {productAttributes.map((attribute) => (
+                        <div key={`${attribute.label}-${attribute.value}`} className="product-detail-attribute-item">
+                            <span className="attribute-key">{attribute.label}</span>
+                            <span className="attribute-value">{attribute.value}</span>
+                        </div>
+                    ))}
+                </div>
+                <ul className="product-detail-highlights">
+                    {productHighlights.map((item) => (
+                        <li key={item}>{item}</li>
+                    ))}
+                </ul>
+            </section>
 
             <section className="product-detail-section">
                 <h2>{t('productDetail.summary')}</h2>

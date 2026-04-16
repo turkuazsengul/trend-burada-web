@@ -14,7 +14,7 @@ import {InputTextarea} from "primereact/inputtextarea";
 import UserActivityService from "../../service/UserActivityService";
 
 const MyUserInfo = () => {
-    const {t = (key) => key} = useContext(AppContext) || {};
+    const {t = (key) => key, isMobile = false} = useContext(AppContext) || {};
     const safeText = (key, fallback) => {
         const value = t(key);
         return value === key ? fallback : value;
@@ -858,7 +858,7 @@ const MyUserInfo = () => {
 
     return (
 
-        <div className="catalog">
+        <div className={`catalog ${isMobile ? 'my-account-mobile-mode' : ''}`}>
             <div className="container-items">
                 <Toast ref={toastCenter} position="center"/>
                 <div className="my-account-page">

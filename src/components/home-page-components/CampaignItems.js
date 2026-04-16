@@ -68,7 +68,7 @@ const staticCampaignData = [
 ];
 
 export const CampaignItems = () => {
-    const {t = (key) => key} = useContext(AppContext) || {};
+    const {t = (key) => key, isMobile = false} = useContext(AppContext) || {};
     const [campaignData, setCampaignData] = useState(staticCampaignData);
     const [activeSlide, setActiveSlide] = useState(0);
 
@@ -193,7 +193,9 @@ export const CampaignItems = () => {
                                     <img
                                         src={slide.value}
                                         alt={slide.description}
-                                        loading={index === activeSlide ? "eager" : "lazy"}
+                                        width="1600"
+                                        height="1100"
+                                        loading={isMobile ? "eager" : (index === activeSlide ? "eager" : "lazy")}
                                         decoding="async"
                                         fetchPriority={index === activeSlide ? "high" : "low"}
                                     />
@@ -217,7 +219,9 @@ export const CampaignItems = () => {
                                     <img
                                         src={slide.value}
                                         alt={slide.description}
-                                        loading={index === activeSlide ? "eager" : "lazy"}
+                                        width="1200"
+                                        height="1800"
+                                        loading={isMobile ? "eager" : (index === activeSlide ? "eager" : "lazy")}
                                         decoding="async"
                                     />
                                     <div className="hero-mini-overlay">
@@ -251,7 +255,7 @@ export const CampaignItems = () => {
                 <div className="trend-card-grid">
                     {trendCards.map((item) => (
                         <a key={item.id} href="/product" className="trend-card">
-                            <img src={item.value} alt={item.description} loading="lazy" decoding="async" />
+                            <img src={item.value} alt={item.description} width="1200" height="1500" loading={isMobile ? "eager" : "lazy"} decoding="async" />
                             <span className="campaign-caption">{item.description}</span>
                         </a>
                     ))}
@@ -267,7 +271,7 @@ export const CampaignItems = () => {
                 <div className="category-spotlight-grid">
                     {categoryCards.map((category) => (
                         <a key={category.id} href={category.to} className="category-spotlight-card">
-                            <img src={category.image} alt={category.label} loading="lazy" decoding="async"/>
+                            <img src={category.image} alt={category.label} width="1200" height="1500" loading={isMobile ? "eager" : "lazy"} decoding="async"/>
                             <div className="category-spotlight-overlay">
                                 <h4>{category.label}</h4>
                                 <div className="category-spotlight-tags">
@@ -304,7 +308,9 @@ export const CampaignItems = () => {
                     <img
                         src={(mosaicCards[0] || safeSlides[0]).value}
                         alt={(mosaicCards[0] || safeSlides[0]).description}
-                        loading="lazy"
+                        width="1600"
+                        height="1200"
+                        loading={isMobile ? "eager" : "lazy"}
                         decoding="async"
                     />
                     <div>
@@ -316,7 +322,7 @@ export const CampaignItems = () => {
                 <div className="discovery-grid">
                     {mosaicCards.slice(1).map((item) => (
                         <a key={item.id} href="/product" className="discovery-card">
-                            <img src={item.value} alt={item.description} loading="lazy" decoding="async" />
+                            <img src={item.value} alt={item.description} width="1200" height="1200" loading={isMobile ? "eager" : "lazy"} decoding="async" />
                             <span className="campaign-caption">{item.description}</span>
                         </a>
                     ))}
@@ -334,7 +340,7 @@ export const CampaignItems = () => {
                         <div key={item.id} className="campaign-item">
                             <a href="/product">
                                 <div className="campaign-item-img-wrap">
-                                    <img className="campaign-item-img" src={item.value} alt={item.description} loading="lazy" decoding="async" />
+                                    <img className="campaign-item-img" src={item.value} alt={item.description} width="1200" height="1500" loading={isMobile ? "eager" : "lazy"} decoding="async" />
                                 </div>
                                 <div className="campaign-item-summary">
                                     <span className="campaign-caption">{item.description}</span>
