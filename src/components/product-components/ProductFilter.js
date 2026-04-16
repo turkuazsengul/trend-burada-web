@@ -62,7 +62,8 @@ export const ProductFilter = ({
     activeMenuKey = '',
     mobileMode = false,
     sortValue = 'recommended',
-    onSortChange
+    onSortChange,
+    showSecondaryStrip = true
 }) => {
     const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
     const sortOptions = useMemo(() => ([
@@ -396,50 +397,52 @@ export const ProductFilter = ({
         ) : null;
 
         return (
-            <div className="mobile-filter-shell">
-                <div className="mobile-filter-utility-row">
-                    <button
-                        type="button"
-                        className={`mobile-filter-utility-btn ${activeMobileGroupKey === '__sort' ? 'is-active' : ''}`}
-                        onClick={() => setActiveMobileGroupKey((prev) => (prev === '__sort' ? '' : '__sort'))}
-                    >
-                        <i className="pi pi-sort-alt" aria-hidden="true"/>
-                        <span>{t('productFilter.sorting')}</span>
-                    </button>
-                    <button
-                        type="button"
-                        className={`mobile-filter-utility-btn ${isMobileFilterScreenOpen ? 'is-active' : ''}`}
-                        onClick={openMobileFilterScreen}
-                    >
-                        <i className="pi pi-sliders-h" aria-hidden="true"/>
-                        <span>{t('productFilter.filtering')}</span>
-                    </button>
-                </div>
-                <div className="mobile-filter-strip" role="tablist" aria-label={t('productFilter.mobileFilterAria')}>
-                    {chipGroups.map((group) => {
-                        const count = group.key === '__categories'
-                            ? (activeMenuKey ? 1 : 0)
-                            : (selectedFilters[group.key] || []).length;
-
-                        return (
-                            <button
-                                key={group.key}
-                                type="button"
-                                className={`mobile-filter-chip ${activeMobileGroupKey === group.key ? 'is-active' : ''}`}
-                                onClick={() => setActiveMobileGroupKey((prev) => (prev === group.key ? '' : group.key))}
-                            >
-                                <span>{group.title}</span>
-                                {count > 0 && <b>{count}</b>}
-                                <i className={`pi ${activeMobileGroupKey === group.key ? 'pi-angle-up' : 'pi-angle-down'}`}/>
-                            </button>
-                        );
-                    })}
-
-                    {hasActiveFilter && (
-                        <button type="button" className="mobile-filter-reset" onClick={onClearAllFilters}>
-                            {t('productFilter.clearFilters')}
+            <div className={`mobile-filter-shell ${showSecondaryStrip ? 'is-secondary-visible' : 'is-secondary-hidden'}`}>
+                <div className="mobile-filter-topbar">
+                    <div className="mobile-filter-utility-row">
+                        <button
+                            type="button"
+                            className={`mobile-filter-utility-btn ${activeMobileGroupKey === '__sort' ? 'is-active' : ''}`}
+                            onClick={() => setActiveMobileGroupKey((prev) => (prev === '__sort' ? '' : '__sort'))}
+                        >
+                            <i className="pi pi-sort-alt" aria-hidden="true"/>
+                            <span>{t('productFilter.sorting')}</span>
                         </button>
-                    )}
+                        <button
+                            type="button"
+                            className={`mobile-filter-utility-btn ${isMobileFilterScreenOpen ? 'is-active' : ''}`}
+                            onClick={openMobileFilterScreen}
+                        >
+                            <i className="pi pi-sliders-h" aria-hidden="true"/>
+                            <span>{t('productFilter.filtering')}</span>
+                        </button>
+                    </div>
+                    <div className="mobile-filter-strip" role="tablist" aria-label={t('productFilter.mobileFilterAria')}>
+                        {chipGroups.map((group) => {
+                            const count = group.key === '__categories'
+                                ? (activeMenuKey ? 1 : 0)
+                                : (selectedFilters[group.key] || []).length;
+
+                            return (
+                                <button
+                                    key={group.key}
+                                    type="button"
+                                    className={`mobile-filter-chip ${activeMobileGroupKey === group.key ? 'is-active' : ''}`}
+                                    onClick={() => setActiveMobileGroupKey((prev) => (prev === group.key ? '' : group.key))}
+                                >
+                                    <span>{group.title}</span>
+                                    {count > 0 && <b>{count}</b>}
+                                    <i className={`pi ${activeMobileGroupKey === group.key ? 'pi-angle-up' : 'pi-angle-down'}`}/>
+                                </button>
+                            );
+                        })}
+
+                        {hasActiveFilter && (
+                            <button type="button" className="mobile-filter-reset" onClick={onClearAllFilters}>
+                                {t('productFilter.clearFilters')}
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {activeGroup && (

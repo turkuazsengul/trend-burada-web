@@ -57,6 +57,7 @@ export const ProductPage = ({match}) => {
     const [serviceFacets, setServiceFacets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [sortValue, setSortValue] = useState('recommended');
+    const [isMobileFilterStripVisible, setIsMobileFilterStripVisible] = useState(true);
 
     const [selectedFilters, setSelectedFilters] = useState({
         mark: [],
@@ -155,6 +156,52 @@ export const ProductPage = ({match}) => {
             document.body.classList.remove('hide-global-footer');
         };
     }, [categoryKey, loading, products.length]);
+
+    useEffect(() => {
+        if (!isMobile) {
+            setIsMobileFilterStripVisible(true);
+            return undefined;
+        }
+
+        let lastScrollY = window.scrollY || 0;
+        let ticking = false;
+
+        const updateToolbarVisibility = () => {
+            const currentScrollY = window.scrollY || 0;
+            const delta = currentScrollY - lastScrollY;
+
+            if (currentScrollY <= 12) {
+                setIsMobileFilterStripVisible(true);
+                lastScrollY = currentScrollY;
+                ticking = false;
+                return;
+            }
+
+            if (delta > 8 && currentScrollY > 72) {
+                setIsMobileFilterStripVisible(false);
+            } else if (delta < -5) {
+                setIsMobileFilterStripVisible(true);
+            }
+
+            lastScrollY = currentScrollY;
+            ticking = false;
+        };
+
+        const handleScroll = () => {
+            if (ticking) {
+                return;
+            }
+
+            ticking = true;
+            window.requestAnimationFrame(updateToolbarVisibility);
+        };
+
+        window.addEventListener('scroll', handleScroll, {passive: true});
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [isMobile]);
 
     const filters = useMemo(() => {
         if (serviceFacets.length > 0) {
@@ -284,7 +331,7 @@ export const ProductPage = ({match}) => {
                 </aside>
 
                 <section ref={productContentRef} className="product-content">
-                    <div className="product-toolbar">
+                    <div className={`product-toolbar ${isMobileFilterStripVisible ? 'is-visible' : 'is-hidden'}`}>
                         <ProductFilter
                             mobileMode
                             filterItemList={filters}
@@ -296,6 +343,7 @@ export const ProductPage = ({match}) => {
                             activeMenuKey={categoryKey}
                             sortValue={sortValue}
                             onSortChange={setSortValue}
+                            showSecondaryStrip
                         />
                         <span>{t('productList.listingCount', {count: sortedProducts.length})}</span>
                     </div>

@@ -5,6 +5,7 @@ import {Rating} from 'primereact/rating';
 import ProductService from "../../service/ProductService";
 import {MEGA_MENU_CATEGORIES} from "../../data/demoProductData";
 import {ProductFeedbackPanel} from "./ProductFeedbackPanel";
+import {ImageLightbox} from "./ImageLightbox";
 import CartService from "../../service/CartService";
 import AppContext from "../../AppContext";
 import UserActivityService from "../../service/UserActivityService";
@@ -249,6 +250,12 @@ const resolveColorHex = (colorName = '') => {
     return COLOR_HEX_MAP[key] || '#cbd5e1';
 };
 
+const getAttributeValue = (attributes = [], labels = []) => {
+    const keys = labels.map((label) => String(label).toLowerCase());
+    const match = attributes.find((item) => keys.includes(String(item.label || '').toLowerCase()));
+    return match?.value || '';
+};
+
 export const ProductDetail = ({match}) => {
     const {t = (key) => key, language = 'tr', isMobile = false} = useContext(AppContext) || {};
     const locale = language === 'en' ? 'en-US' : 'tr-TR';
@@ -265,6 +272,8 @@ export const ProductDetail = ({match}) => {
     const [selectedSize, setSelectedSize] = useState('');
     const [selectedColor, setSelectedColor] = useState('');
     const [activeFeedbackMode, setActiveFeedbackMode] = useState('reviews');
+    const [isGalleryLightboxOpen, setIsGalleryLightboxOpen] = useState(false);
+    const [galleryLightboxIndex, setGalleryLightboxIndex] = useState(0);
 
     useEffect(() => {
         let isMounted = true;
@@ -341,6 +350,48 @@ export const ProductDetail = ({match}) => {
             t('productDetail.highlight3')
         ];
     }, [product, t]);
+    const productSummaryParagraphs = useMemo(() => {
+        const safeTitle = product?.title || '';
+        const safeMark = product?.mark || '';
+        const safeColor = product?.color || '';
+        const fit = getAttributeValue(productAttributes, ['Kalıp', 'Fit']) || (language === 'en' ? 'regular fit' : 'regular fit');
+        const material = getAttributeValue(productAttributes, ['Materyal', 'Material']) || (language === 'en' ? 'soft textured fabric' : 'yumuşak dokulu kumaş');
+        const summaryText = t('productDetail.summaryText', {title: safeTitle});
+
+        if (language === 'en') {
+            return [
+                summaryText,
+                `${safeMark} designed this piece with a ${fit} silhouette and ${material.toLowerCase()} texture so it keeps its shape while staying comfortable throughout the day.`,
+                `${safeColor ? `${safeColor} tone` : 'Its color palette'} works well with daily city styling, office looks and layered seasonal combinations without losing a clean premium feel.`
+            ];
+        }
+
+        return [
+            summaryText,
+            `${safeMark} imzası taşıyan bu model, ${fit.toLowerCase()} kalıbı ve ${material.toLowerCase()} yapısıyla gün boyu konfor sunarken daha toplu ve dengeli bir siluet oluşturur.`,
+            `${safeColor ? `${safeColor} tonu` : 'Renk yapısı'} günlük şehir stilinde, ofis kombinlerinde ve katmanlı mevsim geçişi görünümlerinde rahatça kullanılabilecek kadar güçlü ve dengelidir.`
+        ];
+    }, [language, product, productAttributes, t]);
+    const productDetailFacts = useMemo(() => {
+        const material = getAttributeValue(productAttributes, ['Materyal', 'Material']) || (language === 'en' ? 'Soft textured fabric' : 'Yumuşak dokulu kumaş');
+        const fit = getAttributeValue(productAttributes, ['Kalıp', 'Fit']) || (language === 'en' ? 'Regular fit' : 'Regular fit');
+
+        if (language === 'en') {
+            return [
+                {label: 'Fabric feel', value: material},
+                {label: 'Fit profile', value: fit},
+                {label: 'Usage', value: 'Daily wear, office combinations and weekend styling'},
+                {label: 'Season', value: 'Suitable for spring, summer and mild weather layering'}
+            ];
+        }
+
+        return [
+            {label: 'Kumaş hissi', value: material},
+            {label: 'Kalıp yapısı', value: fit},
+            {label: 'Kullanım alanı', value: 'Günlük kullanım, ofis kombinleri ve hafta sonu stili'},
+            {label: 'Sezon uyumu', value: 'İlkbahar, yaz ve ılıman hava geçişlerinde rahat kullanım'}
+        ];
+    }, [language, productAttributes]);
     const galleryImages = useMemo(() => {
         const selectedColorImage = colorOptions.find((item) => item.name === selectedColor)?.image;
         const colorImages = colorOptions.map((item) => item.image);
@@ -357,6 +408,11 @@ export const ProductDetail = ({match}) => {
 
     const increaseQuantity = () => setQuantity((prev) => Math.min(10, prev + 1));
     const decreaseQuantity = () => setQuantity((prev) => Math.max(1, prev - 1));
+    const openGalleryLightbox = (imageUrl) => {
+        const nextIndex = galleryImages.findIndex((item) => item === imageUrl);
+        setGalleryLightboxIndex(nextIndex >= 0 ? nextIndex : 0);
+        setIsGalleryLightboxOpen(true);
+    };
 
     const openFeedbackSection = (mode) => {
         setActiveFeedbackMode(mode);
@@ -413,7 +469,13 @@ export const ProductDetail = ({match}) => {
         return (
             <div className="product-detail-page product-detail-mobile-page">
                 <section className="product-detail-mobile-gallery">
-                    <img src={selectedImage || product.img} alt={product.title} className="product-detail-mobile-hero"/>
+                    <button
+                        type="button"
+                        className="product-detail-mobile-hero-button"
+                        onClick={() => openGalleryLightbox(selectedImage || product.img)}
+                    >
+                        <img src={selectedImage || product.img} alt={product.title} className="product-detail-mobile-hero"/>
+                    </button>
                     <div className="product-detail-mobile-thumbs">
                         {galleryImages.map((imageUrl) => (
                             <button
@@ -436,8 +498,8 @@ export const ProductDetail = ({match}) => {
                     </h1>
 
                     <div className="product-detail-rating-row">
+                        <span className="product-detail-rating-average">{Number(product.rating || 0).toFixed(1)}</span>
                         <Rating value={product.rating} readOnly cancel={false}/>
-                        <span>{Number(product.rating || 0).toFixed(1)}</span>
                         <button
                             type="button"
                             className="detail-link-button product-detail-review-count"
@@ -549,14 +611,14 @@ export const ProductDetail = ({match}) => {
                         </div>
                     </details>
 
-                    <details className="product-detail-mobile-accordion">
+                    <details className="product-detail-mobile-accordion" open>
                         <summary>{t('productDetail.summary')}</summary>
                         <div className="product-detail-mobile-accordion-content">
                             <p>{t('productDetail.summaryText', {title: product.title})}</p>
                         </div>
                     </details>
 
-                    <details className="product-detail-mobile-accordion">
+                    <details className="product-detail-mobile-accordion" open>
                         <summary>{t('productDetail.feedbackTitle')}</summary>
                         <div className="product-detail-mobile-accordion-content">
                             <ProductFeedbackPanel
@@ -569,13 +631,13 @@ export const ProductDetail = ({match}) => {
                         </div>
                     </details>
 
-                    <details className="product-detail-mobile-accordion">
+                    <details className="product-detail-mobile-accordion" open>
                         <summary>{t('productDetail.related')}</summary>
                         <div className="product-detail-mobile-accordion-content">
                             {relatedProducts.length > 0 ? (
                                 <Carousel
                                     value={relatedProducts}
-                                    numVisible={1}
+                                    numVisible={2}
                                     numScroll={1}
                                     itemTemplate={(item) => relatedProductTemplate(item, locale)}
                                     circular
@@ -594,10 +656,28 @@ export const ProductDetail = ({match}) => {
                         <strong>{formatPrice(product.price, locale)}</strong>
                         <small>{buildDeliveryLabel(language, t)}</small>
                     </div>
-                    <button type="button" className="product-detail-mobile-add-button" onClick={addToCart}>
-                        {t('productDetail.addToCart')}
-                    </button>
-                </div>
+                <button type="button" className="product-detail-mobile-add-button" onClick={addToCart}>
+                    {t('productDetail.addToCart')}
+                </button>
+            </div>
+
+                {isGalleryLightboxOpen && (
+                    <ImageLightbox
+                        items={galleryImages.map((src) => ({src}))}
+                        initialIndex={galleryLightboxIndex}
+                        onClose={() => setIsGalleryLightboxOpen(false)}
+                        getAlt={() => product.title}
+                        labels={{
+                            prev: t('common.previousSlide'),
+                            next: t('common.nextSlide'),
+                            close: t('common.close'),
+                            zoomIn: t('feedback.zoomIn'),
+                            zoomOut: t('feedback.zoomOut'),
+                            resetZoom: t('feedback.resetZoom')
+                        }}
+                        showMeta={false}
+                    />
+                )}
             </div>
         );
     }
@@ -606,7 +686,13 @@ export const ProductDetail = ({match}) => {
         <div className="product-detail-page">
             <div className="product-detail-main">
                 <div className="product-detail-gallery">
-                    <img src={selectedImage || product.img} alt={product.title} className="product-detail-image"/>
+                    <button
+                        type="button"
+                        className="product-detail-image-button"
+                        onClick={() => openGalleryLightbox(selectedImage || product.img)}
+                    >
+                        <img src={selectedImage || product.img} alt={product.title} className="product-detail-image"/>
+                    </button>
                     <div className="product-detail-thumbs">
                         {galleryImages.map((imageUrl) => (
                             <button
@@ -637,8 +723,8 @@ export const ProductDetail = ({match}) => {
                     </h1>
 
                     <div className="product-detail-rating-row">
+                        <span className="product-detail-rating-average">{Number(product.rating || 0).toFixed(1)}</span>
                         <Rating value={product.rating} readOnly cancel={false}/>
-                        <span>{Number(product.rating || 0).toFixed(1)}</span>
                         <button
                             type="button"
                             className="detail-link-button product-detail-review-count"
@@ -751,6 +837,29 @@ export const ProductDetail = ({match}) => {
                     </div>
 
                     {cartMessageVisible && <div className="detail-cart-feedback">{t('productDetail.addedToCart')}</div>}
+                
+                    <section className="product-detail-features-block is-inline">
+                        <h2>{t('productDetail.productFeatures')}</h2>
+                        <div className="product-detail-attributes-grid">
+                            {productAttributes.map((attribute) => (
+                                <div key={`${attribute.label}-${attribute.value}`} className="product-detail-attribute-item">
+                                    <span className="attribute-key">{attribute.label}</span>
+                                    <span className="attribute-value">{attribute.value}</span>
+                                </div>
+                            ))}
+                            {productDetailFacts.map((attribute) => (
+                                <div key={`${attribute.label}-${attribute.value}`} className="product-detail-attribute-item is-rich">
+                                    <span className="attribute-key">{attribute.label}</span>
+                                    <span className="attribute-value">{attribute.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <ul className="product-detail-highlights">
+                            {productHighlights.map((item) => (
+                                <li key={item}>{item}</li>
+                            ))}
+                        </ul>
+                    </section>
                 </div>
 
                 <aside className="product-detail-side">
@@ -776,20 +885,10 @@ export const ProductDetail = ({match}) => {
                         <button type="button" className="side-outline-button">{t('productDetail.storeButton')}</button>
                     </div>
                 </aside>
+
             </div>
 
-            <div className="product-detail-mobile-action-bar">
-                <div className="product-detail-mobile-price">
-                    <span className="mobile-price-label">{t('productDetail.discount', {count: product.discountRate || 0})}</span>
-                    <strong>{formatPrice(product.price, locale)}</strong>
-                    <small>{buildDeliveryLabel(language, t)}</small>
-                </div>
-                <button type="button" className="product-detail-mobile-add-button" onClick={addToCart}>
-                    {t('productDetail.addToCart')}
-                </button>
-            </div>
-
-            <section className="product-detail-features-block">
+            <section className="product-detail-features-block desktop-hidden">
                 <h2>{t('productDetail.productFeatures')}</h2>
                 <div className="product-detail-attributes-grid">
                     {productAttributes.map((attribute) => (
@@ -806,11 +905,29 @@ export const ProductDetail = ({match}) => {
                 </ul>
             </section>
 
-            <section className="product-detail-section">
+            <div className="product-detail-mobile-action-bar">
+                <div className="product-detail-mobile-price">
+                    <span className="mobile-price-label">{t('productDetail.discount', {count: product.discountRate || 0})}</span>
+                    <strong>{formatPrice(product.price, locale)}</strong>
+                    <small>{buildDeliveryLabel(language, t)}</small>
+                </div>
+                <button type="button" className="product-detail-mobile-add-button" onClick={addToCart}>
+                    {t('productDetail.addToCart')}
+                </button>
+            </div>
+
+            <section className="product-detail-section product-detail-summary-section">
                 <h2>{t('productDetail.summary')}</h2>
-                <p>
-                    {t('productDetail.summaryText', {title: product.title})}
-                </p>
+                <div className="product-detail-summary-layout">
+                    <div className="product-detail-summary-card is-wide">
+                        <p>{productSummaryParagraphs[0]}</p>
+                        <ul className="product-detail-summary-points">
+                            {productSummaryParagraphs.slice(1).map((item) => (
+                                <li key={item}>{item}</li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
             </section>
 
             <section ref={feedbackSectionRef} className="product-detail-section product-detail-feedback-section">
@@ -844,6 +961,24 @@ export const ProductDetail = ({match}) => {
                     <div className="product-empty-state">{t('productDetail.relatedEmpty')}</div>
                 )}
             </section>
+
+            {isGalleryLightboxOpen && (
+                <ImageLightbox
+                    items={galleryImages.map((src) => ({src}))}
+                    initialIndex={galleryLightboxIndex}
+                    onClose={() => setIsGalleryLightboxOpen(false)}
+                    getAlt={() => product.title}
+                    labels={{
+                        prev: t('common.previousSlide'),
+                        next: t('common.nextSlide'),
+                        close: t('common.close'),
+                        zoomIn: t('feedback.zoomIn'),
+                        zoomOut: t('feedback.zoomOut'),
+                        resetZoom: t('feedback.resetZoom')
+                    }}
+                    showMeta={false}
+                />
+            )}
         </div>
     );
 };
