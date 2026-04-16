@@ -103,6 +103,7 @@ export const AppTopBar = () => {
     const cartButtonAnchorRef = useRef(null);
     const cartBounceTimerRef = useRef(null);
     const lastCartCountRef = useRef(0);
+    const mobileTopBarRef = useRef(null);
 
     const [userFullName, setUserFullName] = useState('');
     const [activeMegaCategoryId, setActiveMegaCategoryId] = useState(megaMenuCategories[0].id);
@@ -114,6 +115,8 @@ export const AppTopBar = () => {
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
     const [mobileSearchValue, setMobileSearchValue] = useState('');
     const [desktopSearchValue, setDesktopSearchValue] = useState('');
+    const [isMobileCategoryStripVisible, setIsMobileCategoryStripVisible] = useState(true);
+    const isHomeRoute = (location?.pathname || '') === '/';
 
     useEffect(() => {
         const path = location?.pathname || '';
@@ -174,6 +177,76 @@ export const AppTopBar = () => {
         setMobileSearchValue(currentQuery);
         setDesktopSearchValue(currentQuery);
     }, [location.search]);
+
+    useEffect(() => {
+        if (!isMobile) {
+            document.documentElement.style.removeProperty('--mobile-topbar-offset');
+            return undefined;
+        }
+
+        const element = mobileTopBarRef.current;
+        if (!element) {
+            return undefined;
+        }
+
+        const updateTopBarOffset = () => {
+            const nextHeight = Math.ceil(element.getBoundingClientRect().height || 0);
+            document.documentElement.style.setProperty('--mobile-topbar-offset', `${nextHeight}px`);
+        };
+
+        updateTopBarOffset();
+
+        const resizeObserver = typeof ResizeObserver !== 'undefined'
+            ? new ResizeObserver(() => updateTopBarOffset())
+            : null;
+
+        if (resizeObserver) {
+            resizeObserver.observe(element);
+        }
+
+        window.addEventListener('resize', updateTopBarOffset, {passive: true});
+
+        return () => {
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
+            window.removeEventListener('resize', updateTopBarOffset);
+        };
+    }, [isMobile, isHomeRoute, isMobileCategoryStripVisible, isMobileSearchOpen, location.pathname]);
+
+    useEffect(() => {
+        if (!isMobile || !isHomeRoute || isMobileSearchOpen) {
+            setIsMobileCategoryStripVisible(true);
+            return undefined;
+        }
+
+        let lastScrollY = window.scrollY || 0;
+
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY || 0;
+            const delta = currentScrollY - lastScrollY;
+
+            if (currentScrollY <= 12) {
+                setIsMobileCategoryStripVisible(true);
+                lastScrollY = currentScrollY;
+                return;
+            }
+
+            if (delta > 8 && currentScrollY > 72) {
+                setIsMobileCategoryStripVisible(false);
+            } else if (delta < -5) {
+                setIsMobileCategoryStripVisible(true);
+            }
+
+            lastScrollY = currentScrollY;
+        };
+
+        window.addEventListener('scroll', handleScroll, {passive: true});
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [isHomeRoute, isMobile, isMobileSearchOpen]);
 
     useEffect(() => {
         if (USE_STATIC_PROMO_IMAGES) {
@@ -499,7 +572,25 @@ export const AppTopBar = () => {
         activeCategory,
         ...localizedMegaMenuCategories.filter((category) => category.id !== activeCategory.id)
     ];
-    const isHomeRoute = (location?.pathname || '') === '/';
+    const mobileHomeCategoryItems = localizedMegaMenuCategories.reduce((acc, category) => {
+        acc.push({
+            key: category.id,
+            label: category.label,
+            href: `/product/${encodeURIComponent(category.items?.[0]?.slug || category.id)}`,
+            isActive: activeMegaCategoryId === category.id
+        });
+
+        (category.items || []).slice(0, 2).forEach((item) => {
+            acc.push({
+                key: `${category.id}-${item.slug}`,
+                label: item.label,
+                href: `/product/${encodeURIComponent(item.slug)}`,
+                isActive: false
+            });
+        });
+
+        return acc;
+    }, []);
     const popularSearches = [
         'Elbise',
         'Sneaker',
@@ -511,7 +602,7 @@ export const AppTopBar = () => {
 
     if (isMobile) {
         return (
-            <div className="top-bar top-bar-mobile">
+            <div ref={mobileTopBarRef} className="top-bar top-bar-mobile">
                 {isHomeRoute && (
                     <div className="top-bar-mobile-head">
                         <a href="/" className="top-bar-mobile-logo">TREND BURADA</a>
@@ -614,13 +705,17 @@ export const AppTopBar = () => {
                 </div>
 
                 {isHomeRoute && (
-                    <div className="top-bar-mobile-category-strip" role="navigation" aria-label={t('topbar.categoriesAria')}>
-                        {localizedMegaMenuCategories.map((category) => (
+                    <div
+                        className={`top-bar-mobile-category-strip ${isMobileCategoryStripVisible ? 'is-visible' : 'is-hidden'}`}
+                        role="navigation"
+                        aria-label={t('topbar.categoriesAria')}
+                    >
+                        {mobileHomeCategoryItems.map((category) => (
                             <a
-                                key={category.id}
-                                href={`/product/${encodeURIComponent(category.items?.[0]?.slug || category.id)}`}
-                                className={`top-bar-mobile-category-pill ${activeMegaCategoryId === category.id ? 'is-active' : ''}`}
-                                onClick={() => setActiveMegaCategoryId(category.id)}
+                                key={category.key}
+                                href={category.href}
+                                className={`top-bar-mobile-category-pill ${category.isActive ? 'is-active' : ''}`}
+                                onClick={() => setActiveMegaCategoryId(category.key.split('-')[0])}
                             >
                                 {category.label}
                             </a>

@@ -6,7 +6,7 @@ export const translations = {
             about: 'Hakkımızda',
             newSeason: 'Yeni Sezon Ürünleri',
             categoriesAria: 'Ürün kategorileri',
-            searchPlaceholder: 'Dilediğinizi Arayın',
+            searchPlaceholder: 'Ürün, kategori veya marka ara',
             login: 'Giriş Yap',
             account: 'Hesabım',
             favorites: 'Favoriler',
@@ -192,7 +192,10 @@ export const translations = {
             reviewPhotoAlt: '{{user}} yorum fotoğrafı',
             reviewPhotoPlainAlt: 'Yorum fotoğrafı',
             reviewThumbAlt: 'Yorum fotoğrafı küçük önizleme',
-            photoModalTitle: '{{user}} - Fotoğraflar'
+            photoModalTitle: '{{user}} - Fotoğraflar',
+            zoomIn: 'Yakınlaştır',
+            zoomOut: 'Uzaklaştır',
+            resetZoom: 'Yakınlaştırmayı sıfırla'
         },
         cart: {
             title: 'Sepetim',
@@ -272,7 +275,9 @@ export const translations = {
             next: 'Sonraki',
             mobileCheckoutTitle: 'Güvenli Ödeme',
             back: 'Geri',
-            cancel: 'Vazgeç'
+            cancel: 'Vazgeç',
+            deliveryType: 'Teslimat: Standart Kargo',
+            cargoFreeInfo: 'Kargo: Ücretsiz'
         },
         footer: {
             safeShopping: 'Güvenli Alışveriş',
@@ -421,7 +426,7 @@ export const translations = {
             about: 'About Us',
             newSeason: 'New Season',
             categoriesAria: 'Product categories',
-            searchPlaceholder: 'Search for products',
+            searchPlaceholder: 'Search products, categories or brands',
             login: 'Sign In',
             account: 'My Account',
             favorites: 'Favorites',
@@ -607,7 +612,10 @@ export const translations = {
             reviewPhotoAlt: '{{user}} review photo',
             reviewPhotoPlainAlt: 'Review photo',
             reviewThumbAlt: 'Review photo thumbnail',
-            photoModalTitle: '{{user}} - Photos'
+            photoModalTitle: '{{user}} - Photos',
+            zoomIn: 'Zoom in',
+            zoomOut: 'Zoom out',
+            resetZoom: 'Reset zoom'
         },
         cart: {
             title: 'My Cart',
@@ -687,7 +695,9 @@ export const translations = {
             next: 'Next',
             mobileCheckoutTitle: 'Secure Checkout',
             back: 'Back',
-            cancel: 'Cancel'
+            cancel: 'Cancel',
+            deliveryType: 'Delivery: Standard Shipping',
+            cargoFreeInfo: 'Shipping: Free'
         },
         footer: {
             safeShopping: 'Secure Shopping',

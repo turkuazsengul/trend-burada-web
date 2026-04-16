@@ -1,5 +1,5 @@
 .login-page-shell {
-    padding: 1.2rem 0 2.4rem;
+    padding: 0 0 2.4rem;
     min-height: calc(100vh - 16rem);
     display: flex;
     align-items: center;
@@ -7,7 +7,7 @@
 
 .login-card-wrap {
     width: min(560px, calc(100% - 3.2rem));
-    margin: 2.2rem auto 2.8rem;
+    margin: 0.8rem auto 2.8rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;

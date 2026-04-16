@@ -59,7 +59,7 @@ export const CartPage = () => {
     const [bankModalOpen, setBankModalOpen] = useState(false);
     const [otpCode, setOtpCode] = useState('');
     const [otpError, setOtpError] = useState('');
-    const [checkoutStep, setCheckoutStep] = useState(1);
+    const [checkoutStep, setCheckoutStep] = useState(typeof window !== 'undefined' && window.innerWidth <= 768 ? 2 : 1);
     const [showNewAddressForm, setShowNewAddressForm] = useState(false);
     const [newAddressForm, setNewAddressForm] = useState({
         title: '',
@@ -200,6 +200,8 @@ export const CartPage = () => {
     }, [items]);
 
     const summary = CartService.getCartSummary();
+    const mobileCtaOldTotal = Number(summary.subtotal || 0) + Number(summary.cargo || 0);
+    const hasMobileCtaDiscount = Number(summary.discount || 0) > 0 && mobileCtaOldTotal > Number(summary.total || 0);
     const installmentOptions = getInstallmentOptions(Number(summary.total || 0), t);
     const selectedInstallmentLabel = installmentOptions.find((item) => item.value === selectedInstallment)?.label || t('cart.cash');
     const isCardFormValid = normalizeCardNumber(cardForm.cardNumber).length === 16
@@ -247,13 +249,6 @@ export const CartPage = () => {
         setOtpCode('');
         setOtpError('');
         setBankModalOpen(true);
-    };
-
-    const handleGoToAddressStep = () => {
-        if (items.length === 0) {
-            return;
-        }
-        setCheckoutStep(2);
     };
 
     const handleAddressContinue = () => {
@@ -471,23 +466,31 @@ export const CartPage = () => {
         }
         setter((prev) => (prev + step + length) % length);
     };
+    const openProductDetail = (productId) => {
+        if (!productId) {
+            return;
+        }
+        history.push(`/detail/${productId}`);
+    };
     const renderCheckoutPanel = () => (
         <>
-            {checkoutStep === 1 && (
+            {checkoutStep === 1 && !isMobileViewport && (
                 <div className="checkout-panel-card cart-summary-card">
                     <h3>{t('cart.summaryTitle')}</h3>
                     <div className="summary-row"><span>{t('cart.subtotal')}</span><strong>{formatPrice(summary.subtotal, locale)}</strong></div>
                     <div className="summary-row"><span>{t('cart.cargo')}</span><strong>{summary.cargo === 0 ? t('cart.free') : formatPrice(summary.cargo, locale)}</strong></div>
                     <div className="summary-row"><span>{t('cart.discount')}</span><strong>- {formatPrice(summary.discount, locale)}</strong></div>
                     <div className="summary-row total"><span>{t('cart.total')}</span><strong>{formatPrice(summary.total, locale)}</strong></div>
-                    <button
-                        type="button"
-                        className="checkout-complete-button"
-                        onClick={handleGoToAddressStep}
-                        disabled={items.length === 0}
-                    >
-                        {t('cart.buy')}
-                    </button>
+                    <div className="checkout-step-actions">
+                        <button
+                            type="button"
+                            className="checkout-complete-button"
+                            onClick={() => setCheckoutStep(2)}
+                            disabled={items.length === 0}
+                        >
+                            {text('cart.continueAddress', 'Adrese Geç')}
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -519,6 +522,11 @@ export const CartPage = () => {
                     )}
 
                     <div className="checkout-step-actions">
+                        {!isMobileViewport && (
+                            <button type="button" className="checkout-outline-btn" onClick={() => setCheckoutStep(1)}>
+                                {text('cart.back', 'Geri')}
+                            </button>
+                        )}
                         <button type="button" className="checkout-outline-btn" onClick={() => setShowNewAddressForm((prev) => !prev)}>
                             {text('cart.addAddressInline', 'Yeni Adres Ekle')}
                         </button>
@@ -762,7 +770,9 @@ export const CartPage = () => {
                 {items.length > 0 && (
                     <div className="cart-header-right">
                         <div className="checkout-steps-chip">
-                            <span className={checkoutStep >= 1 ? 'is-active' : ''}>{text('cart.stepSummary', 'Özet')}</span>
+                            {!isMobileViewport && (
+                                <span className={checkoutStep >= 1 ? 'is-active' : ''}>{text('cart.summaryTitle', 'Özet')}</span>
+                            )}
                             <span className={checkoutStep >= 2 ? 'is-active' : ''}>{text('cart.stepAddress', 'Adres')}</span>
                             <span className={checkoutStep >= 3 ? 'is-active' : ''}>{text('cart.stepPayment', 'Ödeme')}</span>
                             <span className={checkoutStep >= 4 ? 'is-active' : ''}>{text('cart.stepConfirm', 'Onay')}</span>
@@ -788,19 +798,25 @@ export const CartPage = () => {
 
                     {items.map((item) => (
                         <article key={item.lineId} className="cart-item-card">
-                            <img src={item.img} alt={item.title}/>
+                            <button
+                                type="button"
+                                className="cart-item-main-link"
+                                onClick={() => openProductDetail(item.id)}
+                            >
+                                <img src={item.img} alt={item.title}/>
 
-                            <div className="cart-item-info">
-                                <strong>{item.mark}</strong>
-                                <h3>{item.title}</h3>
-                                <div className="cart-item-meta">
-                                    <span>{t('cart.size')}: {item.selectedSize || '-'}</span>
-                                    <span>{t('cart.color')}: {item.selectedColor || '-'}</span>
+                                <div className="cart-item-info">
+                                    <strong>{item.mark}</strong>
+                                    <h3>{item.title}</h3>
+                                    <div className="cart-item-meta">
+                                        <span>{t('cart.size')}: {item.selectedSize || '-'}</span>
+                                        <span>{t('cart.color')}: {item.selectedColor || '-'}</span>
+                                    </div>
+                                    <div className="cart-item-price-row">
+                                        <span className="cart-item-price">{formatPrice(item.price, locale)}</span>
+                                    </div>
                                 </div>
-                                <div className="cart-item-price-row">
-                                    <span className="cart-item-price">{formatPrice(item.price, locale)}</span>
-                                </div>
-                            </div>
+                            </button>
 
                             <div className="cart-item-qty">
                                 <button type="button" onClick={() => decrease(item.lineId, item.quantity)}>-</button>
@@ -937,14 +953,31 @@ export const CartPage = () => {
             {isMobileViewport && items.length > 0 && (
                 <div className="cart-mobile-cta-bar">
                     <div className="cart-mobile-cta-price">
-                        <span>{t('cart.total')}</span>
+                        <span className="cart-mobile-cta-caption">{t('cart.total')}</span>
                         <strong>{formatPrice(summary.total, locale)}</strong>
+                        {hasMobileCtaDiscount && (
+                            <span className="cart-mobile-cta-old-price">{formatPrice(mobileCtaOldTotal, locale)}</span>
+                        )}
+                        <span className="cart-mobile-cta-delivery">
+                            {text('cart.deliveryType', 'Teslimat: Standart Kargo')}
+                        </span>
+                        <span className="cart-mobile-cta-cargo">
+                            {summary.cargo === 0
+                                ? text('cart.cargoFreeInfo', 'Kargo: Ücretsiz')
+                                : `${t('cart.cargo')}: ${formatPrice(summary.cargo, locale)}`}
+                        </span>
                     </div>
                     <button
                         type="button"
                         className="cart-mobile-cta-button"
-                        onClick={() => setMobileCheckoutOpen(true)}
+                        onClick={() => {
+                            setCheckoutStep(2);
+                            setMobileCheckoutOpen(true);
+                        }}
                     >
+                        <span className="cart-mobile-cta-button-icon" aria-hidden="true">
+                            <span className="cart-mobile-cta-dollar-ring"/>
+                        </span>
                         {t('cart.buy')}
                     </button>
                 </div>
@@ -958,7 +991,6 @@ export const CartPage = () => {
                             <button type="button" onClick={() => setMobileCheckoutOpen(false)}>{t('cart.close')}</button>
                         </div>
                         <div className="checkout-steps-chip">
-                            <span className={checkoutStep >= 1 ? 'is-active' : ''}>{text('cart.stepSummary', 'Özet')}</span>
                             <span className={checkoutStep >= 2 ? 'is-active' : ''}>{text('cart.stepAddress', 'Adres')}</span>
                             <span className={checkoutStep >= 3 ? 'is-active' : ''}>{text('cart.stepPayment', 'Ödeme')}</span>
                             <span className={checkoutStep >= 4 ? 'is-active' : ''}>{text('cart.stepConfirm', 'Onay')}</span>

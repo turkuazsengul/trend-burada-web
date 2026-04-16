@@ -89,7 +89,7 @@ export const HomePage = () => {
             <AppContext.Provider value={userSettings}>
                 <AppTopBar/>
                 <AppBreadcrumb/>
-                <div className="container-items">
+                <div className={`container-items ${location.pathname === '/' ? 'is-home-route' : 'is-inner-route'}`}>
                     <div className={`container ${isCartRoute ? 'container-full' : ''}`}>
                         <Switch>
                             <Route path="/" exact component={CampaignItems}/>

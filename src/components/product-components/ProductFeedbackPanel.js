@@ -1,6 +1,7 @@
 import React, {useContext, useState} from 'react';
 import {Rating} from 'primereact/rating';
 import AppContext from "../../AppContext";
+import {ImageLightbox} from "./ImageLightbox";
 
 export const ProductFeedbackPanel = ({
     product,
@@ -13,37 +14,29 @@ export const ProductFeedbackPanel = ({
     const isReviewMode = mode === 'reviews';
     const [activePhotoModal, setActivePhotoModal] = useState(null);
     const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+    const reviewPhotoItems = (reviews || []).flatMap((review) => (
+        Array.isArray(review.photos)
+            ? review.photos.map((photo, index) => ({
+                id: `${review.id}-${index}`,
+                photo,
+                user: review.user,
+                rating: review.rating,
+                text: review.text,
+                date: review.date
+            }))
+            : []
+    ));
 
-    const openPhotoModal = (review) => {
-        setActivePhotoModal({user: review.user, photos: review.photos});
-        setActivePhotoIndex(0);
+    const openPhotoModal = (review, photoIndex = 0) => {
+        const targetPhoto = review?.photos?.[photoIndex];
+        const nextIndex = reviewPhotoItems.findIndex((item) => item.photo === targetPhoto && item.user === review.user);
+        setActivePhotoModal({items: reviewPhotoItems});
+        setActivePhotoIndex(nextIndex >= 0 ? nextIndex : 0);
     };
 
     const closePhotoModal = () => {
         setActivePhotoModal(null);
         setActivePhotoIndex(0);
-    };
-
-    const showPrevPhoto = () => {
-        if (!activePhotoModal?.photos?.length) {
-            return;
-        }
-
-        setActivePhotoIndex((prev) => {
-            const total = activePhotoModal.photos.length;
-            return (prev - 1 + total) % total;
-        });
-    };
-
-    const showNextPhoto = () => {
-        if (!activePhotoModal?.photos?.length) {
-            return;
-        }
-
-        setActivePhotoIndex((prev) => {
-            const total = activePhotoModal.photos.length;
-            return (prev + 1) % total;
-        });
     };
 
     return (
@@ -90,7 +83,7 @@ export const ProductFeedbackPanel = ({
                                         <button
                                             type="button"
                                             className="review-photo-preview"
-                                            onClick={() => openPhotoModal(review)}
+                                            onClick={() => openPhotoModal(review, 0)}
                                         >
                                             <img src={review.photos[0]} alt={t('feedback.reviewPhotoAlt', {user: review.user})}/>
                                         </button>
@@ -121,49 +114,30 @@ export const ProductFeedbackPanel = ({
             </div>
 
             {activePhotoModal && (
-                <div className="review-photo-modal-backdrop" onClick={closePhotoModal}>
-                    <div className="review-photo-modal" onClick={(event) => event.stopPropagation()}>
-                        <div className="review-photo-modal-head">
-                            <strong>{t('feedback.photoModalTitle', {user: activePhotoModal.user})}</strong>
-                            <button type="button" onClick={closePhotoModal}>
-                                <i className="pi pi-times"/>
-                            </button>
+                <ImageLightbox
+                    items={activePhotoModal.items}
+                    initialIndex={activePhotoIndex}
+                    onClose={closePhotoModal}
+                    getAlt={() => t('feedback.reviewPhotoPlainAlt')}
+                    labels={{
+                        prev: t('common.previousSlide'),
+                        next: t('common.nextSlide'),
+                        close: t('common.close'),
+                        zoomIn: t('feedback.zoomIn'),
+                        zoomOut: t('feedback.zoomOut'),
+                        resetZoom: t('feedback.resetZoom')
+                    }}
+                    renderMeta={(item) => (
+                        <div className="review-photo-review-card">
+                            <div className="review-photo-review-head">
+                                <strong>{item.user}</strong>
+                                <span>{item.date}</span>
+                            </div>
+                            <Rating value={item.rating} readOnly cancel={false}/>
+                            <p>{item.text}</p>
                         </div>
-
-                        <div className="review-photo-slider">
-                            <button type="button" className="review-photo-nav prev" onClick={showPrevPhoto}>
-                                <i className="pi pi-angle-left"/>
-                            </button>
-
-                            <img
-                                src={activePhotoModal.photos[activePhotoIndex]}
-                                alt={t('feedback.reviewPhotoPlainAlt')}
-                                className="review-photo-active-image"
-                            />
-
-                            <button type="button" className="review-photo-nav next" onClick={showNextPhoto}>
-                                <i className="pi pi-angle-right"/>
-                            </button>
-                        </div>
-
-                        <div className="review-photo-counter">
-                            {activePhotoIndex + 1} / {activePhotoModal.photos.length}
-                        </div>
-
-                        <div className="review-photo-thumbs">
-                            {activePhotoModal.photos.map((photo, index) => (
-                                <button
-                                    key={photo}
-                                    type="button"
-                                    className={`review-photo-thumb-btn ${activePhotoIndex === index ? 'is-active' : ''}`}
-                                    onClick={() => setActivePhotoIndex(index)}
-                                >
-                                    <img src={photo} alt={t('feedback.reviewThumbAlt')}/>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
+                    )}
+                />
             )}
         </>
     );
