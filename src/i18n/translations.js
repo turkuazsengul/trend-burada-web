@@ -251,6 +251,7 @@ export const translations = {
             discountCircleLabel: 'İndirim',
             prev: 'Önceki',
             next: 'Sonraki',
+            mobileCheckoutTitle: 'Güvenli Ödeme',
             back: 'Geri',
             cancel: 'Vazgeç'
         },
@@ -646,6 +647,7 @@ export const translations = {
             discountCircleLabel: 'Discount',
             prev: 'Previous',
             next: 'Next',
+            mobileCheckoutTitle: 'Secure Checkout',
             back: 'Back',
             cancel: 'Cancel'
         },
