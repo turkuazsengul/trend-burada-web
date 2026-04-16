@@ -4,7 +4,7 @@ import AppContext from "./AppContext";
 import appstoreicon from './icons/app-store-icon.svg'
 
 export const AppFooter = () => {
-    const {t = (key) => key} = useContext(AppContext) || {};
+    const {t = (key) => key, isMobile = false} = useContext(AppContext) || {};
     const footerBodyData = useMemo(() => ([
         {
             id: 0,
@@ -27,6 +27,10 @@ export const AppFooter = () => {
             items: [t('footer.faq'), t('footer.liveHelp'), t('footer.howToReturn'), t('footer.guide')]
         }
     ]), [t]);
+
+    if (isMobile) {
+        return null;
+    }
 
     return (
         <div className="footer">

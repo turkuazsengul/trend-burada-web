@@ -45,6 +45,13 @@ const TITLE_PREFIX = [
 const FIT_POOL = ["Regular Fit", "Slim Fit", "Oversize", "Relaxed Fit"];
 const FABRIC_POOL = ["Pamuk", "Pamuk - Elastan", "Viskon", "Keten Karışımlı", "Modal"];
 const ORIGIN_POOL = ["Türkiye", "İtalya", "Portekiz", "İspanya"];
+const DETAIL_SUFFIX_POOL = [
+    "Günlük Kullanıma Uygun",
+    "Yumuşak Dokulu Tasarım",
+    "Modern ve Rahat Kesim",
+    "Şehir Stiline Uyumlu",
+    "Premium Görünümlü Duruş"
+];
 
 const unwrapList = (payload) => {
     const list = payload?.returnData || payload?.data || payload?.products || payload || [];
@@ -147,7 +154,10 @@ const getStaticProductsByCategory = (categoryKey) => {
         ];
         const prefix = TITLE_PREFIX[(i + 3) % TITLE_PREFIX.length];
         const core = coreWords[i % coreWords.length];
-        const title = `${prefix} ${core} ${suffix}`;
+        const fit = FIT_POOL[i % FIT_POOL.length];
+        const fabric = FABRIC_POOL[i % FABRIC_POOL.length];
+        const detailSuffix = DETAIL_SUFFIX_POOL[i % DETAIL_SUFFIX_POOL.length];
+        const title = `${prefix} ${core} ${suffix} ${fit} ${fabric} ${detailSuffix}`;
 
         const basePrice = 650 + ((i % 12) * 130) + (categoryKey.length * 17);
         const oldPrice = basePrice + 220 + ((i % 5) * 90);
@@ -177,8 +187,8 @@ const getStaticProductsByCategory = (categoryKey) => {
                 "Sezon kombinlerine uyumlu modern tasarım"
             ],
             attributes: [
-                {label: "Kalıp", value: FIT_POOL[i % FIT_POOL.length]},
-                {label: "Materyal", value: FABRIC_POOL[i % FABRIC_POOL.length]},
+                {label: "Kalıp", value: fit},
+                {label: "Materyal", value: fabric},
                 {label: "Renk", value: color},
                 {label: "Beden", value: size},
                 {label: "Menşei", value: ORIGIN_POOL[i % ORIGIN_POOL.length]}

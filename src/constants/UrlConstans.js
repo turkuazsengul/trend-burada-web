@@ -25,6 +25,8 @@ export const USE_STATIC_CAMPAIGN_ITEMS = (process.env.REACT_APP_USE_STATIC_CAMPA
 export const PRODUCT_LIST_URL = process.env.REACT_APP_PRODUCT_LIST_URL
 export const PRODUCT_FACETS_URL = process.env.REACT_APP_PRODUCT_FACETS_URL
 export const USE_STATIC_PRODUCT_DATA = (process.env.REACT_APP_USE_STATIC_PRODUCT_DATA || "true").toLowerCase() === "true"
+export const SEARCH_URL = process.env.REACT_APP_SEARCH_URL
+export const USE_STATIC_SEARCH_DATA = (process.env.REACT_APP_USE_STATIC_SEARCH_DATA || "true").toLowerCase() === "true"
 
 export const FAVORITE_LIST_URL = process.env.REACT_APP_FAVORITE_LIST_URL
 export const FAVORITE_TOGGLE_URL = process.env.REACT_APP_FAVORITE_TOGGLE_URL

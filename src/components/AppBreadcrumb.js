@@ -10,7 +10,7 @@ const normalizeLabel = (raw = '') => {
 };
 
 export const AppBreadcrumb = () => {
-    const {t = (key) => key} = useContext(AppContext) || {};
+    const {t = (key) => key, isMobile = false} = useContext(AppContext) || {};
     const location = useLocation();
     const history = useHistory();
     const pathname = location?.pathname || '/';
@@ -64,7 +64,7 @@ export const AppBreadcrumb = () => {
         return items;
     }, [pathname, t]);
 
-    if (crumbs.length === 0) {
+    if (isMobile || crumbs.length === 0) {
         return null;
     }
 
@@ -98,4 +98,3 @@ export const AppBreadcrumb = () => {
         </div>
     );
 };
-

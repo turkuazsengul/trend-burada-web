@@ -19,6 +19,8 @@ export const translations = {
             promoText: 'Premium kumaşlar, zamansız kesimler ve sınırlı stok fırsatlarıyla sezonun öne çıkan parçalarını keşfedin.',
             promoCta: 'Koleksiyonu İncele',
             promoImageAlt: 'Yeni sezon kampanya görseli',
+            popularSearches: 'Popüler Aramalar',
+            searchSuggestions: 'Öne Çıkan Aramalar',
             profileAccount: 'Hesabım',
             profileOrders: 'Siparişlerim',
             profileAddresses: 'Adreslerim',
@@ -41,6 +43,8 @@ export const translations = {
         common: {
             previousSlide: 'Önceki slide',
             nextSlide: 'Sonraki slide',
+            back: 'Geri',
+            close: 'Kapat',
             suggestions: 'Öneriler',
             passwordRuleLower: 'En az bir küçük harf',
             passwordRuleUpper: 'En az bir büyük harf',
@@ -98,10 +102,18 @@ export const translations = {
             loading: 'Ürünler yükleniyor...',
             empty: 'Seçili filtrelere uygun ürün bulunamadı. Farklı filtre kombinasyonları deneyin.'
         },
+        search: {
+            loading: 'Arama sonuçları yükleniyor...',
+            resultsFor: '"{{query}}" için sonuçlar',
+            empty: '"{{query}}" ile eşleşen ürün bulunamadı.'
+        },
         productCard: {
             fastDelivery: 'Hızlı Teslimat',
             addFavorite: 'Favorilere ekle',
             removeFavorite: 'Favorilerden çıkar',
+            addToCart: 'Sepete Ekle',
+            favoriteCount: '{{count}} kişi favoriledi',
+            viewed24h: 'Son 24 saatte {{count}} kişi inceledi',
             sellerScore: 'Satıcı Puanı',
             freeCargo: 'Kargo Bedava'
         },
@@ -114,7 +126,14 @@ export const translations = {
             clearFilters: 'Temizle',
             apply: 'Uygula',
             cancel: 'Vazgeç',
+            sorting: 'Sırala',
+            filtering: 'Filtrele',
             mobileFilterAria: 'Filtre sekmeleri',
+            sortRecommended: 'Önerilen',
+            sortPriceAsc: 'Fiyat Artan',
+            sortPriceDesc: 'Fiyat Azalan',
+            sortRatingDesc: 'En Çok Beğenilen',
+            sortNewest: 'En Yeni',
             brand: 'Marka',
             size: 'Beden',
             color: 'Renk',
@@ -415,6 +434,8 @@ export const translations = {
             promoText: 'Discover standout pieces with premium fabrics, timeless cuts and limited stock offers.',
             promoCta: 'Explore Collection',
             promoImageAlt: 'New season campaign image',
+            popularSearches: 'Popular Searches',
+            searchSuggestions: 'Featured Searches',
             profileAccount: 'My Account',
             profileOrders: 'My Orders',
             profileAddresses: 'My Addresses',
@@ -437,6 +458,8 @@ export const translations = {
         common: {
             previousSlide: 'Previous slide',
             nextSlide: 'Next slide',
+            back: 'Back',
+            close: 'Close',
             suggestions: 'Suggestions',
             passwordRuleLower: 'At least one lowercase letter',
             passwordRuleUpper: 'At least one uppercase letter',
@@ -494,10 +517,18 @@ export const translations = {
             loading: 'Loading products...',
             empty: 'No products found for selected filters. Try a different combination.'
         },
+        search: {
+            loading: 'Loading search results...',
+            resultsFor: 'Results for "{{query}}"',
+            empty: 'No products matched "{{query}}".'
+        },
         productCard: {
             fastDelivery: 'Fast Delivery',
             addFavorite: 'Add to favorites',
             removeFavorite: 'Remove from favorites',
+            addToCart: 'Add to Cart',
+            favoriteCount: '{{count}} people favorited this',
+            viewed24h: '{{count}} people viewed in the last 24h',
             sellerScore: 'Seller Score',
             freeCargo: 'Free Shipping'
         },
@@ -510,7 +541,14 @@ export const translations = {
             clearFilters: 'Clear',
             apply: 'Apply',
             cancel: 'Cancel',
+            sorting: 'Sorting',
+            filtering: 'Filtering',
             mobileFilterAria: 'Filter tabs',
+            sortRecommended: 'Recommended',
+            sortPriceAsc: 'Price Low to High',
+            sortPriceDesc: 'Price High to Low',
+            sortRatingDesc: 'Top Rated',
+            sortNewest: 'Newest',
             brand: 'Brand',
             size: 'Size',
             color: 'Color',

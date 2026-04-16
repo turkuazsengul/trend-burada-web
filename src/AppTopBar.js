@@ -67,12 +67,37 @@ const staticMegaMenuPromoImages = [
     "https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?auto=format&fit=crop&w=2200&q=86"
 ];
 
+const mobileSearchPreviewProducts = [
+    {
+        id: 'gomlek-3',
+        mark: 'Mavi',
+        title: 'Premium Dokulu Oversize Gömlek',
+        priceLabel: '1.249 TL',
+        img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+        id: 'elbise-4',
+        mark: 'Nocturne',
+        title: 'Modern Kesim Midi Elbise',
+        priceLabel: '1.799 TL',
+        img: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+        id: 'sneaker-2',
+        mark: 'Lufian',
+        title: 'Günlük Sneaker Koleksiyonu',
+        priceLabel: '2.149 TL',
+        img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80'
+    }
+];
+
 export const AppTopBar = () => {
     const history = useHistory();
     const location = useLocation();
     const myContext = useContext(AppContext);
     const t = myContext?.t || ((key) => key);
     const language = myContext?.language || 'tr';
+    const isMobile = Boolean(myContext?.isMobile);
     const closeTimerRef = useRef(null);
     const profileMenuCloseTimerRef = useRef(null);
     const cartButtonAnchorRef = useRef(null);
@@ -86,6 +111,9 @@ export const AppTopBar = () => {
     const [promoImages, setPromoImages] = useState(staticMegaMenuPromoImages);
     const [promoImageIndex, setPromoImageIndex] = useState(0);
     const [isCartBadgeBouncing, setIsCartBadgeBouncing] = useState(false);
+    const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+    const [mobileSearchValue, setMobileSearchValue] = useState('');
+    const [desktopSearchValue, setDesktopSearchValue] = useState('');
 
     useEffect(() => {
         const path = location?.pathname || '';
@@ -127,6 +155,25 @@ export const AppTopBar = () => {
             }
         };
     }, []);
+
+    useEffect(() => {
+        if (!isMobileSearchOpen) {
+            return undefined;
+        }
+
+        const currentOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = currentOverflow;
+        };
+    }, [isMobileSearchOpen]);
+
+    useEffect(() => {
+        const currentQuery = new URLSearchParams(location.search).get('q') || '';
+        setMobileSearchValue(currentQuery);
+        setDesktopSearchValue(currentQuery);
+    }, [location.search]);
 
     useEffect(() => {
         if (USE_STATIC_PROMO_IMAGES) {
@@ -297,6 +344,18 @@ export const AppTopBar = () => {
         history.push('/favoriler');
     };
 
+    const executeSearch = useCallback((rawValue) => {
+        const query = String(rawValue || '').trim();
+        if (!query) {
+            return;
+        }
+
+        setMobileSearchValue(query);
+        setDesktopSearchValue(query);
+        setIsMobileSearchOpen(false);
+        history.push(`/arama?q=${encodeURIComponent(query)}`);
+    }, [history]);
+
     const topMenuItemBody = () => {
         return topMenuItems.map((x) => {
             return (
@@ -440,6 +499,208 @@ export const AppTopBar = () => {
         activeCategory,
         ...localizedMegaMenuCategories.filter((category) => category.id !== activeCategory.id)
     ];
+    const isHomeRoute = (location?.pathname || '') === '/';
+    const popularSearches = [
+        'Elbise',
+        'Sneaker',
+        'Basic Tişört',
+        'Oversize Gömlek',
+        'Ceket',
+        'Çanta'
+    ];
+
+    if (isMobile) {
+        return (
+            <div className="top-bar top-bar-mobile">
+                {isHomeRoute && (
+                    <div className="top-bar-mobile-head">
+                        <a href="/" className="top-bar-mobile-logo">TREND BURADA</a>
+                        <div className="top-bar-mobile-icons">
+                            <button
+                                type="button"
+                                className="top-bar-mobile-icon-button"
+                                onClick={clickLoginButton}
+                                aria-label={localStorage.getItem('token') ? t('topbar.account') : t('topbar.login')}
+                            >
+                                <i className="pi pi-user"/>
+                            </button>
+                            <button
+                                type="button"
+                                className="top-bar-mobile-icon-button"
+                                onClick={clickFavoriteButton}
+                                aria-label={t('topbar.favorites')}
+                            >
+                                <i className="pi pi-heart"/>
+                            </button>
+                            <button
+                                type="button"
+                                className="top-bar-mobile-icon-button top-bar-mobile-cart"
+                                onClick={clickBoxButton}
+                                aria-label={t('topbar.cartAria', {count: cartCount})}
+                            >
+                                <i className="pi pi-shopping-cart"/>
+                                {cartCount > 0 && (
+                                    <span className={`top-cart-count-badge ${isCartBadgeBouncing ? 'is-bouncing' : ''}`}>
+                                        {cartBadgeLabel}
+                                    </span>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="top-bar-mobile-search">
+                    <div className={`top-bar-mobile-search-row ${isHomeRoute ? 'is-home' : 'is-inner'}`}>
+                        {!isHomeRoute && (
+                            <button
+                                type="button"
+                                className="top-bar-mobile-back"
+                                onClick={() => {
+                                    if (window.history.length > 1) {
+                                        history.goBack();
+                                    } else {
+                                        history.push('/');
+                                    }
+                                }}
+                                aria-label={t('common.back')}
+                            >
+                                <i className="pi pi-angle-left"/>
+                            </button>
+                        )}
+
+                        <button
+                            type="button"
+                            className={`top-bar-mobile-search-trigger ${isHomeRoute ? 'is-home' : 'is-inner'}`}
+                            onClick={() => setIsMobileSearchOpen(true)}
+                        >
+                            <i className="pi pi-search"/>
+                            <span>{t('topbar.searchPlaceholder')}</span>
+                        </button>
+
+                        {!isHomeRoute && (
+                            <div className="top-bar-mobile-search-actions">
+                                <button
+                                    type="button"
+                                    className="top-bar-mobile-icon-button is-inline"
+                                    onClick={clickLoginButton}
+                                    aria-label={localStorage.getItem('token') ? t('topbar.account') : t('topbar.login')}
+                                >
+                                    <i className="pi pi-user"/>
+                                </button>
+                                <button
+                                    type="button"
+                                    className="top-bar-mobile-icon-button is-inline"
+                                    onClick={clickFavoriteButton}
+                                    aria-label={t('topbar.favorites')}
+                                >
+                                    <i className="pi pi-heart"/>
+                                </button>
+                                <button
+                                    type="button"
+                                    className="top-bar-mobile-icon-button is-inline top-bar-mobile-cart"
+                                    onClick={clickBoxButton}
+                                    aria-label={t('topbar.cartAria', {count: cartCount})}
+                                >
+                                    <i className="pi pi-shopping-cart"/>
+                                    {cartCount > 0 && (
+                                        <span className={`top-cart-count-badge ${isCartBadgeBouncing ? 'is-bouncing' : ''}`}>
+                                            {cartBadgeLabel}
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {isHomeRoute && (
+                    <div className="top-bar-mobile-category-strip" role="navigation" aria-label={t('topbar.categoriesAria')}>
+                        {localizedMegaMenuCategories.map((category) => (
+                            <a
+                                key={category.id}
+                                href={`/product/${encodeURIComponent(category.items?.[0]?.slug || category.id)}`}
+                                className={`top-bar-mobile-category-pill ${activeMegaCategoryId === category.id ? 'is-active' : ''}`}
+                                onClick={() => setActiveMegaCategoryId(category.id)}
+                            >
+                                {category.label}
+                            </a>
+                        ))}
+                    </div>
+                )}
+
+                {isMobileSearchOpen && (
+                    <div className="mobile-search-overlay" onClick={() => setIsMobileSearchOpen(false)}>
+                        <div className="mobile-search-sheet" onClick={(event) => event.stopPropagation()}>
+                            <div className="mobile-search-top-row">
+                                <button
+                                    type="button"
+                                    className="mobile-search-back"
+                                    onClick={() => setIsMobileSearchOpen(false)}
+                                    aria-label={t('common.back')}
+                                >
+                                    <i className="pi pi-angle-left"/>
+                                </button>
+                                <div className="mobile-search-input-shell">
+                                    <i className="pi pi-search"/>
+                                    <InputText
+                                        autoFocus
+                                        value={mobileSearchValue}
+                                        onChange={(event) => setMobileSearchValue(event.target.value)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter') {
+                                                executeSearch(mobileSearchValue);
+                                            }
+                                        }}
+                                        className="mobile-search-input"
+                                        placeholder={t('topbar.searchPlaceholder')}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="mobile-search-popular">
+                                <span className="mobile-search-popular-title">{t('topbar.popularSearches')}</span>
+                                <div className="mobile-search-chip-list">
+                                    {popularSearches.map((item, index) => (
+                                        <button
+                                            key={item}
+                                            type="button"
+                                            className="mobile-search-chip"
+                                            onClick={() => executeSearch(item)}
+                                        >
+                                            {index < 3 && (
+                                                <span className="mobile-search-flame" aria-hidden="true">
+                                                    <span className="mobile-search-flame-core"/>
+                                                </span>
+                                            )}
+                                            {item}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="mobile-search-preview">
+                                <span className="mobile-search-popular-title">{t('topbar.searchSuggestions')}</span>
+                                <div className="mobile-search-product-list">
+                                    {mobileSearchPreviewProducts.map((item) => (
+                                        <a key={item.id} href={`/detail/${item.id}`} className="mobile-search-product-card">
+                                            <div className="mobile-search-product-media">
+                                                <img src={item.img} alt={item.title} loading="lazy" decoding="async"/>
+                                            </div>
+                                            <div className="mobile-search-product-content">
+                                                <strong>{item.mark}</strong>
+                                                <span>{item.title}</span>
+                                                <b>{item.priceLabel}</b>
+                                            </div>
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div className="top-bar">
@@ -517,8 +778,22 @@ export const AppTopBar = () => {
                         <div className="top-bar-search-input">
                             <div className="col-12 md:col-4">
                                 <div className="p-inputgroup search-input-group">
-                                    <InputText className="search-input" placeholder={t('topbar.searchPlaceholder')}/>
-                                    <Button icon="pi pi-search" className="search-button p-button-secondary p-button-text"/>
+                                    <InputText
+                                        value={desktopSearchValue}
+                                        onChange={(event) => setDesktopSearchValue(event.target.value)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter') {
+                                                executeSearch(desktopSearchValue);
+                                            }
+                                        }}
+                                        className="search-input"
+                                        placeholder={t('topbar.searchPlaceholder')}
+                                    />
+                                    <Button
+                                        icon="pi pi-search"
+                                        className="search-button p-button-secondary p-button-text"
+                                        onClick={() => executeSearch(desktopSearchValue)}
+                                    />
                                 </div>
                             </div>
                         </div>

@@ -42,7 +42,7 @@ const matchesPriceRange = (price, rangeValue) => {
 };
 
 export const ProductPage = ({match}) => {
-    const {t = (key) => key, language = 'tr'} = useContext(AppContext) || {};
+    const {t = (key) => key, language = 'tr', isMobile = false} = useContext(AppContext) || {};
     const locale = language === 'en' ? 'en-US' : 'tr-TR';
     const location = useLocation();
     const routeKey = normalizeCategoryKey(match.params.id || 'elbise');
@@ -56,6 +56,7 @@ export const ProductPage = ({match}) => {
     const [products, setProducts] = useState([]);
     const [serviceFacets, setServiceFacets] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [sortValue, setSortValue] = useState('recommended');
 
     const [selectedFilters, setSelectedFilters] = useState({
         mark: [],
@@ -215,6 +216,27 @@ export const ProductPage = ({match}) => {
         });
     }, [products, selectedFilters, isDiscountRoute, discountQuery]);
 
+    const sortedProducts = useMemo(() => {
+        const list = [...filteredProducts];
+
+        switch (sortValue) {
+            case 'price-asc':
+                return list.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+            case 'price-desc':
+                return list.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+            case 'rating-desc':
+                return list.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+            case 'newest':
+                return list.sort((a, b) => Number(b.reviewCount || 0) - Number(a.reviewCount || 0));
+            default:
+                return list.sort((a, b) => {
+                    const scoreA = (Number(a.rating || 0) * 100) + Number(a.reviewCount || 0) + Number(a.sellerScore || 0);
+                    const scoreB = (Number(b.rating || 0) * 100) + Number(b.reviewCount || 0) + Number(b.sellerScore || 0);
+                    return scoreB - scoreA;
+                });
+        }
+    }, [filteredProducts, sortValue]);
+
     const handleFilterChange = (filterKey, value) => {
         setSelectedFilters((prev) => {
             const currentValues = prev[filterKey] || [];
@@ -242,7 +264,7 @@ export const ProductPage = ({match}) => {
     };
 
     return (
-        <div className="catalog product-page-shell">
+        <div className={`catalog product-page-shell ${isMobile ? 'product-page-mobile-mode' : ''}`}>
             <div
                 ref={catalogRef}
                 className="product-catalog"
@@ -256,6 +278,8 @@ export const ProductPage = ({match}) => {
                         onClearAllFilters={clearAllFilters}
                         menuItems={menuItems}
                         activeMenuKey={categoryKey}
+                        sortValue={sortValue}
+                        onSortChange={setSortValue}
                     />
                 </aside>
 
@@ -270,15 +294,17 @@ export const ProductPage = ({match}) => {
                             onClearAllFilters={clearAllFilters}
                             menuItems={menuItems}
                             activeMenuKey={categoryKey}
+                            sortValue={sortValue}
+                            onSortChange={setSortValue}
                         />
-                        <span>{t('productList.listingCount', {count: filteredProducts.length})}</span>
+                        <span>{t('productList.listingCount', {count: sortedProducts.length})}</span>
                     </div>
 
                     {loading && <div className="product-empty-state">{t('productList.loading')}</div>}
 
                     {!loading && (
                         <div className="product-list">
-                            {filteredProducts.map((product) => (
+                            {sortedProducts.map((product) => (
                                 <div key={product.id} className="product-card-items">
                                     <ProductCard
                                         product={{
@@ -292,7 +318,7 @@ export const ProductPage = ({match}) => {
                         </div>
                     )}
 
-                    {!loading && filteredProducts.length === 0 && (
+                    {!loading && sortedProducts.length === 0 && (
                         <div className="product-empty-state">
                             {t('productList.empty')}
                         </div>
