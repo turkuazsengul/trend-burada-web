@@ -78,6 +78,7 @@ export const CartPage = () => {
     const [viewedStart, setViewedStart] = useState(0);
     const [recoStart, setRecoStart] = useState(0);
     const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
+    const [mobileCheckoutOpen, setMobileCheckoutOpen] = useState(false);
 
     const reloadCart = () => {
         setItems(CartService.getCartItems());
@@ -375,6 +376,7 @@ export const CartPage = () => {
         CartService.clearCart();
         setCompleted(true);
         setBankModalOpen(false);
+        setMobileCheckoutOpen(false);
         setOtpCode('');
         setOtpError('');
     };
@@ -411,13 +413,41 @@ export const CartPage = () => {
         );
     };
 
+    const isMobileViewport = viewportWidth <= 768;
     const selectedAddressOption = addressOptions.find((item) => item.id === selectedAddress);
     const visibleRecentlyViewed = recentlyViewed.length > 0 ? recentlyViewed : recentlyViewedFallback;
-    const viewedItems = visibleRecentlyViewed.slice(0, 12);
-    const recommendationProducts = (suggestedProducts.length > 0 ? suggestedProducts : campaignProducts).slice(0, 12);
+    const baseViewedItems = visibleRecentlyViewed.slice(0, 12);
+    const baseRecommendationProducts = (suggestedProducts.length > 0 ? suggestedProducts : campaignProducts).slice(0, 12);
+    const fillToMin = (list, pool, min = 2) => {
+        const base = Array.isArray(list) ? [...list] : [];
+        const source = Array.isArray(pool) ? pool : [];
+        if (base.length >= min) {
+            return base;
+        }
+        const used = new Set(base.map((item) => String(item?.id)));
+        for (let i = 0; i < source.length; i += 1) {
+            const candidate = source[i];
+            const key = String(candidate?.id);
+            if (!candidate?.id || used.has(key)) {
+                continue;
+            }
+            base.push(candidate);
+            used.add(key);
+            if (base.length >= min) {
+                break;
+            }
+        }
+        return base;
+    };
+    const viewedItems = isMobileViewport
+        ? fillToMin(baseViewedItems, baseRecommendationProducts, 2).slice(0, 12)
+        : baseViewedItems;
+    const recommendationProducts = isMobileViewport
+        ? fillToMin(baseRecommendationProducts, campaignProducts, 2).slice(0, 12)
+        : baseRecommendationProducts;
     const hasSideRoomForRecommendations = viewedItems.length > 0 && viewedItems.length <= 3;
-    const viewedVisibleCount = viewportWidth <= 768 ? 1 : (viewportWidth <= 1200 ? 2 : (hasSideRoomForRecommendations ? 2 : 4));
-    const recoVisibleCount = viewportWidth <= 768 ? 1 : (hasSideRoomForRecommendations ? 2 : 4);
+    const viewedVisibleCount = viewportWidth <= 768 ? 2 : (viewportWidth <= 1200 ? 2 : (hasSideRoomForRecommendations ? 2 : 4));
+    const recoVisibleCount = viewportWidth <= 768 ? 2 : (hasSideRoomForRecommendations ? 2 : 4);
     const enableViewedSlider = viewedItems.length > viewedVisibleCount;
     const enableRecoSlider = recommendationProducts.length > recoVisibleCount;
     const viewedPanelStyle = viewedItems.length > 0
@@ -441,6 +471,280 @@ export const CartPage = () => {
         }
         setter((prev) => (prev + step + length) % length);
     };
+    const renderCheckoutPanel = () => (
+        <>
+            {checkoutStep === 1 && (
+                <div className="checkout-panel-card cart-summary-card">
+                    <h3>{t('cart.summaryTitle')}</h3>
+                    <div className="summary-row"><span>{t('cart.subtotal')}</span><strong>{formatPrice(summary.subtotal, locale)}</strong></div>
+                    <div className="summary-row"><span>{t('cart.cargo')}</span><strong>{summary.cargo === 0 ? t('cart.free') : formatPrice(summary.cargo, locale)}</strong></div>
+                    <div className="summary-row"><span>{t('cart.discount')}</span><strong>- {formatPrice(summary.discount, locale)}</strong></div>
+                    <div className="summary-row total"><span>{t('cart.total')}</span><strong>{formatPrice(summary.total, locale)}</strong></div>
+                    <button
+                        type="button"
+                        className="checkout-complete-button"
+                        onClick={handleGoToAddressStep}
+                        disabled={items.length === 0}
+                    >
+                        {t('cart.buy')}
+                    </button>
+                </div>
+            )}
+
+            {checkoutStep === 2 && (
+                <div className="checkout-panel-card">
+                    <h3>{t('cart.addressTitle')}</h3>
+                    {addressOptions.length === 0 ? (
+                        <div className="cart-address-empty-box">
+                            <span>{t('cart.noAddressInAccount')}</span>
+                        </div>
+                    ) : (
+                        <div className="checkout-option-list">
+                            {addressOptions.map((option) => (
+                                <label key={option.id} className={`checkout-option ${selectedAddress === option.id ? 'is-active' : ''}`}>
+                                    <input
+                                        type="radio"
+                                        name="address"
+                                        value={option.id}
+                                        checked={selectedAddress === option.id}
+                                        onChange={() => setSelectedAddress(option.id)}
+                                    />
+                                    <span className="checkout-option-text">
+                                        <strong>{option.label}</strong>
+                                        <small>{option.detail}</small>
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="checkout-step-actions">
+                        <button type="button" className="checkout-outline-btn" onClick={() => setShowNewAddressForm((prev) => !prev)}>
+                            {text('cart.addAddressInline', 'Yeni Adres Ekle')}
+                        </button>
+                        <button
+                            type="button"
+                            className="checkout-complete-button"
+                            onClick={handleAddressContinue}
+                            disabled={!selectedAddress}
+                        >
+                            {text('cart.continuePayment', 'Ödemeye Geç')}
+                        </button>
+                    </div>
+
+                    {showNewAddressForm && (
+                        <div className="inline-address-form">
+                            <div className="inline-address-grid">
+                                <label>
+                                    <span>{text('cart.addressFormTitle', 'Adres Başlığı')}</span>
+                                    <input
+                                        type="text"
+                                        value={newAddressForm.title}
+                                        onChange={(e) => handleNewAddressField('title', e.target.value)}
+                                    />
+                                </label>
+                                <label>
+                                    <span>{text('cart.addressPhone', 'Telefon')}</span>
+                                    <input
+                                        type="text"
+                                        value={newAddressForm.phone}
+                                        onChange={(e) => handleNewAddressField('phone', e.target.value)}
+                                    />
+                                </label>
+                                <label>
+                                    <span>{text('cart.addressCity', 'İl')}</span>
+                                    <input
+                                        type="text"
+                                        value={newAddressForm.city}
+                                        onChange={(e) => handleNewAddressField('city', e.target.value)}
+                                    />
+                                </label>
+                                <label>
+                                    <span>{text('cart.addressDistrict', 'İlçe')}</span>
+                                    <input
+                                        type="text"
+                                        value={newAddressForm.district}
+                                        onChange={(e) => handleNewAddressField('district', e.target.value)}
+                                    />
+                                </label>
+                                <label className="full">
+                                    <span>{text('cart.addressFull', 'Açık Adres')}</span>
+                                    <input
+                                        type="text"
+                                        value={newAddressForm.fullAddress}
+                                        onChange={(e) => handleNewAddressField('fullAddress', e.target.value)}
+                                    />
+                                </label>
+                            </div>
+                            <div className="checkout-step-actions">
+                                <button type="button" className="checkout-outline-btn" onClick={() => setShowNewAddressForm(false)}>
+                                    {text('cart.cancel', 'Vazgeç')}
+                                </button>
+                                <button type="button" className="checkout-complete-button" onClick={handleCreateAddress}>
+                                    {text('cart.saveAddress', 'Adresi Kaydet')}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {checkoutStep === 3 && (
+                <div className="checkout-panel-card">
+                    <h3>{t('cart.paymentTitle')}</h3>
+                    <div className="checkout-option-list">
+                        {paymentOptions.map((option) => (
+                            <div key={option.id} className="checkout-option-item">
+                                <label className={`checkout-option ${selectedPayment === option.id ? 'is-active' : ''}`}>
+                                    <input
+                                        type="radio"
+                                        name="payment"
+                                        value={option.id}
+                                        checked={selectedPayment === option.id}
+                                        onChange={() => setSelectedPayment(option.id)}
+                                    />
+                                    <span className="checkout-option-text">
+                                        <strong>{option.label}</strong>
+                                        <small>{option.detail}</small>
+                                    </span>
+                                </label>
+
+                                {option.id === 'card' && selectedPayment === 'card' && (
+                                    <div className="checkout-option-extend">
+                                        <div className="card-form-area">
+                                            <div className="card-form-grid">
+                                                <label className="card-form-field full">
+                                                    <span>{t('cart.cardNo')}</span>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="0000 0000 0000 0000"
+                                                        value={cardForm.cardNumber}
+                                                        onChange={(event) => onCardFieldChange('cardNumber', event.target.value)}
+                                                    />
+                                                </label>
+
+                                                <label className="card-form-field full">
+                                                    <span>{t('cart.cardHolder')}</span>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="AD SOYAD"
+                                                        value={cardForm.holderName}
+                                                        onChange={(event) => onCardFieldChange('holderName', event.target.value)}
+                                                    />
+                                                </label>
+
+                                                <label className="card-form-field">
+                                                    <span>{t('cart.expiry')}</span>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="AA/YY"
+                                                        value={cardForm.expiry}
+                                                        onChange={(event) => onCardFieldChange('expiry', event.target.value)}
+                                                    />
+                                                </label>
+
+                                                <label className="card-form-field">
+                                                    <span>CVV</span>
+                                                    <input
+                                                        type="password"
+                                                        placeholder="***"
+                                                        value={cardForm.cvv}
+                                                        onChange={(event) => onCardFieldChange('cvv', event.target.value)}
+                                                    />
+                                                </label>
+                                            </div>
+
+                                            <div className="installment-area">
+                                                <button
+                                                    type="button"
+                                                    className="installment-toggle"
+                                                    onClick={() => setIsInstallmentOpen((prev) => !prev)}
+                                                >
+                                                    <strong>
+                                                        {t('cart.installments')}
+                                                        <span className="installment-selected-label">({selectedInstallmentLabel})</span>
+                                                    </strong>
+                                                    <i className={`pi ${isInstallmentOpen ? 'pi-angle-up' : 'pi-angle-down'}`}/>
+                                                </button>
+
+                                                <div className={`installment-list ${isInstallmentOpen ? 'is-open' : ''}`}>
+                                                    {installmentOptions.map((item) => (
+                                                        <label key={item.value} className={`installment-option ${selectedInstallment === item.value ? 'is-active' : ''}`}>
+                                                            <input
+                                                                type="radio"
+                                                                name="installment"
+                                                                checked={selectedInstallment === item.value}
+                                                                onChange={() => setSelectedInstallment(item.value)}
+                                                            />
+                                                            <span>{item.label}</span>
+                                                            <small>{formatPrice(item.amount, locale)}</small>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    <div className="checkout-step-actions">
+                        <button type="button" className="checkout-outline-btn" onClick={() => setCheckoutStep(2)}>
+                            {text('cart.back', 'Geri')}
+                        </button>
+                        <button
+                            type="button"
+                            className="checkout-complete-button"
+                            onClick={handlePaymentContinue}
+                            disabled={isPaymentContinueDisabled}
+                        >
+                            {text('cart.continueConfirm', 'Onaya Geç')}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {checkoutStep === 4 && (
+                <div className="checkout-panel-card cart-summary-card">
+                    <h3>{text('cart.finalCheckTitle', 'Son Kontrol')}</h3>
+                    <div className="checkout-review-box">
+                        <div className="checkout-review-row">
+                            <span>{t('cart.addressTitle')}</span>
+                            <strong>{selectedAddressOption?.label || '-'}</strong>
+                        </div>
+                        <div className="checkout-review-row">
+                            <span>{t('cart.paymentTitle')}</span>
+                            <strong>{paymentOptions.find((item) => item.id === selectedPayment)?.label || '-'}</strong>
+                        </div>
+                        {selectedPayment === 'card' && (
+                            <div className="checkout-review-row">
+                                <span>{t('cart.card')}</span>
+                                <strong>**** **** **** {normalizeCardNumber(cardForm.cardNumber).slice(-4) || '0000'}</strong>
+                            </div>
+                        )}
+                    </div>
+                    <div className="summary-row"><span>{t('cart.subtotal')}</span><strong>{formatPrice(summary.subtotal, locale)}</strong></div>
+                    <div className="summary-row"><span>{t('cart.cargo')}</span><strong>{summary.cargo === 0 ? t('cart.free') : formatPrice(summary.cargo, locale)}</strong></div>
+                    <div className="summary-row"><span>{t('cart.discount')}</span><strong>- {formatPrice(summary.discount, locale)}</strong></div>
+                    <div className="summary-row total"><span>{t('cart.total')}</span><strong>{formatPrice(summary.total, locale)}</strong></div>
+
+                    <div className="checkout-step-actions">
+                        <button type="button" className="checkout-outline-btn" onClick={() => setCheckoutStep(3)}>
+                            {text('cart.back', 'Geri')}
+                        </button>
+                        <button
+                            type="button"
+                            className="checkout-complete-button"
+                            onClick={completePurchase}
+                            disabled={items.length === 0}
+                        >
+                            {t('cart.buy')}
+                        </button>
+                    </div>
+                </div>
+            )}
+        </>
+    );
 
     return (
         <div className="cart-page">
@@ -515,278 +819,11 @@ export const CartPage = () => {
                     ))}
                 </section>
 
-                {items.length > 0 && <aside className="cart-checkout-section">
-                    {checkoutStep === 1 && (
-                        <div className="checkout-panel-card cart-summary-card">
-                            <h3>{t('cart.summaryTitle')}</h3>
-                            <div className="summary-row"><span>{t('cart.subtotal')}</span><strong>{formatPrice(summary.subtotal, locale)}</strong></div>
-                            <div className="summary-row"><span>{t('cart.cargo')}</span><strong>{summary.cargo === 0 ? t('cart.free') : formatPrice(summary.cargo, locale)}</strong></div>
-                            <div className="summary-row"><span>{t('cart.discount')}</span><strong>- {formatPrice(summary.discount, locale)}</strong></div>
-                            <div className="summary-row total"><span>{t('cart.total')}</span><strong>{formatPrice(summary.total, locale)}</strong></div>
-                            <button
-                                type="button"
-                                className="checkout-complete-button"
-                                onClick={handleGoToAddressStep}
-                                disabled={items.length === 0}
-                            >
-                                {t('cart.buy')}
-                            </button>
-                        </div>
-                    )}
-
-                    {checkoutStep === 2 && (
-                        <div className="checkout-panel-card">
-                            <h3>{t('cart.addressTitle')}</h3>
-                            {addressOptions.length === 0 ? (
-                                <div className="cart-address-empty-box">
-                                    <span>{t('cart.noAddressInAccount')}</span>
-                                </div>
-                            ) : (
-                                <div className="checkout-option-list">
-                                    {addressOptions.map((option) => (
-                                        <label key={option.id} className={`checkout-option ${selectedAddress === option.id ? 'is-active' : ''}`}>
-                                            <input
-                                                type="radio"
-                                                name="address"
-                                                value={option.id}
-                                                checked={selectedAddress === option.id}
-                                                onChange={() => setSelectedAddress(option.id)}
-                                            />
-                                            <span className="checkout-option-text">
-                                                <strong>{option.label}</strong>
-                                                <small>{option.detail}</small>
-                                            </span>
-                                        </label>
-                                    ))}
-                                </div>
-                            )}
-
-                            <div className="checkout-step-actions">
-                                <button type="button" className="checkout-outline-btn" onClick={() => setShowNewAddressForm((prev) => !prev)}>
-                                    {text('cart.addAddressInline', 'Yeni Adres Ekle')}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="checkout-complete-button"
-                                    onClick={handleAddressContinue}
-                                    disabled={!selectedAddress}
-                                >
-                                    {text('cart.continuePayment', 'Ödemeye Geç')}
-                                </button>
-                            </div>
-
-                            {showNewAddressForm && (
-                                <div className="inline-address-form">
-                                    <div className="inline-address-grid">
-                                        <label>
-                                            <span>{text('cart.addressFormTitle', 'Adres Başlığı')}</span>
-                                            <input
-                                                type="text"
-                                                value={newAddressForm.title}
-                                                onChange={(e) => handleNewAddressField('title', e.target.value)}
-                                            />
-                                        </label>
-                                        <label>
-                                            <span>{text('cart.addressPhone', 'Telefon')}</span>
-                                            <input
-                                                type="text"
-                                                value={newAddressForm.phone}
-                                                onChange={(e) => handleNewAddressField('phone', e.target.value)}
-                                            />
-                                        </label>
-                                        <label>
-                                            <span>{text('cart.addressCity', 'İl')}</span>
-                                            <input
-                                                type="text"
-                                                value={newAddressForm.city}
-                                                onChange={(e) => handleNewAddressField('city', e.target.value)}
-                                            />
-                                        </label>
-                                        <label>
-                                            <span>{text('cart.addressDistrict', 'İlçe')}</span>
-                                            <input
-                                                type="text"
-                                                value={newAddressForm.district}
-                                                onChange={(e) => handleNewAddressField('district', e.target.value)}
-                                            />
-                                        </label>
-                                        <label className="full">
-                                            <span>{text('cart.addressFull', 'Açık Adres')}</span>
-                                            <input
-                                                type="text"
-                                                value={newAddressForm.fullAddress}
-                                                onChange={(e) => handleNewAddressField('fullAddress', e.target.value)}
-                                            />
-                                        </label>
-                                    </div>
-                                    <div className="checkout-step-actions">
-                                        <button type="button" className="checkout-outline-btn" onClick={() => setShowNewAddressForm(false)}>
-                                            {text('cart.cancel', 'Vazgeç')}
-                                        </button>
-                                        <button type="button" className="checkout-complete-button" onClick={handleCreateAddress}>
-                                            {text('cart.saveAddress', 'Adresi Kaydet')}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {checkoutStep === 3 && (
-                        <div className="checkout-panel-card">
-                            <h3>{t('cart.paymentTitle')}</h3>
-                            <div className="checkout-option-list">
-                                {paymentOptions.map((option) => (
-                                    <div key={option.id} className="checkout-option-item">
-                                        <label className={`checkout-option ${selectedPayment === option.id ? 'is-active' : ''}`}>
-                                            <input
-                                                type="radio"
-                                                name="payment"
-                                                value={option.id}
-                                                checked={selectedPayment === option.id}
-                                                onChange={() => setSelectedPayment(option.id)}
-                                            />
-                                            <span className="checkout-option-text">
-                                                <strong>{option.label}</strong>
-                                                <small>{option.detail}</small>
-                                            </span>
-                                        </label>
-
-                                        {option.id === 'card' && selectedPayment === 'card' && (
-                                            <div className="checkout-option-extend">
-                                                <div className="card-form-area">
-                                                    <div className="card-form-grid">
-                                                        <label className="card-form-field full">
-                                                            <span>{t('cart.cardNo')}</span>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="0000 0000 0000 0000"
-                                                                value={cardForm.cardNumber}
-                                                                onChange={(event) => onCardFieldChange('cardNumber', event.target.value)}
-                                                            />
-                                                        </label>
-
-                                                        <label className="card-form-field full">
-                                                            <span>{t('cart.cardHolder')}</span>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="AD SOYAD"
-                                                                value={cardForm.holderName}
-                                                                onChange={(event) => onCardFieldChange('holderName', event.target.value)}
-                                                            />
-                                                        </label>
-
-                                                        <label className="card-form-field">
-                                                            <span>{t('cart.expiry')}</span>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="AA/YY"
-                                                                value={cardForm.expiry}
-                                                                onChange={(event) => onCardFieldChange('expiry', event.target.value)}
-                                                            />
-                                                        </label>
-
-                                                        <label className="card-form-field">
-                                                            <span>CVV</span>
-                                                            <input
-                                                                type="password"
-                                                                placeholder="***"
-                                                                value={cardForm.cvv}
-                                                                onChange={(event) => onCardFieldChange('cvv', event.target.value)}
-                                                            />
-                                                        </label>
-                                                    </div>
-
-                                                    <div className="installment-area">
-                                                        <button
-                                                            type="button"
-                                                            className="installment-toggle"
-                                                            onClick={() => setIsInstallmentOpen((prev) => !prev)}
-                                                        >
-                                                            <strong>
-                                                                {t('cart.installments')}
-                                                                <span className="installment-selected-label">({selectedInstallmentLabel})</span>
-                                                            </strong>
-                                                            <i className={`pi ${isInstallmentOpen ? 'pi-angle-up' : 'pi-angle-down'}`}/>
-                                                        </button>
-
-                                                        <div className={`installment-list ${isInstallmentOpen ? 'is-open' : ''}`}>
-                                                            {installmentOptions.map((item) => (
-                                                                <label key={item.value} className={`installment-option ${selectedInstallment === item.value ? 'is-active' : ''}`}>
-                                                                    <input
-                                                                        type="radio"
-                                                                        name="installment"
-                                                                        checked={selectedInstallment === item.value}
-                                                                        onChange={() => setSelectedInstallment(item.value)}
-                                                                    />
-                                                                    <span>{item.label}</span>
-                                                                    <small>{formatPrice(item.amount, locale)}</small>
-                                                                </label>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="checkout-step-actions">
-                                <button type="button" className="checkout-outline-btn" onClick={() => setCheckoutStep(2)}>
-                                    {text('cart.back', 'Geri')}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="checkout-complete-button"
-                                    onClick={handlePaymentContinue}
-                                    disabled={isPaymentContinueDisabled}
-                                >
-                                    {text('cart.continueConfirm', 'Onaya Geç')}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {checkoutStep === 4 && (
-                        <div className="checkout-panel-card cart-summary-card">
-                            <h3>{text('cart.finalCheckTitle', 'Son Kontrol')}</h3>
-                            <div className="checkout-review-box">
-                                <div className="checkout-review-row">
-                                    <span>{t('cart.addressTitle')}</span>
-                                    <strong>{selectedAddressOption?.label || '-'}</strong>
-                                </div>
-                                <div className="checkout-review-row">
-                                    <span>{t('cart.paymentTitle')}</span>
-                                    <strong>{paymentOptions.find((item) => item.id === selectedPayment)?.label || '-'}</strong>
-                                </div>
-                                {selectedPayment === 'card' && (
-                                    <div className="checkout-review-row">
-                                        <span>{t('cart.card')}</span>
-                                        <strong>**** **** **** {normalizeCardNumber(cardForm.cardNumber).slice(-4) || '0000'}</strong>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="summary-row"><span>{t('cart.subtotal')}</span><strong>{formatPrice(summary.subtotal, locale)}</strong></div>
-                            <div className="summary-row"><span>{t('cart.cargo')}</span><strong>{summary.cargo === 0 ? t('cart.free') : formatPrice(summary.cargo, locale)}</strong></div>
-                            <div className="summary-row"><span>{t('cart.discount')}</span><strong>- {formatPrice(summary.discount, locale)}</strong></div>
-                            <div className="summary-row total"><span>{t('cart.total')}</span><strong>{formatPrice(summary.total, locale)}</strong></div>
-
-                            <div className="checkout-step-actions">
-                                <button type="button" className="checkout-outline-btn" onClick={() => setCheckoutStep(3)}>
-                                    {text('cart.back', 'Geri')}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="checkout-complete-button"
-                                    onClick={completePurchase}
-                                    disabled={items.length === 0}
-                                >
-                                    {t('cart.buy')}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </aside>}
+                {items.length > 0 && !isMobileViewport && (
+                    <aside className="cart-checkout-section">
+                        {renderCheckoutPanel()}
+                    </aside>
+                )}
             </div>
 
             <section className={`cart-personalized-row ${hasSideRoomForRecommendations ? 'split' : 'stacked'}`}>
@@ -896,6 +933,42 @@ export const CartPage = () => {
                     </a>
                 ))}
             </section>
+
+            {isMobileViewport && items.length > 0 && (
+                <div className="cart-mobile-cta-bar">
+                    <div className="cart-mobile-cta-price">
+                        <span>{t('cart.total')}</span>
+                        <strong>{formatPrice(summary.total, locale)}</strong>
+                    </div>
+                    <button
+                        type="button"
+                        className="cart-mobile-cta-button"
+                        onClick={() => setMobileCheckoutOpen(true)}
+                    >
+                        {t('cart.buy')}
+                    </button>
+                </div>
+            )}
+
+            {isMobileViewport && mobileCheckoutOpen && (
+                <div className="cart-mobile-checkout-backdrop" onClick={() => setMobileCheckoutOpen(false)}>
+                    <div className="cart-mobile-checkout-modal" onClick={(event) => event.stopPropagation()}>
+                        <div className="cart-mobile-checkout-head">
+                            <h3>{text('cart.mobileCheckoutTitle', 'Güvenli Ödeme')}</h3>
+                            <button type="button" onClick={() => setMobileCheckoutOpen(false)}>{t('cart.close')}</button>
+                        </div>
+                        <div className="checkout-steps-chip">
+                            <span className={checkoutStep >= 1 ? 'is-active' : ''}>{text('cart.stepSummary', 'Özet')}</span>
+                            <span className={checkoutStep >= 2 ? 'is-active' : ''}>{text('cart.stepAddress', 'Adres')}</span>
+                            <span className={checkoutStep >= 3 ? 'is-active' : ''}>{text('cart.stepPayment', 'Ödeme')}</span>
+                            <span className={checkoutStep >= 4 ? 'is-active' : ''}>{text('cart.stepConfirm', 'Onay')}</span>
+                        </div>
+                        <div className="cart-mobile-checkout-content">
+                            {renderCheckoutPanel()}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {bankModalOpen && (
                 <div className="bank-demo-modal-backdrop" onClick={closeBankModal}>
