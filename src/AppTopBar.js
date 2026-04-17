@@ -605,7 +605,7 @@ export const AppTopBar = () => {
             <div ref={mobileTopBarRef} className="top-bar top-bar-mobile">
                 {isHomeRoute && (
                     <div className="top-bar-mobile-head">
-                        <a href="/" className="top-bar-mobile-logo">TREND BURADA</a>
+                        <a href="/" className="top-bar-mobile-logo top-bar-mobile-logo-home">TREND BURADA</a>
                         <div className="top-bar-mobile-icons">
                             <button
                                 type="button"
@@ -625,6 +625,7 @@ export const AppTopBar = () => {
                             </button>
                             <button
                                 type="button"
+                                ref={cartButtonAnchorRef}
                                 className="top-bar-mobile-icon-button top-bar-mobile-cart"
                                 onClick={clickBoxButton}
                                 aria-label={t('topbar.cartAria', {count: cartCount})}
@@ -688,6 +689,7 @@ export const AppTopBar = () => {
                                 </button>
                                 <button
                                     type="button"
+                                    ref={cartButtonAnchorRef}
                                     className="top-bar-mobile-icon-button is-inline top-bar-mobile-cart"
                                     onClick={clickBoxButton}
                                     aria-label={t('topbar.cartAria', {count: cartCount})}
