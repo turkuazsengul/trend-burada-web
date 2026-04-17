@@ -52,6 +52,7 @@ export const ProductPage = ({match}) => {
     const menuItems = useMemo(() => getMenuItemsByCategory(categoryKey), [categoryKey]);
     const catalogRef = useRef(null);
     const productContentRef = useRef(null);
+    const productToolbarRef = useRef(null);
 
     const [products, setProducts] = useState([]);
     const [serviceFacets, setServiceFacets] = useState([]);
@@ -203,6 +204,40 @@ export const ProductPage = ({match}) => {
         };
     }, [isMobile]);
 
+    useLayoutEffect(() => {
+        if (!isMobile) {
+            document.documentElement.style.removeProperty('--mobile-product-toolbar-height');
+            return undefined;
+        }
+
+        const toolbar = productToolbarRef.current;
+        if (!toolbar) {
+            return undefined;
+        }
+
+        const updateToolbarHeight = () => {
+            document.documentElement.style.setProperty('--mobile-product-toolbar-height', `${toolbar.offsetHeight || 0}px`);
+        };
+
+        updateToolbarHeight();
+
+        let resizeObserver;
+        if (typeof ResizeObserver !== 'undefined') {
+            resizeObserver = new ResizeObserver(updateToolbarHeight);
+            resizeObserver.observe(toolbar);
+        }
+
+        window.addEventListener('resize', updateToolbarHeight, {passive: true});
+
+        return () => {
+            window.removeEventListener('resize', updateToolbarHeight);
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
+            document.documentElement.style.removeProperty('--mobile-product-toolbar-height');
+        };
+    }, [isMobile, isMobileFilterStripVisible]);
+
     const filters = useMemo(() => {
         if (serviceFacets.length > 0) {
             return serviceFacets;
@@ -331,7 +366,10 @@ export const ProductPage = ({match}) => {
                 </aside>
 
                 <section ref={productContentRef} className="product-content">
-                    <div className={`product-toolbar ${isMobileFilterStripVisible ? 'is-visible' : 'is-hidden'}`}>
+                    <div
+                        ref={productToolbarRef}
+                        className={`product-toolbar ${isMobileFilterStripVisible ? 'is-visible' : 'is-hidden'}`}
+                    >
                         <ProductFilter
                             mobileMode
                             filterItemList={filters}
