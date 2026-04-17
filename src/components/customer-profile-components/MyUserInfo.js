@@ -13,6 +13,28 @@ import AppContext from "../../AppContext";
 import {InputTextarea} from "primereact/inputtextarea";
 import UserActivityService from "../../service/UserActivityService";
 
+const AI_SHOP_BODY_KEY = 'tb_ai_shop_body_profile_v1';
+const BODY_PROFILE_DEFAULTS = {
+    height: '',
+    weight: '',
+    gender: 'kadin',
+    topSize: 'M',
+    bottomSize: '38',
+    trouserLength: '',
+    waist: '',
+    budget: ''
+};
+
+const readBodyProfile = () => {
+    try {
+        const raw = localStorage.getItem(AI_SHOP_BODY_KEY);
+        if (!raw) return BODY_PROFILE_DEFAULTS;
+        return {...BODY_PROFILE_DEFAULTS, ...JSON.parse(raw)};
+    } catch (e) {
+        return BODY_PROFILE_DEFAULTS;
+    }
+};
+
 const MyUserInfo = () => {
     const {t = (key) => key, isMobile = false} = useContext(AppContext) || {};
     const safeText = (key, fallback) => {
@@ -51,6 +73,7 @@ const MyUserInfo = () => {
         sms: false,
         push: false
     });
+    const [bodyProfile, setBodyProfile] = useState(BODY_PROFILE_DEFAULTS);
     const [addresses, setAddresses] = useState([]);
     const [showAddressForm, setShowAddressForm] = useState(false);
     const [orderHistory, setOrderHistory] = useState([]);
@@ -114,6 +137,10 @@ const MyUserInfo = () => {
         onResize();
         window.addEventListener('resize', onResize, {passive: true});
         return () => window.removeEventListener('resize', onResize);
+    }, []);
+
+    useEffect(() => {
+        setBodyProfile(readBodyProfile());
     }, []);
 
     const addressStorageKey = `tb_addresses_${userId || 'guest'}`;
@@ -251,6 +278,7 @@ const MyUserInfo = () => {
 
     const sectionMeta = {
         'user-info': {title: t('profile.accountInfoTitle'), subtitle: t('profile.accountInfoSubtitle')},
+        'body-info': {title: safeText('profile.bodyInfo', 'Beden Bilgilerim'), subtitle: safeText('profile.bodyInfoText', 'AI Shop önerilerinin size daha doğru kombinler sunabilmesi için ölçülerinizi burada güncelleyebilirsiniz.')},
         'address': {title: t('profile.sectionTitleAddress'), subtitle: t('profile.sectionSubtitleAddress')},
         'saved-cards': {title: t('profile.sectionTitleCards'), subtitle: t('profile.sectionSubtitleCards')},
         'orders': {title: t('profile.sectionTitleOrders'), subtitle: t('profile.sectionSubtitleOrders')},
@@ -570,6 +598,88 @@ const MyUserInfo = () => {
         );
     };
 
+    const renderBodyInfoSection = () => {
+        const saveBodyProfile = () => {
+            localStorage.setItem(AI_SHOP_BODY_KEY, JSON.stringify(bodyProfile));
+            showMessage(
+                safeText('profile.bodyProfileSavedTitle', 'Beden bilgileri kaydedildi'),
+                safeText('profile.bodyProfileSavedDetail', 'AI Shop ve hesabım ekranında aynı beden bilgileri kullanılacak.'),
+                toastCenter,
+                'success'
+            );
+        };
+
+        return (
+            <>
+                <div className="process-row">
+                    <div className="process-header-item">{safeText('profile.bodyInfo', 'Beden Bilgilerim')}</div>
+                </div>
+                <div className="process-row">
+                    <div className="contact-preference-box phone-update-box">
+                        <h4>{safeText('profile.bodyInfo', 'Beden Bilgilerim')}</h4>
+                        <p>{safeText('profile.bodyInfoText', 'AI Shop önerilerinin size daha doğru kombinler sunabilmesi için ölçülerinizi burada güncelleyebilirsiniz.')}</p>
+
+                        <div className="phone-update-grid">
+                            <label className="phone-update-field">
+                                <span>{safeText('aiShop.height', 'Boy')}</span>
+                                <InputText value={bodyProfile.height} onChange={(e) => setBodyProfile((prev) => ({...prev, height: e.target.value}))} placeholder="cm" />
+                            </label>
+                            <label className="phone-update-field">
+                                <span>{safeText('aiShop.weight', 'Kilo')}</span>
+                                <InputText value={bodyProfile.weight} onChange={(e) => setBodyProfile((prev) => ({...prev, weight: e.target.value}))} placeholder="kg" />
+                            </label>
+                            <label className="phone-update-field">
+                                <span>{safeText('aiShop.gender', 'Cinsiyet')}</span>
+                                <div className="gender-check-list">
+                                    <label className="gender-check-item">
+                                        <input type="radio" name="body-gender" checked={bodyProfile.gender === 'kadin'} onChange={() => setBodyProfile((prev) => ({...prev, gender: 'kadin'}))} />
+                                        <span>{safeText('profile.genderFemale', 'Kadın')}</span>
+                                    </label>
+                                    <label className="gender-check-item">
+                                        <input type="radio" name="body-gender" checked={bodyProfile.gender === 'erkek'} onChange={() => setBodyProfile((prev) => ({...prev, gender: 'erkek'}))} />
+                                        <span>{safeText('profile.genderMale', 'Erkek')}</span>
+                                    </label>
+                                    <label className="gender-check-item">
+                                        <input type="radio" name="body-gender" checked={bodyProfile.gender === 'cocuk'} onChange={() => setBodyProfile((prev) => ({...prev, gender: 'cocuk'}))} />
+                                        <span>{safeText('aiShop.genderChild', 'Çocuk')}</span>
+                                    </label>
+                                </div>
+                            </label>
+                            <label className="phone-update-field">
+                                <span>{safeText('aiShop.topSize', 'Kıyafet bedeni')}</span>
+                                <InputText value={bodyProfile.topSize} onChange={(e) => setBodyProfile((prev) => ({...prev, topSize: e.target.value}))} placeholder="XS / S / M / L / XL" />
+                            </label>
+                            <label className="phone-update-field">
+                                <span>{safeText('aiShop.bottomSize', 'Pantolon bedeni')}</span>
+                                <InputText value={bodyProfile.bottomSize} onChange={(e) => setBodyProfile((prev) => ({...prev, bottomSize: e.target.value}))} placeholder="36 / 38 / 40" />
+                            </label>
+                            <label className="phone-update-field">
+                                <span>{safeText('aiShop.trouserLength', 'Pantolon boy ölçüsü')}</span>
+                                <InputText value={bodyProfile.trouserLength} onChange={(e) => setBodyProfile((prev) => ({...prev, trouserLength: e.target.value}))} placeholder="İç boy / paça" />
+                            </label>
+                            <label className="phone-update-field">
+                                <span>{safeText('aiShop.waist', 'Bel ölçüsü')}</span>
+                                <InputText value={bodyProfile.waist} onChange={(e) => setBodyProfile((prev) => ({...prev, waist: e.target.value}))} placeholder="cm" />
+                            </label>
+                            <label className="phone-update-field">
+                                <span>{safeText('aiShop.budget', 'Bütçe üst limiti')}</span>
+                                <InputText value={bodyProfile.budget} onChange={(e) => setBodyProfile((prev) => ({...prev, budget: e.target.value}))} placeholder="2500" />
+                            </label>
+                        </div>
+
+                        <div className="user-detail-button">
+                            <Button
+                                className="profile-action-btn"
+                                label={safeText('profile.update', 'Güncelle')}
+                                onClick={saveBodyProfile}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    };
+
     const clearAddressForm = () => {
         setAddressForm({
             title: '',
@@ -871,10 +981,11 @@ const MyUserInfo = () => {
 
                     <div className="process-column">
                         {activeSection === 'user-info' && renderUserInfoSection()}
+                        {activeSection === 'body-info' && renderBodyInfoSection()}
                         {activeSection === 'address' && renderAddressSection()}
                         {activeSection === 'orders' && renderOrdersSection()}
                         {activeSection === 'history' && renderViewedSection()}
-                        {!['user-info', 'address', 'orders', 'history'].includes(activeSection) && renderPlaceholderSection()}
+                        {!['user-info', 'body-info', 'address', 'orders', 'history'].includes(activeSection) && renderPlaceholderSection()}
                     </div>
                 </div>
             </div>

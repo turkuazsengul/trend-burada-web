@@ -9,6 +9,8 @@ import {ImageLightbox} from "./ImageLightbox";
 import CartService from "../../service/CartService";
 import AppContext from "../../AppContext";
 import UserActivityService from "../../service/UserActivityService";
+import {FAVORITES_UPDATED_EVENT, initFavorites, isFavorite, toggleFavorite} from "../../service/FavoriteService";
+import {ProductFavoriteButton} from "./ProductFavoriteButton";
 
 const resolveCategoryKeyFromId = (productId = '') => {
     const normalized = String(productId).toLowerCase();
@@ -274,6 +276,7 @@ export const ProductDetail = ({match}) => {
     const [activeFeedbackMode, setActiveFeedbackMode] = useState('reviews');
     const [isGalleryLightboxOpen, setIsGalleryLightboxOpen] = useState(false);
     const [galleryLightboxIndex, setGalleryLightboxIndex] = useState(0);
+    const [favorite, setFavorite] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -317,6 +320,21 @@ export const ProductDetail = ({match}) => {
         }
         UserActivityService.addViewedProduct(product);
     }, [product]);
+
+    useEffect(() => {
+        if (!productId) {
+            return undefined;
+        }
+
+        const syncFavorite = () => setFavorite(isFavorite(productId));
+        syncFavorite();
+        initFavorites().then(syncFavorite);
+        window.addEventListener(FAVORITES_UPDATED_EVENT, syncFavorite);
+
+        return () => {
+            window.removeEventListener(FAVORITES_UPDATED_EVENT, syncFavorite);
+        };
+    }, [productId]);
 
     const categoryKey = useMemo(() => resolveCategoryKeyFromId(productId), [productId]);
 
@@ -423,6 +441,18 @@ export const ProductDetail = ({match}) => {
         }, 10);
     };
 
+    const onFavoriteClick = async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const next = await toggleFavorite({
+            ...product,
+            priceLabel: formatPrice(product?.price, locale),
+            oldPriceLabel: formatPrice(product?.oldPrice, locale)
+        });
+        setFavorite(next);
+    };
+
     const addToCart = (event) => {
         const selectedQuantity = Math.max(1, Number(quantity) || 1);
         CartService.addToCart({
@@ -469,6 +499,12 @@ export const ProductDetail = ({match}) => {
         return (
             <div className="product-detail-page product-detail-mobile-page">
                 <section className="product-detail-mobile-gallery">
+                    <ProductFavoriteButton
+                        isFavorited={favorite}
+                        onToggleFavorite={onFavoriteClick}
+                        ariaLabel={favorite ? t('productCard.removeFavorite') : t('productCard.addFavorite')}
+                        className="product-detail-favorite-toggle"
+                    />
                     <button
                         type="button"
                         className="product-detail-mobile-hero-button"
@@ -686,6 +722,12 @@ export const ProductDetail = ({match}) => {
         <div className="product-detail-page">
             <div className="product-detail-main">
                 <div className="product-detail-gallery">
+                    <ProductFavoriteButton
+                        isFavorited={favorite}
+                        onToggleFavorite={onFavoriteClick}
+                        ariaLabel={favorite ? t('productCard.removeFavorite') : t('productCard.addFavorite')}
+                        className="product-detail-favorite-toggle"
+                    />
                     <button
                         type="button"
                         className="product-detail-image-button"
@@ -837,7 +879,7 @@ export const ProductDetail = ({match}) => {
                     </div>
 
                     {cartMessageVisible && <div className="detail-cart-feedback">{t('productDetail.addedToCart')}</div>}
-                
+
                     <section className="product-detail-features-block is-inline">
                         <h2>{t('productDetail.productFeatures')}</h2>
                         <div className="product-detail-attributes-grid">
