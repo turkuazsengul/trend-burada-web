@@ -30,6 +30,9 @@ import {AppBreadcrumb} from "./components/AppBreadcrumb";
 import './css/breadcrumb.css'
 import './css/responsive-shell.css'
 import {useResponsiveMode} from "./hooks/useResponsiveMode";
+import LiveHelpWidget from "./components/LiveHelpWidget";
+import AIShopWidget from "./components/AIShopWidget";
+import AIShopComboPage from "./components/AIShopComboPage";
 
 const AddressRedirect = () => <Redirect to="/hesabım/KullaniciBilgilerim?section=address"/>;
 
@@ -98,6 +101,7 @@ export const HomePage = () => {
                             <Route path="/arama" exact component={SearchResultsPage}/>
                             <AuthenticatedRoute key="favorites" exact path="/favoriler" component={FavoritesPage}/>
                             <Route path="/detail/:id" exact component={ProductDetail}/>
+                            <Route path="/ai-shop/kombin/:comboId" exact component={AIShopComboPage}/>
                             <Route path="/sepetim" exact component={CartPage}/>
                             <AuthenticatedRoute key="profile" exact path="/hesabım/KullaniciBilgilerim" component={MyUserInfo}/>
                             <AuthenticatedRoute key="order" exact path="/hesabım/Siparislerim" component={AllOrderComp}/>
@@ -105,6 +109,8 @@ export const HomePage = () => {
                         </Switch>
                     </div>
                 </div>
+                <AIShopWidget/>
+                <LiveHelpWidget/>
                 <AppFooter/>
             </AppContext.Provider>
 

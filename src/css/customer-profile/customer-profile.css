@@ -76,6 +76,26 @@
     font-weight: 600;
 }
 
+.navi-item svg,
+.navi-item-mobile-sheet svg {
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 1rem;
+    display: block;
+    overflow: visible;
+    transform: scale(2.42);
+    transform-origin: center;
+}
+
+.profile-nav-svg-icon {
+    transform: scale(2.42) translateX(0.28rem);
+    transform-origin: center;
+}
+
+.navi-item-body-info {
+    padding-left: 1.5rem;
+}
+
 .navi-item:hover {
     background-color: #f7f9fc;
     border-color: #e4eaf3;
@@ -1169,4 +1189,10 @@
 
 .navi-item-mobile-sheet span {
     font-size: 1rem;
+}
+.profile-nav-svg-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    color: #708090;
+    flex: 0 0 auto;
 }

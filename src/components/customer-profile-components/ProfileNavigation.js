@@ -2,11 +2,25 @@ import React, {useContext, useEffect, useMemo, useState} from 'react';
 import '../../css/customer-profile/customer-profile.css'
 import AppContext from "../../AppContext";
 
+const DressIcon = () => (
+    <svg viewBox="0 0 24 24" className="profile-nav-svg-icon" aria-hidden="true">
+        <path
+            d="M9.4 3.2c.4 1 1.4 1.7 2.6 1.7s2.2-.7 2.6-1.7l2.1.8-.9 4-2.3 1 3.8 10.8H6.7L10.5 9 8.2 8l-.9-4 2.1-.8Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.15"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
 export const buildProfileSections = (t) => ([
     {
         group: t('profile.groupAccount'),
         items: [
             {key: 'user-info', icon: 'pi pi-user', label: t('profile.userInfo')},
+            {key: 'body-info', iconSvg: <DressIcon/>, label: t('profile.bodyInfo')},
             {key: 'address', icon: 'pi pi-map-marker', label: t('profile.addresses')},
             {key: 'saved-cards', icon: 'pi pi-credit-card', label: t('profile.cards')}
         ]
@@ -48,6 +62,13 @@ const ProfileNavigation = ({userFullName, activeSection, onChangeSection, compac
         () => flatItems.find((item) => item.key === activeSection),
         [flatItems, activeSection]
     );
+
+    const renderItemIcon = (item) => {
+        if (item.iconSvg) {
+            return item.iconSvg;
+        }
+        return <i className={item.icon} style={{color: '#708090'}}/>;
+    };
 
     useEffect(() => {
         if (!mobileSheetOpen) {
@@ -125,13 +146,13 @@ const ProfileNavigation = ({userFullName, activeSection, onChangeSection, compac
                                             <button
                                                 key={item.key}
                                                 type="button"
-                                                className={`navi-item navi-item-button navi-item-mobile-sheet ${activeSection === item.key ? 'is-active' : ''}`}
+                                                className={`navi-item navi-item-button navi-item-mobile-sheet navi-item-${item.key} ${activeSection === item.key ? 'is-active' : ''}`}
                                                 onClick={() => {
                                                     onChangeSection && onChangeSection(item.key);
                                                     setMobileSheetOpen(false);
                                                 }}
                                             >
-                                                <i className={item.icon} style={{color: '#708090'}}/>
+                                                {renderItemIcon(item)}
                                                 <span>{item.label}</span>
                                             </button>
                                         ))}
@@ -159,10 +180,10 @@ const ProfileNavigation = ({userFullName, activeSection, onChangeSection, compac
                         <button
                             key={item.key}
                             type="button"
-                            className={`navi-item navi-item-button ${activeSection === item.key ? 'is-active' : ''}`}
+                            className={`navi-item navi-item-button navi-item-${item.key} ${activeSection === item.key ? 'is-active' : ''}`}
                             onClick={() => onChangeSection && onChangeSection(item.key)}
                         >
-                            <i className={item.icon} style={{color: '#708090'}}/>
+                            {renderItemIcon(item)}
                             <span>{item.label}</span>
                         </button>
                     ))}

@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useMemo, useState} from 'react';
+import React, {useContext, useEffect, useMemo, useRef, useState} from 'react';
 import CartService, {CART_UPDATED_EVENT} from "../service/CartService";
 import ProductService from "../service/ProductService";
 import {useHistory} from "react-router-dom";
@@ -79,6 +79,13 @@ export const CartPage = () => {
     const [recoStart, setRecoStart] = useState(0);
     const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
     const [mobileCheckoutOpen, setMobileCheckoutOpen] = useState(false);
+    const [swipeOffsets, setSwipeOffsets] = useState({});
+    const swipeGestureRef = useRef({
+        lineId: null,
+        startX: 0,
+        currentOffset: 0,
+        isDragging: false
+    });
 
     const reloadCart = () => {
         setItems(CartService.getCartItems());
@@ -228,6 +235,62 @@ export const CartPage = () => {
 
     const removeItem = (lineId) => {
         CartService.removeCartItem(lineId);
+        setSwipeOffsets((prev) => {
+            const next = {...prev};
+            delete next[lineId];
+            return next;
+        });
+    };
+
+    const handleSwipeStart = (lineId, clientX) => {
+        if (!isMobileViewport) {
+            return;
+        }
+
+        swipeGestureRef.current = {
+            lineId,
+            startX: clientX,
+            currentOffset: Number(swipeOffsets[lineId] || 0),
+            isDragging: true
+        };
+    };
+
+    const handleSwipeMove = (clientX) => {
+        const active = swipeGestureRef.current;
+        if (!isMobileViewport || !active.isDragging || !active.lineId) {
+            return;
+        }
+
+        const delta = clientX - active.startX;
+        const nextOffset = Math.max(-88, Math.min(0, active.currentOffset + delta));
+        setSwipeOffsets((prev) => ({
+            ...prev,
+            [active.lineId]: nextOffset
+        }));
+    };
+
+    const handleSwipeEnd = () => {
+        const active = swipeGestureRef.current;
+        if (!active.lineId) {
+            return;
+        }
+
+        const finalOffset = Number(swipeOffsets[active.lineId] || 0);
+        if (finalOffset <= -72) {
+            removeItem(active.lineId);
+        } else {
+            setSwipeOffsets((prev) => ({
+                ...prev,
+                [active.lineId]: 0
+            }));
+        }
+
+        swipeGestureRef.current = {
+            lineId: null,
+            startX: 0,
+            currentOffset: 0,
+            isDragging: false
+        };
     };
 
     const completePurchase = () => {
@@ -797,39 +860,56 @@ export const CartPage = () => {
                     )}
 
                     {items.map((item) => (
-                        <article key={item.lineId} className="cart-item-card">
-                            <button
-                                type="button"
-                                className="cart-item-main-link"
-                                onClick={() => openProductDetail(item.id)}
-                            >
-                                <img src={item.img} alt={item.title}/>
-
-                                <div className="cart-item-info">
-                                    <strong>{item.mark}</strong>
-                                    <h3>{item.title}</h3>
-                                    <div className="cart-item-meta">
-                                        <span>{t('cart.size')}: {item.selectedSize || '-'}</span>
-                                        <span>{t('cart.color')}: {item.selectedColor || '-'}</span>
-                                    </div>
-                                    <div className="cart-item-price-row">
-                                        <span className="cart-item-price">{formatPrice(item.price, locale)}</span>
-                                    </div>
+                        <article key={item.lineId} className={`cart-item-card ${isMobileViewport ? 'is-swipeable' : ''}`}>
+                            {isMobileViewport && (
+                                <div className="cart-item-delete-reveal" aria-hidden="true">
+                                    <i className="pi pi-trash"/>
                                 </div>
-                            </button>
+                            )}
 
-                            <div className="cart-item-qty">
-                                <button type="button" onClick={() => decrease(item.lineId, item.quantity)}>-</button>
-                                <span>{item.quantity}</span>
-                                <button type="button" onClick={() => increase(item.lineId, item.quantity)}>+</button>
+                            <div
+                                className="cart-item-swipe-shell"
+                                style={isMobileViewport ? {transform: `translateX(${Number(swipeOffsets[item.lineId] || 0)}px)`} : undefined}
+                                onTouchStart={(event) => handleSwipeStart(item.lineId, event.touches[0].clientX)}
+                                onTouchMove={(event) => handleSwipeMove(event.touches[0].clientX)}
+                                onTouchEnd={handleSwipeEnd}
+                                onTouchCancel={handleSwipeEnd}
+                            >
                                 <button
                                     type="button"
-                                    className="cart-remove-icon-button"
-                                    onClick={() => removeItem(item.lineId)}
-                                    aria-label={t('cart.removeAria')}
+                                    className="cart-item-main-link"
+                                    onClick={() => openProductDetail(item.id)}
                                 >
-                                    <i className="pi pi-trash"/>
+                                    <img src={item.img} alt={item.title}/>
+
+                                    <div className="cart-item-info">
+                                        <strong>{item.mark}</strong>
+                                        <h3>{item.title}</h3>
+                                        <div className="cart-item-meta">
+                                            <span>{t('cart.size')}: {item.selectedSize || '-'}</span>
+                                            <span>{t('cart.color')}: {item.selectedColor || '-'}</span>
+                                        </div>
+                                        <div className="cart-item-price-row">
+                                            <span className="cart-item-price">{formatPrice(item.price, locale)}</span>
+                                        </div>
+                                    </div>
                                 </button>
+
+                                <div className="cart-item-qty">
+                                    <button type="button" onClick={() => decrease(item.lineId, item.quantity)}>-</button>
+                                    <span>{item.quantity}</span>
+                                    <button type="button" onClick={() => increase(item.lineId, item.quantity)}>+</button>
+                                    {!isMobileViewport && (
+                                        <button
+                                            type="button"
+                                            className="cart-remove-icon-button"
+                                            onClick={() => removeItem(item.lineId)}
+                                            aria-label={t('cart.removeAria')}
+                                        >
+                                            <i className="pi pi-trash"/>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </article>
                     ))}
