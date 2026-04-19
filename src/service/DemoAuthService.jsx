@@ -14,6 +14,14 @@ const saveUsers = (users) => {
     localStorage.setItem(DEMO_USERS_STORAGE_KEY, JSON.stringify(users));
 };
 
+const createVerificationCode = () => {
+    return String(Math.floor(100000 + Math.random() * 900000));
+};
+
+const findUserById = (users, userId) => {
+    return users.find((user) => String(user.id) === String(userId));
+};
+
 const register = ({firstName, lastName, email, password}) => {
     const normalizedEmail = String(email || '').trim().toLowerCase();
     const users = readUsers();
@@ -32,6 +40,8 @@ const register = ({firstName, lastName, email, password}) => {
         surname: String(lastName || '').trim(),
         email: normalizedEmail,
         password: String(password || ''),
+        emailVerified: false,
+        verificationCode: createVerificationCode(),
         createdAt: new Date().toISOString()
     };
 
@@ -45,7 +55,8 @@ const register = ({firstName, lastName, email, password}) => {
             name: createdUser.name,
             surname: createdUser.surname,
             email: createdUser.email
-        }
+        },
+        verificationCode: createdUser.verificationCode
     };
 };
 
@@ -62,6 +73,10 @@ const login = (email, password) => {
         throw new Error('Kullanıcı adı veya şifre hatalı');
     }
 
+    if (!matchedUser.emailVerified) {
+        throw new Error('E-posta adresinizi doğrulamadan giriş yapamazsınız.');
+    }
+
     return {
         token: `demo-token-${matchedUser.id}-${Date.now()}`,
         user: {
@@ -73,8 +88,88 @@ const login = (email, password) => {
     };
 };
 
-export default {
-    register,
-    login
+const lookupAccountStatus = (email) => {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const users = readUsers();
+    const matchedUser = users.find((user) => String(user.email || '').toLowerCase() === normalizedEmail);
+
+    return {
+        email: normalizedEmail,
+        exists: !!matchedUser,
+        emailVerified: !!matchedUser && !!matchedUser.emailVerified
+    };
 };
 
+const getVerificationDetails = (userId) => {
+    const users = readUsers();
+    const matchedUser = findUserById(users, userId);
+
+    if (!matchedUser) {
+        return null;
+    }
+
+    return {
+        userId: matchedUser.id,
+        email: matchedUser.email,
+        verificationCode: matchedUser.verificationCode,
+        emailVerified: !!matchedUser.emailVerified
+    };
+};
+
+const confirm = (userId, confirmCode) => {
+    const users = readUsers();
+    const matchedUser = findUserById(users, userId);
+
+    if (!matchedUser) {
+        return {
+            success: false,
+            message: 'Onay için kullanıcı bulunamadı.'
+        };
+    }
+
+    if (String(matchedUser.verificationCode || '').trim() !== String(confirmCode || '').trim()) {
+        return {
+            success: false,
+            message: 'Doğrulama kodu geçersiz. Demo kodu kullanarak tekrar deneyin.'
+        };
+    }
+
+    matchedUser.emailVerified = true;
+    saveUsers(users);
+
+    return {
+        success: true,
+        message: 'Demo hesap doğrulandı. Giriş yapabilirsiniz.'
+    };
+};
+
+const createConfirm = (userId) => {
+    const users = readUsers();
+    const matchedUser = findUserById(users, userId);
+
+    if (!matchedUser) {
+        return {
+            success: false,
+            message: 'Doğrulama kodu tekrar oluşturulamadı.'
+        };
+    }
+
+    matchedUser.verificationCode = createVerificationCode();
+    matchedUser.emailVerified = false;
+    saveUsers(users);
+
+    return {
+        success: true,
+        message: 'Demo doğrulama kodu yenilendi.',
+        verificationCode: matchedUser.verificationCode
+    };
+};
+
+export default {
+    register,
+    login,
+    lookupAccountStatus,
+    getVerificationDetails,
+    confirm,
+    createConfirm
+};

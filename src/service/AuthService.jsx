@@ -1,5 +1,5 @@
 import axios from "axios";
-import {KEYCLOAK_CLIENT_ID, KEYCLOAK_GRANT_TYPE, KEYCLOAK_TOKEN_URL, LOGIN_URL, LOGOUT_URL} from "../constants/UrlConstans";
+import {ACCOUNT_STATUS_URL, KEYCLOAK_CLIENT_ID, KEYCLOAK_GRANT_TYPE, KEYCLOAK_TOKEN_URL, LOGIN_URL, LOGOUT_URL} from "../constants/UrlConstans";
 
 // const login = (username, password) => {
 //     const formData = new URLSearchParams();
@@ -21,6 +21,14 @@ const login = (username, password) => {
         headers: {
             'Authorization': `Basic ${base64EncodedCredentials}`
         }
+    });
+};
+
+const lookupAccountStatus = (email) => {
+    return axios.get(ACCOUNT_STATUS_URL, {
+        params: {email}
+    }).then((response) => {
+        return response?.data?.returnData?.[0];
     });
 };
 
@@ -54,6 +62,7 @@ const logout = (userId) => {
 }
 
 export default {
+    lookupAccountStatus,
     login,
     getCurrentUser,
     getBearerToken,
