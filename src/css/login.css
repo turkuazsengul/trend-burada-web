@@ -41,7 +41,28 @@
     max-width: none;
 }
 
+.login-page-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    min-height: 2.4rem;
+    padding: 0 0.95rem;
+    margin-bottom: 0.8rem;
+    border-radius: 999px;
+    background: rgba(128, 54, 235, 0.08);
+    color: #7c3aed;
+    font-size: 1.04rem;
+    font-weight: 700;
+}
+
 .login-card-panel .p-tabview {
+    border: 1px solid #e6eaf0;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.login-card-panel.login-card-panel-single {
     border: 1px solid #e6eaf0;
     border-radius: 14px;
     overflow: hidden;
@@ -72,6 +93,104 @@
     width: 100%;
     margin: 0;
     padding: 0.2rem 0 1rem;
+}
+
+.email-entry-flow {
+    padding-top: 0.8rem !important;
+}
+
+.container-items .login .login-item.email-entry-intro {
+    margin-top: 0.5rem;
+}
+
+.email-entry-card {
+    padding: 1.45rem;
+    border-radius: 14px;
+    border: 1px solid #e6ebf4;
+    background:
+        radial-gradient(circle at top right, rgba(238, 174, 195, 0.18), transparent 34%),
+        linear-gradient(135deg, #fff9fb 0%, #ffffff 54%, #f8f5ff 100%);
+}
+
+.email-entry-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.3rem;
+    padding: 0 0.85rem;
+    border-radius: 999px;
+    background: rgba(128, 54, 235, 0.08);
+    color: #7c3aed;
+    font-size: 1.02rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+}
+
+.email-entry-card h2 {
+    margin: 0;
+    font-size: 1.65rem;
+    line-height: 1.3;
+    color: #1f2937;
+    font-weight: 700;
+}
+
+.email-entry-card p {
+    margin: 0.65rem 0 0;
+    font-size: 1.12rem;
+    line-height: 1.6;
+    color: #5f6c80;
+}
+
+.container-items .login .login-item.email-entry-note {
+    margin-top: 0.2rem;
+}
+
+.email-entry-note p {
+    margin: 0;
+    text-align: center;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #64748b;
+}
+
+.login-identity-card {
+    padding: 1rem 1.1rem;
+    border-radius: 12px;
+    border: 1px solid #e5ebf3;
+    background: #fbfcfe;
+}
+
+.login-identity-label {
+    font-size: 1.02rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.login-identity-row {
+    margin-top: 0.45rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.login-identity-row strong {
+    font-size: 1.2rem;
+    color: #1f2937;
+    word-break: break-word;
+}
+
+.login-change-email-button,
+.login-change-email-button:hover,
+.login-change-email-button:focus {
+    background: transparent !important;
+    border: 0 !important;
+    color: #7c3aed !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    text-decoration: underline;
+    font-size: 1.08rem;
+    font-weight: 700;
 }
 
 .container-items .login .login-item {
@@ -140,6 +259,145 @@
 
 .container-items .login .login-item .login-submit-button:hover {
     filter: brightness(0.98);
+}
+
+.container-items .login.register-form {
+    padding-top: 0.6rem;
+}
+
+.container-items .login .register-intro-item {
+    margin-top: 0.4rem;
+}
+
+.register-intro-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.4rem;
+    padding: 1.4rem;
+    border: 1px solid #e4e9f3;
+    border-radius: 14px;
+    background:
+        radial-gradient(circle at top right, rgba(238, 174, 195, 0.18), transparent 34%),
+        linear-gradient(135deg, #fff9fb 0%, #ffffff 54%, #f8f5ff 100%);
+}
+
+.register-intro-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-width: 0;
+}
+
+.register-intro-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-start;
+    min-height: 2.4rem;
+    padding: 0 0.95rem;
+    border-radius: 999px;
+    background: rgba(128, 54, 235, 0.08);
+    color: #7c3aed;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.register-intro-card h3 {
+    margin: 0;
+    font-size: 1.55rem;
+    line-height: 1.25;
+    color: #1f2937;
+    font-weight: 700;
+}
+
+.register-intro-card p {
+    margin: 0;
+    font-size: 1.12rem;
+    line-height: 1.65;
+    color: #5f6c80;
+}
+
+.register-benefit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    min-width: 15rem;
+}
+
+.register-benefit-chip {
+    display: flex;
+    align-items: center;
+    min-height: 3.6rem;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    border: 1px solid #e6ebf4;
+    background: rgba(255, 255, 255, 0.9);
+    color: #334155;
+    font-size: 1.12rem;
+    font-weight: 600;
+}
+
+.register-benefit-chip::before {
+    content: "";
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #eeaec3, #8036eb);
+    margin-right: 0.8rem;
+    flex: 0 0 auto;
+}
+
+.container-items .login .login-item.register-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: stretch;
+}
+
+.register-field-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 1rem 1rem 1.05rem;
+    border: 1px solid #e4e9f3;
+    border-radius: 13px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.035);
+}
+
+.register-field-card-wide {
+    padding: 1rem 1rem 1.05rem !important;
+}
+
+.container-items .login .register-field-card label {
+    margin-bottom: 0.55rem;
+}
+
+.container-items .login .register-field-card input,
+.container-items .login .register-field-card .p-password input {
+    background: #fbfcfe;
+}
+
+.container-items .login .login-item.register-password-block {
+    gap: 0.9rem;
+}
+
+.register-password-note {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem 1.1rem;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e5ebf3;
+}
+
+.register-password-note-title {
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: #334155;
 }
 
 .container-items .login .login-item.social-login-section {
@@ -261,11 +519,55 @@
 .password-validate-message {
     font-size: 1.1rem;
     text-align: left;
-    margin: 0.8rem 0;
+    margin: 0;
+    color: #64748b;
+    line-height: 1.55;
+}
+
+.container-items .login .login-item.register-policy-item {
+    margin-top: 0.1rem;
+}
+
+.register-policy-note {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.65;
+    text-align: center;
+    color: #64748b;
 }
 
 @media (max-width: 1024px) {
     .login-card-wrap {
         width: min(560px, calc(100% - 2.4rem));
+    }
+
+    .register-intro-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .register-benefit-list {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .container-items .login .login-item.register-form-grid {
+        grid-template-columns: 1fr;
+        gap: 0.9rem;
+    }
+
+    .register-intro-card {
+        padding: 1.2rem;
+    }
+
+    .register-intro-card h3 {
+        font-size: 1.38rem;
+    }
+
+    .login-identity-row {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

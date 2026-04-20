@@ -1,10 +1,7 @@
 import axios from "axios";
-import {REGISTER_URL} from "../constants/UrlConstans";
-
-export const BASE_URL = process.env.REACT_APP_USER_SERVICE_BASE_URL
+import {REGISTER_URL, REGISTER_CONFIRM_URL, REGISTER_CREATE_CONFIRM_URL} from "../constants/UrlConstans";
 
 const register = (data) => {
-
     return axios.post(REGISTER_URL, data).then(
         response => {
             return response;
@@ -13,24 +10,10 @@ const register = (data) => {
         console.log('error ' + error)
         return 11;
     });
-
 };
 
-// const register = (data) => {
-//
-//     return axios.post(BASE_URL + `/auth/register`, data).then(
-//         response => {
-//             return response;
-//         }
-//     ).catch((error) => {
-//         console.log('error ' + error)
-//         return 11;
-//     });
-//
-// };
-
 const confirm = (userId, confirmCode) => {
-    return axios.post(BASE_URL + `/auth/confirm`,{},
+    return axios.post(REGISTER_CONFIRM_URL, {},
         {params: {userId, confirmCode}}
     ).then(
         response => {
@@ -43,7 +26,7 @@ const confirm = (userId, confirmCode) => {
 };
 
 const createConfirm = (userId) => {
-    return axios.post(BASE_URL + `/auth/createConfirm`,{},
+    return axios.post(REGISTER_CREATE_CONFIRM_URL, {},
         {params: {userId}}
     ).then(
         response => {

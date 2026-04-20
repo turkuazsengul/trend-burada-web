@@ -8,12 +8,17 @@ import {USE_DEMO_LOCAL_AUTH} from "../../constants/UrlConstans";
 import DemoAuthService from "../../service/DemoAuthService";
 import AppContext from "../../AppContext";
 
-export const Login = () => {
+export const Login = ({
+    presetEmail = "",
+    lockEmail = false,
+    onUseDifferentEmail,
+    showSocialActions = true
+}) => {
     const {t = (key) => key} = useContext(AppContext) || {};
     const history = useHistory();
     const location = useLocation();
 
-    const [username, setUsername] = useState("");
+    const [username, setUsername] = useState(presetEmail);
     const [password, setPassword] = useState("");
 
     const [wrongAccountInfo, setWrongAccountInfo] = useState(false);
@@ -32,7 +37,7 @@ export const Login = () => {
                     window.location.reload();
                 } catch (error) {
                     setWrongAccountInfo(true);
-                    setLabelMessage(t('login.invalidCreds'))
+                    setLabelMessage(error?.message || t('login.invalidCreds'))
                 }
                 return;
             }
@@ -42,7 +47,7 @@ export const Login = () => {
                 localStorage.setItem("user", JSON.stringify(response.data.returnData[0].user));
                 history.push(redirectTarget)
                 window.location.reload();
-            }).catch((error) => {
+            }).catch(() => {
                 setWrongAccountInfo(true);
                 setLabelMessage(t('login.invalidCreds'))
             })
@@ -60,13 +65,6 @@ export const Login = () => {
             return false;
         } else {
             return true;
-            // if (!validator.isEmail(username)) {
-            //     setWrongAccountInfo(true);
-            //     setLabelMessage(failMailLabelMessage)
-            //     return false;
-            // } else {
-            //     return true;
-            // }
         }
     }
 
@@ -89,16 +87,34 @@ export const Login = () => {
     return (
         <div className="login">
             {failLoginMessageLabel()}
-            <div className="login-item">
-                <label>{t('login.email')}</label>
-                <InputText placeholder={t('login.emailPlaceholder')}
-                           value={username} type="text"
-                           onChange={(e) => {
-                               setUsername(e.target.value)
-                               setWrongAccountInfo(false);
-                           }}
-                />
-            </div>
+
+            {lockEmail ? (
+                <div className="login-item login-identity-card">
+                    <span className="login-identity-label">{t('loginPage.emailStepLabel')}</span>
+                    <div className="login-identity-row">
+                        <strong>{username}</strong>
+                        {onUseDifferentEmail ? (
+                            <Button
+                                type="button"
+                                className="login-change-email-button"
+                                label={t('loginPage.changeEmail')}
+                                onClick={onUseDifferentEmail}
+                            />
+                        ) : null}
+                    </div>
+                </div>
+            ) : (
+                <div className="login-item">
+                    <label>{t('login.email')}</label>
+                    <InputText placeholder={t('login.emailPlaceholder')}
+                               value={username} type="text"
+                               onChange={(e) => {
+                                   setUsername(e.target.value)
+                                   setWrongAccountInfo(false);
+                               }}
+                    />
+                </div>
+            )}
 
             <div className="login-item">
                 <label>{t('login.password')}</label>
@@ -124,33 +140,35 @@ export const Login = () => {
                 <Button className="login-submit-button" label={t('login.submit')} onClick={loginButtonOnClick}/>
             </div>
 
-            <div className="login-item social-login-section">
-                <div className="social-login-divider">
-                    <span>{t('login.or')}</span>
-                </div>
+            {showSocialActions ? (
+                <div className="login-item social-login-section">
+                    <div className="social-login-divider">
+                        <span>{t('login.or')}</span>
+                    </div>
 
-                <div className="social-login-actions">
-                    <Button
-                        type="button"
-                        className="social-login-button social-facebook"
-                    >
-                        <span className="social-facebook-icon pi pi-facebook" aria-hidden="true"/>
-                        <span className="social-label">{t('login.facebook')}</span>
-                    </Button>
-                    <Button
-                        type="button"
-                        className="social-login-button social-google"
-                    >
-                        <img
-                            className="social-google-icon"
-                            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                            alt=""
-                            aria-hidden="true"
-                        />
-                        <span className="social-label">{t('login.google')}</span>
-                    </Button>
+                    <div className="social-login-actions">
+                        <Button
+                            type="button"
+                            className="social-login-button social-facebook"
+                        >
+                            <span className="social-facebook-icon pi pi-facebook" aria-hidden="true"/>
+                            <span className="social-label">{t('login.facebook')}</span>
+                        </Button>
+                        <Button
+                            type="button"
+                            className="social-login-button social-google"
+                        >
+                            <img
+                                className="social-google-icon"
+                                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                                alt=""
+                                aria-hidden="true"
+                            />
+                            <span className="social-label">{t('login.google')}</span>
+                        </Button>
+                    </div>
                 </div>
-            </div>
+            ) : null}
         </div>
 
     );

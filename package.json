@@ -33,8 +33,9 @@
     "scripts": {
         "start": "react-scripts --openssl-legacy-provider start",
         "build": "react-scripts --openssl-legacy-provider build",
-        "build:cpanel": "npm run build && (test -f public/.htaccess && cp -f public/.htaccess build/.htaccess || echo 'public/.htaccess not found, skipping copy')",
+        "build:cpanel": "node scripts/write-runtime-config.js public/runtime-config.js && npm run build && node scripts/finalize-cpanel-build.js",
         "package:cpanel": "npm run build:cpanel && (cd build && zip -r ../cpanel-deploy.zip .)",
+        "runtime-config": "node scripts/write-runtime-config.js",
         "test": "react-scripts --openssl-legacy-provider test",
         "eject": "react-scripts eject"
     },
