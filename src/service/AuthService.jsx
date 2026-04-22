@@ -1,5 +1,5 @@
 import axios from "axios";
-import {ACCOUNT_STATUS_URL, KEYCLOAK_CLIENT_ID, KEYCLOAK_GRANT_TYPE, KEYCLOAK_TOKEN_URL, LOGIN_URL, LOGOUT_URL} from "../constants/UrlConstans";
+import {ACCOUNT_STATUS_URL, LOGIN_URL, LOGOUT_URL} from "../constants/UrlConstans";
 
 // const login = (username, password) => {
 //     const formData = new URLSearchParams();
@@ -37,7 +37,7 @@ const getCurrentUser = () => {
 };
 
 const getBearerToken = () => {
-    return JSON.parse(localStorage.getItem("token"));
+    return localStorage.getItem("token");
 };
 
 const checkRole = (role) => {
@@ -55,7 +55,6 @@ const checkRole = (role) => {
 
 const logout = (userId) => {
     const token = localStorage.getItem("token")
-    console.log(userId)
     return axios.post(LOGOUT_URL, {userId:userId}, {
         headers: {'Authorization': `Bearer ${token}`}
     });
