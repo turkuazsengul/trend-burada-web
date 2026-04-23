@@ -33,6 +33,8 @@ import {useResponsiveMode} from "./hooks/useResponsiveMode";
 import LiveHelpWidget from "./components/LiveHelpWidget";
 import AIShopWidget from "./components/AIShopWidget";
 import AIShopComboPage from "./components/AIShopComboPage";
+import {SellerApp} from "./modules/seller/SellerApp";
+import {detectShellMode, normalizeSellerPath} from "./utils/appShell";
 
 const AddressRedirect = () => <Redirect to="/hesabım/KullaniciBilgilerim?section=address"/>;
 
@@ -76,6 +78,10 @@ export const HomePage = () => {
     };
 
     const isCartRoute = (location?.pathname || '').startsWith('/sepetim');
+    const shellMode = detectShellMode();
+    const sellerHostRedirectTarget = shellMode === "seller" && !location.pathname.startsWith('/seller')
+        ? `${normalizeSellerPath(location.pathname)}${location.search || ''}${location.hash || ''}`
+        : null;
 
     useEffect(() => {
         document.body.classList.toggle('app-mode-mobile', isMobile);
@@ -90,6 +96,9 @@ export const HomePage = () => {
     return (
         <div className={`home-layout ${isMobile ? 'home-layout-mobile' : ''} ${isTablet ? 'home-layout-tablet' : ''}`}>
             <AppContext.Provider value={userSettings}>
+                {sellerHostRedirectTarget ? <Redirect to={sellerHostRedirectTarget}/> : null}
+                {shellMode === "seller" || location.pathname.startsWith('/seller') ? <SellerApp/> : (
+                    <>
                 <AppTopBar/>
                 <AppBreadcrumb/>
                 <div className={`container-items ${location.pathname === '/' ? 'is-home-route' : 'is-inner-route'}`}>
@@ -112,6 +121,8 @@ export const HomePage = () => {
                 <AIShopWidget/>
                 <LiveHelpWidget/>
                 <AppFooter/>
+                    </>
+                )}
             </AppContext.Provider>
 
         </div>

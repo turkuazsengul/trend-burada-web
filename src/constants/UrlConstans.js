@@ -7,6 +7,17 @@ const getBooleanConfigValue = (key, fallbackValue) => {
     }
     return String(rawValue).toLowerCase() === "true";
 }
+const getListConfigValue = (key, fallbackValue = []) => {
+    const rawValue = runtimeConfig[key] || process.env[key];
+    if (!rawValue) {
+        return fallbackValue;
+    }
+
+    return String(rawValue)
+        .split(",")
+        .map((item) => item.trim().toLowerCase())
+        .filter(Boolean);
+}
 
 export const KEYCLOAK_BASE_URL = getConfigValue("REACT_APP_KEYCLOAK_BASE_URL")
 export const KEYCLOAK_TOKEN_URL = getConfigValue("REACT_APP_KEYCLOAK_TOKEN_URL")
@@ -46,3 +57,7 @@ export const USE_STATIC_SEARCH_DATA = getBooleanConfigValue("REACT_APP_USE_STATI
 export const FAVORITE_LIST_URL = getConfigValue("REACT_APP_FAVORITE_LIST_URL")
 export const FAVORITE_TOGGLE_URL = getConfigValue("REACT_APP_FAVORITE_TOGGLE_URL")
 export const USE_STATIC_FAVORITE_DATA = getBooleanConfigValue("REACT_APP_USE_STATIC_FAVORITE_DATA", true)
+
+export const APP_CUSTOMER_HOSTS = getListConfigValue("REACT_APP_CUSTOMER_HOSTS", ["trendburada.local", "localhost"])
+export const APP_SELLER_HOSTS = getListConfigValue("REACT_APP_SELLER_HOSTS", ["seller.trendburada.local"])
+export const APP_ADMIN_HOSTS = getListConfigValue("REACT_APP_ADMIN_HOSTS", ["admin.trendburada.local"])
