@@ -128,8 +128,11 @@ const toggleFavorite = async (product) => {
     return willBeFavorite;
 };
 
+const getFavoriteRouteId = (product) => product?.routeId || product?.productCode || product?.id || '';
+
 export {
     FAVORITES_UPDATED_EVENT,
+    getFavoriteRouteId,
     getFavorites,
     getFavoritesFromService,
     initFavorites,

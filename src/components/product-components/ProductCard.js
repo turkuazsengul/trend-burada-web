@@ -90,6 +90,7 @@ export const ProductCard = ({product}) => {
     const [activeMediaIndex, setActiveMediaIndex] = useState(0);
     const mediaCarouselRef = useRef(null);
     const productId = product?.id;
+    const productRouteId = product?.routeId || product?.productCode || product?.id;
     const locale = language === 'en' ? 'en-US' : 'tr-TR';
     const favoriteCount = product?.favoriteCount;
     const viewedLast24h = product?.viewedLast24h;
@@ -284,7 +285,7 @@ export const ProductCard = ({product}) => {
     return (
         <div className="product-card">
             <div className="product-image-shell">
-                <a href={`/detail/${product.id}`} className="product-card-media-link">
+                <a href={`/detail/${productRouteId}`} className="product-card-media-link">
                     <div className="product-image-area">
                         <div
                             ref={mediaCarouselRef}
@@ -337,7 +338,7 @@ export const ProductCard = ({product}) => {
                 />
             </div>
 
-            <a href={`/detail/${product.id}`} className="product-card-content-link">
+            <a href={`/detail/${productRouteId}`} className="product-card-content-link">
                 <div className="product-card-title">
                     <span className="product-brand">{product.mark}</span>
                     <span>{product.title}</span>

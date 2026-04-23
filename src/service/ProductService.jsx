@@ -1,5 +1,6 @@
 import axios from "axios";
 import {
+    PRODUCT_DETAIL_URL,
     PRODUCT_FACETS_URL,
     PRODUCT_LIST_URL,
     USE_STATIC_PRODUCT_DATA
@@ -58,37 +59,139 @@ const unwrapList = (payload) => {
     return Array.isArray(list) ? list : [];
 };
 
+const unwrapPaged = (payload) => {
+    const container = payload?.returnData || payload?.data || payload?.products || payload || {};
+    const items = Array.isArray(container?.items)
+        ? container.items
+        : unwrapList(container);
+    const normalizedSize = Number(container?.size || items.length || 0);
+
+    return {
+        items,
+        totalElements: Number(container?.totalElements ?? items.length ?? 0),
+        page: Number(container?.page || 0),
+        size: normalizedSize,
+        totalPages: Number(container?.totalPages || (normalizedSize > 0 ? Math.ceil(items.length / normalizedSize) : (items.length > 0 ? 1 : 0))),
+        hasNext: Boolean(container?.hasNext)
+    };
+};
+
+const unwrapItem = (payload) => payload?.returnData || payload?.data || payload?.product || payload || null;
+
+const resolveProductDetailUrl = (productId) => {
+    const baseUrl = PRODUCT_DETAIL_URL || PRODUCT_LIST_URL;
+    if (!baseUrl || !productId) {
+        return "";
+    }
+    return `${String(baseUrl).replace(/\/$/, "")}/${encodeURIComponent(productId)}`;
+};
+
+const normalizeStringList = (items) => {
+    if (!Array.isArray(items)) {
+        return [];
+    }
+
+    return items
+        .map((item) => typeof item === "string" ? item.trim() : "")
+        .filter(Boolean);
+};
+
+const normalizeColorOptions = (items, fallbackImage = "") => {
+    if (!Array.isArray(items)) {
+        return [];
+    }
+
+    return items.map((item) => {
+        if (typeof item === "string") {
+            return {
+                name: item,
+                image: fallbackImage
+            };
+        }
+
+        if (!item || typeof item !== "object") {
+            return null;
+        }
+
+        const name = item.name || item.label || item.color || "";
+        if (!name) {
+            return null;
+        }
+
+        return {
+            name,
+            image: item.image || item.img || item.imageUrl || fallbackImage
+        };
+    }).filter(Boolean);
+};
+
+const normalizeAttributes = (items) => {
+    if (!Array.isArray(items)) {
+        return [];
+    }
+
+    return items.map((item) => {
+        if (!item || typeof item !== "object") {
+            return null;
+        }
+
+        const label = item.label || item.key || item.name || "";
+        const value = item.value || item.text || "";
+        if (!label || !value) {
+            return null;
+        }
+
+        return {label, value};
+    }).filter(Boolean);
+};
+
 const normalizeProduct = (item) => {
     if (!item || typeof item !== "object") {
         return null;
     }
 
+    const routeId = item.productCode || item.routeId || item.code || item.slug || item.id;
+    const imageUrl = item.img || item.imageUrl || item.image || "";
+    const sizeOptions = normalizeStringList(
+        Array.isArray(item.sizeOptions) ? item.sizeOptions : item.sizes
+    );
+    const colorOptions = normalizeColorOptions(
+        Array.isArray(item.colorOptions) ? item.colorOptions : item.colors,
+        imageUrl
+    );
+    const attributes = normalizeAttributes(
+        Array.isArray(item.attributes) ? item.attributes : item.specifications
+    );
+
     return {
         id: item.id,
+        productCode: item.productCode || routeId,
+        routeId,
         title: item.title,
         mark: item.mark || item.brand || item.sellerName || "Marka",
+        brand: item.brand || item.mark || item.sellerName || "Marka",
+        category: item.category || "",
         price: Number(item.price || 0),
         oldPrice: Number(item.oldPrice || item.listPrice || item.price || 0),
         discountRate: Number(item.discountRate || item.discount || 0),
         rating: Number(item.rating || 0),
         reviewCount: Number(item.reviewCount || item.commentCount || 0),
-        img: item.img || item.imageUrl || item.image,
+        img: imageUrl,
+        imageUrl,
         color: item.color || "Standart",
         size: item.size || "M",
-        sizeOptions: Array.isArray(item.sizeOptions)
-            ? item.sizeOptions
-            : (Array.isArray(item.sizes) ? item.sizes : []),
-        colorOptions: Array.isArray(item.colorOptions)
-            ? item.colorOptions
-            : (Array.isArray(item.colors) ? item.colors : []),
-        isFreeCargo: Boolean(item.isFreeCargo),
-        isFastDelivery: Boolean(item.isFastDelivery),
+        sizeOptions,
+        colorOptions,
+        freeCargo: Boolean(item.isFreeCargo ?? item.freeCargo),
+        isFreeCargo: Boolean(item.isFreeCargo ?? item.freeCargo),
+        fastDelivery: Boolean(item.isFastDelivery ?? item.fastDelivery),
+        isFastDelivery: Boolean(item.isFastDelivery ?? item.fastDelivery),
         sellerScore: Number(item.sellerScore || 0),
         installmentText: item.installmentText || "Peşin fiyatına",
-        highlights: Array.isArray(item.highlights) ? item.highlights : (Array.isArray(item.keyFeatures) ? item.keyFeatures : []),
-        attributes: Array.isArray(item.attributes)
-            ? item.attributes
-            : (Array.isArray(item.specifications) ? item.specifications : [])
+        highlights: normalizeStringList(
+            Array.isArray(item.highlights) ? item.highlights : item.keyFeatures
+        ),
+        attributes
     };
 };
 
@@ -165,6 +268,8 @@ const getStaticProductsByCategory = (categoryKey) => {
 
         products.push({
             id: `${categoryKey}-${i + 1}`,
+            productCode: `${categoryKey}-${i + 1}`,
+            routeId: `${categoryKey}-${i + 1}`,
             title,
             mark,
             price: basePrice,
@@ -199,22 +304,22 @@ const getStaticProductsByCategory = (categoryKey) => {
     return products;
 };
 
-const resolveCategoryFromProductId = (productId = '') => {
-    if (!productId) {
+const resolveCategoryFromProductId = (routeId = '') => {
+    if (!routeId) {
         return null;
     }
 
-    const normalized = String(productId).toLowerCase();
+    const normalized = String(routeId).toLowerCase();
     const keys = getAllCategoryKeys().sort((a, b) => b.length - a.length);
     return keys.find((key) => normalized.startsWith(`${key}-`)) || null;
 };
 
-const findStaticProductById = (productId) => {
-    const preferredCategory = resolveCategoryFromProductId(productId);
+const findStaticProductById = (routeId) => {
+    const preferredCategory = resolveCategoryFromProductId(routeId);
 
     if (preferredCategory) {
         const preferredProducts = getStaticProductsByCategory(preferredCategory);
-        const preferred = preferredProducts.find((item) => String(item.id) === String(productId));
+        const preferred = preferredProducts.find((item) => String(item.routeId || item.productCode || item.id) === String(routeId));
         if (preferred) {
             return preferred;
         }
@@ -224,7 +329,7 @@ const findStaticProductById = (productId) => {
     for (let i = 0; i < allKeys.length; i += 1) {
         const key = allKeys[i];
         const list = getStaticProductsByCategory(key);
-        const found = list.find((item) => String(item.id) === String(productId));
+        const found = list.find((item) => String(item.routeId || item.productCode || item.id) === String(routeId));
         if (found) {
             return found;
         }
@@ -304,16 +409,64 @@ const getStaticFacetsByProducts = (products) => {
     ];
 };
 
-const getProductsByCategory = (categoryKey) => {
-    if (USE_STATIC_PRODUCT_DATA || !PRODUCT_LIST_URL) {
-        return Promise.resolve(getStaticProductsByCategory(categoryKey));
+const collectAllPages = async (fetchPage) => {
+    const firstPage = await fetchPage(0);
+    const items = Array.isArray(firstPage?.items) ? [...firstPage.items] : [];
+    let nextPage = 1;
+    let current = firstPage;
+
+    while (current?.hasNext && nextPage < (current.totalPages || 0)) {
+        current = await fetchPage(nextPage);
+        items.push(...(Array.isArray(current?.items) ? current.items : []));
+        if (!current?.hasNext) {
+            break;
+        }
+        nextPage += 1;
     }
 
-    return axios.get(PRODUCT_LIST_URL, {params: {category: categoryKey}})
-        .then((response) => unwrapList(response?.data).map(normalizeProduct).filter(Boolean))
+    return items;
+};
+
+const getProductsByCategory = (categoryKey) => {
+    return collectAllPages((page) => getProductsPageByCategory(categoryKey, page, 60));
+};
+
+const getProductsPageByCategory = (categoryKey, page = 0, size = 24) => {
+    if (USE_STATIC_PRODUCT_DATA || !PRODUCT_LIST_URL) {
+        const items = getStaticProductsByCategory(categoryKey);
+        const start = Math.max(page, 0) * Math.max(size, 1);
+        const pagedItems = items.slice(start, start + size);
+        return Promise.resolve({
+            items: pagedItems,
+            totalElements: items.length,
+            page: Math.max(page, 0),
+            size,
+            totalPages: Math.ceil(items.length / Math.max(size, 1)),
+            hasNext: start + size < items.length
+        });
+    }
+
+    return axios.get(PRODUCT_LIST_URL, {params: {category: categoryKey, page, size}})
+        .then((response) => {
+            const paged = unwrapPaged(response?.data);
+            return {
+                ...paged,
+                items: paged.items.map(normalizeProduct).filter(Boolean)
+            };
+        })
         .catch((error) => {
             console.log('error ' + error);
-            return getStaticProductsByCategory(categoryKey);
+            const items = getStaticProductsByCategory(categoryKey);
+            const start = Math.max(page, 0) * Math.max(size, 1);
+            const pagedItems = items.slice(start, start + size);
+            return {
+                items: pagedItems,
+                totalElements: items.length,
+                page: Math.max(page, 0),
+                size,
+                totalPages: Math.ceil(items.length / Math.max(size, 1)),
+                hasNext: start + size < items.length
+            };
         });
 };
 
@@ -336,18 +489,47 @@ const getFacetsByCategory = (categoryKey) => {
 };
 
 const getAllProducts = () => {
+    return collectAllPages((page) => getAllProductsPage(page, 60));
+};
+
+const getAllProductsPage = (page = 0, size = 24) => {
     if (USE_STATIC_PRODUCT_DATA || !PRODUCT_LIST_URL) {
         const allKeys = getAllCategoryKeys();
         const allProducts = allKeys.flatMap((key) => getStaticProductsByCategory(key));
-        return Promise.resolve(allProducts);
+        const start = Math.max(page, 0) * Math.max(size, 1);
+        const items = allProducts.slice(start, start + size);
+        return Promise.resolve({
+            items,
+            totalElements: allProducts.length,
+            page: Math.max(page, 0),
+            size,
+            totalPages: Math.ceil(allProducts.length / Math.max(size, 1)),
+            hasNext: start + size < allProducts.length
+        });
     }
 
-    return axios.get(PRODUCT_LIST_URL)
-        .then((response) => unwrapList(response?.data).map(normalizeProduct).filter(Boolean))
+    return axios.get(PRODUCT_LIST_URL, {params: {page, size}})
+        .then((response) => {
+            const paged = unwrapPaged(response?.data);
+            return {
+                ...paged,
+                items: paged.items.map(normalizeProduct).filter(Boolean)
+            };
+        })
         .catch((error) => {
             console.log('error ' + error);
             const allKeys = getAllCategoryKeys();
-            return allKeys.flatMap((key) => getStaticProductsByCategory(key));
+            const allProducts = allKeys.flatMap((key) => getStaticProductsByCategory(key));
+            const start = Math.max(page, 0) * Math.max(size, 1);
+            const items = allProducts.slice(start, start + size);
+            return {
+                items,
+                totalElements: allProducts.length,
+                page: Math.max(page, 0),
+                size,
+                totalPages: Math.ceil(allProducts.length / Math.max(size, 1)),
+                hasNext: start + size < allProducts.length
+            };
         });
 };
 
@@ -356,41 +538,44 @@ const getFacetsByProducts = (products) => {
     return Promise.resolve(getStaticFacetsByProducts(safeProducts));
 };
 
-const getProductById = (productId) => {
-    if (!productId) {
+const getProductById = (routeId) => {
+    if (!routeId) {
         return Promise.resolve(null);
     }
 
-    if (USE_STATIC_PRODUCT_DATA || !PRODUCT_LIST_URL) {
-        return Promise.resolve(findStaticProductById(productId));
+    const detailUrl = resolveProductDetailUrl(routeId);
+    if (USE_STATIC_PRODUCT_DATA || !detailUrl) {
+        return Promise.resolve(findStaticProductById(routeId));
     }
 
-    return axios.get(PRODUCT_LIST_URL, {params: {productId}})
+    return axios.get(detailUrl)
         .then((response) => {
-            const list = unwrapList(response?.data).map(normalizeProduct).filter(Boolean);
-            if (list.length > 0) {
-                return list[0];
+            const normalized = normalizeProduct(unwrapItem(response?.data));
+            if (normalized) {
+                return normalized;
             }
-            return findStaticProductById(productId);
+            return findStaticProductById(routeId);
         })
         .catch((error) => {
             console.log('error ' + error);
-            return findStaticProductById(productId);
+            return findStaticProductById(routeId);
         });
 };
 
-const getRelatedProductsByProductId = (productId, limit = 10) => {
-    const categoryKey = resolveCategoryFromProductId(productId) || 'elbise';
+const getRelatedProductsByProductId = (routeId, limit = 10) => {
+    const categoryKey = resolveCategoryFromProductId(routeId) || 'elbise';
     return getProductsByCategory(categoryKey).then((products) => {
         const list = Array.isArray(products) ? products : [];
-        return list.filter((item) => String(item.id) !== String(productId)).slice(0, limit);
+        return list.filter((item) => String(item.routeId || item.productCode || item.id) !== String(routeId)).slice(0, limit);
     });
 };
 
 export default {
     getProductsByCategory,
+    getProductsPageByCategory,
     getFacetsByCategory,
     getAllProducts,
+    getAllProductsPage,
     getFacetsByProducts,
     getProductById,
     getRelatedProductsByProductId

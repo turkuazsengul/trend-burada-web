@@ -49,6 +49,8 @@ const addViewedProduct = (product) => {
     const next = [
         {
             id: product.id,
+            productCode: product.productCode || product.routeId || product.id,
+            routeId: product.routeId || product.productCode || product.id,
             title: product.title,
             mark: product.mark,
             img: product.img,
@@ -87,4 +89,3 @@ export default {
     getOrders,
     addOrder
 };
-
