@@ -37,6 +37,7 @@ export const CAMPAIGN_ITEMS_URL = getConfigValue("REACT_APP_CAMPAIGN_ITEMS_URL")
 export const USE_STATIC_CAMPAIGN_ITEMS = getBooleanConfigValue("REACT_APP_USE_STATIC_CAMPAIGN_ITEMS", true)
 
 export const PRODUCT_LIST_URL = getConfigValue("REACT_APP_PRODUCT_LIST_URL")
+export const PRODUCT_DETAIL_URL = getConfigValue("REACT_APP_PRODUCT_DETAIL_URL")
 export const PRODUCT_FACETS_URL = getConfigValue("REACT_APP_PRODUCT_FACETS_URL")
 export const USE_STATIC_PRODUCT_DATA = getBooleanConfigValue("REACT_APP_USE_STATIC_PRODUCT_DATA", true)
 export const SEARCH_URL = getConfigValue("REACT_APP_SEARCH_URL")

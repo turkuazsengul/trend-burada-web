@@ -714,7 +714,7 @@ export const AppTopBar = () => {
                                 <span className="mobile-search-popular-title">{t('topbar.searchSuggestions')}</span>
                                 <div className="mobile-search-product-list">
                                     {mobileSearchPreviewProducts.map((item) => (
-                                        <a key={item.id} href={`/detail/${item.id}`} className="mobile-search-product-card">
+                                        <a key={item.id} href={`/detail/${item.routeId || item.productCode || item.id}`} className="mobile-search-product-card">
                                             <div className="mobile-search-product-media">
                                                 <img src={item.img} alt={item.title} loading="lazy" decoding="async"/>
                                             </div>

@@ -949,7 +949,7 @@ const MyUserInfo = () => {
                 ) : (
                     <div className="profile-viewed-grid">
                         {viewedProducts.slice(0, 16).map((item) => (
-                            <a key={item.id} href={`/detail/${item.id}`} className="profile-viewed-card">
+                            <a key={item.id} href={`/detail/${item.routeId || item.productCode || item.id}`} className="profile-viewed-card">
                                 <img src={item.img} alt={item.title}/>
                                 <strong>{item.mark}</strong>
                                 <span>{item.title}</span>

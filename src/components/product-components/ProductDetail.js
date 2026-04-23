@@ -169,9 +169,10 @@ const buildQuestionAnswers = (product, language) => {
 };
 
 const relatedProductTemplate = (item, locale) => {
+    const routeId = item?.routeId || item?.productCode || item?.id;
     return (
         <div className="detail-related-card-wrap">
-            <a href={`/detail/${item.id}`} className="detail-related-card">
+            <a href={`/detail/${routeId}`} className="detail-related-card">
                 <img src={item.img} alt={item.title} loading="lazy" decoding="async"/>
                 <div className="detail-related-brand">{item.mark}</div>
                 <div className="detail-related-title">{item.title}</div>
@@ -261,7 +262,7 @@ const getAttributeValue = (attributes = [], labels = []) => {
 export const ProductDetail = ({match}) => {
     const {t = (key) => key, language = 'tr', isMobile = false} = useContext(AppContext) || {};
     const locale = language === 'en' ? 'en-US' : 'tr-TR';
-    const productId = match?.params?.id;
+    const routeProductId = match?.params?.id;
     const toastTimerRef = useRef(null);
     const feedbackSectionRef = useRef(null);
 
@@ -286,8 +287,8 @@ export const ProductDetail = ({match}) => {
         setActiveFeedbackMode('reviews');
 
         Promise.all([
-            ProductService.getProductById(productId),
-            ProductService.getRelatedProductsByProductId(productId, 12)
+            ProductService.getProductById(routeProductId),
+            ProductService.getRelatedProductsByProductId(routeProductId, 12)
         ]).then(([productData, relatedList]) => {
             if (!isMounted) {
                 return;
@@ -312,7 +313,7 @@ export const ProductDetail = ({match}) => {
                 clearTimeout(toastTimerRef.current);
             }
         };
-    }, [productId]);
+    }, [routeProductId]);
 
     useEffect(() => {
         if (!product?.id) {
@@ -322,11 +323,11 @@ export const ProductDetail = ({match}) => {
     }, [product]);
 
     useEffect(() => {
-        if (!productId) {
+        if (!product?.id) {
             return undefined;
         }
 
-        const syncFavorite = () => setFavorite(isFavorite(productId));
+        const syncFavorite = () => setFavorite(isFavorite(product.id));
         syncFavorite();
         initFavorites().then(syncFavorite);
         window.addEventListener(FAVORITES_UPDATED_EVENT, syncFavorite);
@@ -334,9 +335,9 @@ export const ProductDetail = ({match}) => {
         return () => {
             window.removeEventListener(FAVORITES_UPDATED_EVENT, syncFavorite);
         };
-    }, [productId]);
+    }, [product]);
 
-    const categoryKey = useMemo(() => resolveCategoryKeyFromId(productId), [productId]);
+    const categoryKey = useMemo(() => resolveCategoryKeyFromId(routeProductId), [routeProductId]);
 
     const parentCategoryLabel = useMemo(() => {
         const parent = MEGA_MENU_CATEGORIES.find((group) => group.items.some((item) => item.slug === categoryKey));

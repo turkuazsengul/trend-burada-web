@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {useLocation} from "react-router-dom";
 import {ProductFilter} from "./ProductFilter";
 import {ProductCard} from "./ProductCard";
@@ -9,6 +9,20 @@ import {
     getMenuItemsByCategory,
     PRICE_RANGES,
 } from "../../data/demoProductData";
+
+const PAGE_SIZE = 24;
+const INITIAL_FILTERS = {
+    mark: [],
+    size: [],
+    color: [],
+    priceRange: [],
+    rating: [],
+    sellerScore: [],
+    discountRate: [],
+    isFastDelivery: [],
+    isFreeCargo: [],
+    installmentText: []
+};
 
 const normalizeSlug = (raw = '') => {
     return decodeURIComponent(raw)
@@ -53,42 +67,111 @@ export const ProductPage = ({match}) => {
     const catalogRef = useRef(null);
     const productContentRef = useRef(null);
     const productToolbarRef = useRef(null);
+    const loadMoreRef = useRef(null);
 
     const [products, setProducts] = useState([]);
     const [serviceFacets, setServiceFacets] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [sortValue, setSortValue] = useState('recommended');
     const [isMobileFilterStripVisible, setIsMobileFilterStripVisible] = useState(true);
+    const [totalCount, setTotalCount] = useState(0);
+    const [nextPage, setNextPage] = useState(1);
+    const [hasNextPage, setHasNextPage] = useState(false);
 
-    const [selectedFilters, setSelectedFilters] = useState({
-        mark: [],
-        size: [],
-        color: [],
-        priceRange: [],
-        rating: [],
-        sellerScore: [],
-        discountRate: [],
-        isFastDelivery: [],
-        isFreeCargo: [],
-        installmentText: []
-    });
+    const [selectedFilters, setSelectedFilters] = useState(INITIAL_FILTERS);
 
     useEffect(() => {
+        let cancelled = false;
         setLoading(true);
-        setSelectedFilters({});
+        setLoadingMore(false);
+        setSelectedFilters(INITIAL_FILTERS);
+        setProducts([]);
+        setServiceFacets([]);
+        setTotalCount(0);
+        setNextPage(1);
+        setHasNextPage(false);
 
         const productSource = isDiscountRoute
-            ? ProductService.getAllProducts()
-            : ProductService.getProductsByCategory(categoryKey);
+            ? ProductService.getAllProductsPage(0, PAGE_SIZE)
+            : ProductService.getProductsPageByCategory(categoryKey, 0, PAGE_SIZE);
 
-        productSource.then((productList) => {
-            const safeProducts = Array.isArray(productList) ? productList : [];
-            setProducts(safeProducts);
-            return ProductService.getFacetsByProducts(safeProducts).then((facetList) => {
+        const facetSource = isDiscountRoute
+            ? ProductService.getAllProducts().then((safeProducts) => ProductService.getFacetsByProducts(safeProducts))
+            : ProductService.getFacetsByCategory(categoryKey);
+
+        Promise.all([productSource, facetSource])
+            .then(([productPage, facetList]) => {
+                if (cancelled) {
+                    return;
+                }
+
+                const safeProducts = Array.isArray(productPage?.items) ? productPage.items : [];
+                setProducts(safeProducts);
+                setTotalCount(Number(productPage?.totalElements || safeProducts.length));
+                setHasNextPage(Boolean(productPage?.hasNext));
+                setNextPage(Number(productPage?.page || 0) + 1);
                 setServiceFacets(Array.isArray(facetList) ? facetList : []);
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setLoading(false);
+                }
             });
-        }).finally(() => setLoading(false));
+
+        return () => {
+            cancelled = true;
+        };
     }, [categoryKey, isDiscountRoute]);
+
+    const loadNextPage = useCallback(() => {
+        if (loading || loadingMore || !hasNextPage) {
+            return;
+        }
+
+        setLoadingMore(true);
+        const request = isDiscountRoute
+            ? ProductService.getAllProductsPage(nextPage, PAGE_SIZE)
+            : ProductService.getProductsPageByCategory(categoryKey, nextPage, PAGE_SIZE);
+
+        request.then((productPage) => {
+            const incoming = Array.isArray(productPage?.items) ? productPage.items : [];
+            setProducts((prev) => {
+                const known = new Set(prev.map((item) => item.id));
+                const merged = [...prev];
+                incoming.forEach((item) => {
+                    if (!known.has(item.id)) {
+                        merged.push(item);
+                    }
+                });
+                return merged;
+            });
+            setTotalCount(Number(productPage?.totalElements || totalCount));
+            setHasNextPage(Boolean(productPage?.hasNext));
+            setNextPage(Number(productPage?.page || nextPage) + 1);
+        }).finally(() => setLoadingMore(false));
+    }, [categoryKey, hasNextPage, isDiscountRoute, loading, loadingMore, nextPage, totalCount]);
+
+    useEffect(() => {
+        const sentinel = loadMoreRef.current;
+        const root = productContentRef.current;
+
+        if (!sentinel || !root || loading || !hasNextPage) {
+            return undefined;
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0]?.isIntersecting) {
+                loadNextPage();
+            }
+        }, {
+            root,
+            rootMargin: '0px 0px 280px 0px'
+        });
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [hasNextPage, loading, loadingMore, nextPage, categoryKey, isDiscountRoute, loadNextPage]);
 
     useLayoutEffect(() => {
         const updateFooterVisibility = () => {
@@ -383,28 +466,36 @@ export const ProductPage = ({match}) => {
                             onSortChange={setSortValue}
                             showSecondaryStrip
                         />
-                        <span>{t('productList.listingCount', {count: sortedProducts.length})}</span>
+                        <span>{t('productList.listingCountProgress', {count: sortedProducts.length, total: totalCount || sortedProducts.length})}</span>
                     </div>
 
                     {loading && <div className="product-empty-state">{t('productList.loading')}</div>}
 
                     {!loading && (
-                        <div className="product-list">
-                            {sortedProducts.map((product) => (
-                                <div key={product.id} className="product-card-items">
-                                    <ProductCard
-                                        product={{
-                                            ...product,
-                                            priceLabel: formatPrice(product.price, locale),
-                                            oldPriceLabel: formatPrice(product.oldPrice, locale)
-                                        }}
-                                    />
-                                </div>
-                            ))}
-                        </div>
+                        <>
+                            <div className="product-list">
+                                {sortedProducts.map((product) => (
+                                    <div key={product.id} className="product-card-items">
+                                        <ProductCard
+                                            product={{
+                                                ...product,
+                                                priceLabel: formatPrice(product.price, locale),
+                                                oldPriceLabel: formatPrice(product.oldPrice, locale)
+                                            }}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div ref={loadMoreRef} className="product-list-load-state" aria-live="polite">
+                                {loadingMore && t('productList.loadingMore')}
+                                {!loadingMore && hasNextPage && t('productList.loadingTrigger')}
+                                {!loadingMore && !hasNextPage && sortedProducts.length > 0 && t('productList.allLoaded')}
+                            </div>
+                        </>
                     )}
 
-                    {!loading && sortedProducts.length === 0 && (
+                    {!loading && !loadingMore && sortedProducts.length === 0 && !hasNextPage && (
                         <div className="product-empty-state">
                             {t('productList.empty')}
                         </div>

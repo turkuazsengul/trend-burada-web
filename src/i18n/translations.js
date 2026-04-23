@@ -123,7 +123,11 @@ export const translations = {
         },
         productList: {
             listingCount: '{{count}} ürün listeleniyor',
+            listingCountProgress: '{{count}} ürün gösteriliyor / {{total}} toplam',
             loading: 'Ürünler yükleniyor...',
+            loadingMore: 'Daha fazla ürün yükleniyor...',
+            loadingTrigger: 'Aşağı kaydırdıkça yeni ürünler yüklenecek.',
+            allLoaded: 'Tüm ürünler yüklendi.',
             empty: 'Seçili filtrelere uygun ürün bulunamadı. Farklı filtre kombinasyonları deneyin.'
         },
         search: {
@@ -597,7 +601,11 @@ export const translations = {
         },
         productList: {
             listingCount: '{{count}} products listed',
+            listingCountProgress: '{{count}} products shown / {{total}} total',
             loading: 'Loading products...',
+            loadingMore: 'Loading more products...',
+            loadingTrigger: 'Scroll down to load more products.',
+            allLoaded: 'All products loaded.',
             empty: 'No products found for selected filters. Try a different combination.'
         },
         search: {

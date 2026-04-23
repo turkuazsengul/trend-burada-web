@@ -106,7 +106,7 @@ const AIShopComboPage = () => {
                             <span>{product.title}</span>
                             <b>{Number(product.price || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TL</b>
                             <div className="ai-shop-combo-product-actions">
-                                <button type="button" className="ghost" onClick={() => history.push(`/detail/${product.id}`)}>{safeText('aiShop.viewProduct', 'Ürünü Gör')}</button>
+                                <button type="button" className="ghost" onClick={() => history.push(`/detail/${product.routeId || product.productCode || product.id}`)}>{safeText('aiShop.viewProduct', 'Ürünü Gör')}</button>
                                 <button type="button" className="primary" onClick={() => addProduct(product)}>{safeText('productCard.addToCart', 'Sepete Ekle')}</button>
                             </div>
                         </div>

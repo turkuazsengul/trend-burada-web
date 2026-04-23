@@ -196,12 +196,13 @@ export const CartPage = () => {
 
     useEffect(() => {
         const firstItem = items[0];
-        if (!firstItem?.id) {
+        const relatedProductRouteId = firstItem?.routeId || firstItem?.productCode || firstItem?.id;
+        if (!relatedProductRouteId) {
             setSuggestedProducts([]);
             return;
         }
 
-        ProductService.getRelatedProductsByProductId(firstItem.id, 8).then((list) => {
+        ProductService.getRelatedProductsByProductId(relatedProductRouteId, 8).then((list) => {
             setSuggestedProducts(Array.isArray(list) ? list : []);
         });
     }, [items]);
@@ -461,8 +462,9 @@ export const CartPage = () => {
     };
 
     const recentItemTemplate = (product) => {
+        const routeId = product?.routeId || product?.productCode || product?.id;
         return (
-            <a href={`/detail/${product.id}`} className="cart-suggest-card">
+            <a href={`/detail/${routeId}`} className="cart-suggest-card">
                 <img src={product.img} alt={product.title}/>
                 <strong>{product.mark}</strong>
                 <span>{product.title}</span>
@@ -878,7 +880,7 @@ export const CartPage = () => {
                                 <button
                                     type="button"
                                     className="cart-item-main-link"
-                                    onClick={() => openProductDetail(item.id)}
+                                    onClick={() => openProductDetail(item.routeId || item.productCode || item.id)}
                                 >
                                     <img src={item.img} alt={item.title}/>
 
@@ -1019,7 +1021,7 @@ export const CartPage = () => {
 
             <section className="cart-campaign-strip">
                 {campaignProducts.slice(0, 6).map((product) => (
-                    <a key={product.id} href={`/detail/${product.id}`} className="cart-campaign-card is-product">
+                    <a key={product.id} href={`/detail/${product.routeId || product.productCode || product.id}`} className="cart-campaign-card is-product">
                         <img src={product.img} alt={product.title}/>
                         <div className="cart-campaign-content">
                             <strong>{product.mark}</strong>
