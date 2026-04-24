@@ -12,7 +12,8 @@ export const Login = ({
     presetEmail = "",
     lockEmail = false,
     onUseDifferentEmail,
-    showSocialActions = true
+    showSocialActions = true,
+    defaultRedirectTarget = '/'
 }) => {
     const {t = (key) => key} = useContext(AppContext) || {};
     const history = useHistory();
@@ -24,7 +25,7 @@ export const Login = ({
     const [wrongAccountInfo, setWrongAccountInfo] = useState(false);
     const [labelMessage, setLabelMessage] = useState("");
 
-    const redirectTarget = new URLSearchParams(location.search).get('redirect') || "/";
+    const redirectTarget = new URLSearchParams(location.search).get('redirect') || defaultRedirectTarget;
 
     const loginButtonOnClick = async () => {
         if (checkValidation()) {
