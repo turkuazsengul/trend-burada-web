@@ -42,6 +42,14 @@ export const MY_USER_INFO_URL = getConfigValue("REACT_APP_MY_USER_INFO_URL")
 export const MY_ORDER_URL = getConfigValue("REACT_APP_MY_ORDER_URL")
 export const MY_ADDRESS_URL = getConfigValue("REACT_APP_MY_ADDRESS_URL", "/hesabÄ±m/Adreslerim")
 
+// Backend address CRUD endpoint base. Falls back to user-service base + the controller path
+// so a single REACT_APP_USER_SERVICE_BASE_URL change keeps everything pointing at the right
+// host even if REACT_APP_ADDRESS_BASE_URL is forgotten in an env file.
+export const ADDRESS_BASE_URL = getConfigValue(
+    "REACT_APP_ADDRESS_BASE_URL",
+    USER_SERVICE_BASE_URL ? `${USER_SERVICE_BASE_URL}/customer/me/addresses` : ""
+)
+
 export const PROMO_IMAGES_URL = getConfigValue("REACT_APP_PROMO_IMAGES_URL")
 export const USE_STATIC_PROMO_IMAGES = getBooleanConfigValue("REACT_APP_USE_STATIC_PROMO_IMAGES", true)
 export const CAMPAIGN_ITEMS_URL = getConfigValue("REACT_APP_CAMPAIGN_ITEMS_URL")

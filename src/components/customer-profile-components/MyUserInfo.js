@@ -12,6 +12,31 @@ import {Toast} from "primereact/toast";
 import AppContext from "../../AppContext";
 import {InputTextarea} from "primereact/inputtextarea";
 import UserActivityService from "../../service/UserActivityService";
+import {
+    useAddresses,
+    useCreateAddress,
+    useDeleteAddress,
+    useUpdateAddress,
+    buildSetDefaultBody,
+} from "../../hooks/useAddresses";
+
+// Backend phone validation regex (mirrors AddressRequest.java). Keep the source of truth
+// on the server but reject obviously-bad input client-side so users don't get a 400.
+const ADDRESS_PHONE_REGEX = /^[+0-9 ()\-]{6,30}$/;
+const DEFAULT_COUNTRY = "Türkiye";
+
+const buildEmptyAddressForm = (overrides = {}) => ({
+    title: "",
+    fullName: "",
+    phone: "",
+    country: DEFAULT_COUNTRY,
+    city: "",
+    district: "",
+    neighborhood: "",
+    addressLine: "",
+    postalCode: "",
+    ...overrides,
+});
 
 const AI_SHOP_BODY_KEY = 'tb_ai_shop_body_profile_v1';
 const BODY_PROFILE_DEFAULTS = {
@@ -74,20 +99,22 @@ const MyUserInfo = () => {
         push: false
     });
     const [bodyProfile, setBodyProfile] = useState(BODY_PROFILE_DEFAULTS);
-    const [addresses, setAddresses] = useState([]);
     const [showAddressForm, setShowAddressForm] = useState(false);
     const [orderHistory, setOrderHistory] = useState([]);
     const [viewedProducts, setViewedProducts] = useState([]);
     const [editingAddressId, setEditingAddressId] = useState(null);
-    const [addressForm, setAddressForm] = useState({
-        title: '',
-        fullName: '',
-        phone: '',
-        city: '',
-        district: '',
-        fullAddress: '',
-        type: 'home'
-    });
+    const [addressForm, setAddressForm] = useState(buildEmptyAddressForm());
+
+    // Address CRUD is delegated to React Query — see src/hooks/useAddresses.js. The hook
+    // gates itself on a valid Bearer token so guests don't ping the backend unnecessarily.
+    const {
+        data: addresses = [],
+        isLoading: addressesLoading,
+        isError: addressesError,
+    } = useAddresses();
+    const createAddressMutation = useCreateAddress();
+    const updateAddressMutation = useUpdateAddress();
+    const deleteAddressMutation = useDeleteAddress();
 
     const showMessage = (labelText, detailText, ref, severity) => {
         ref.current.show({severity: severity, summary: labelText, detail: detailText, life: 3000});
@@ -143,54 +170,10 @@ const MyUserInfo = () => {
         setBodyProfile(readBodyProfile());
     }, []);
 
-    const addressStorageKey = `tb_addresses_${userId || 'guest'}`;
-
-    useEffect(() => {
-        if (!userId) {
-            return;
-        }
-
-        const stored = localStorage.getItem(addressStorageKey);
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                if (Array.isArray(parsed)) {
-                    const normalized = parsed.map((item) => {
-                        if (item?.title === t('profile.homeAddressTitle') || item?.title === 'profile.homeAddressTitle') {
-                            return {...item, title: ''};
-                        }
-                        return item;
-                    });
-                    setAddresses(normalized);
-                    return;
-                }
-            } catch (e) {
-                // ignore invalid localStorage data
-            }
-        }
-
-        setAddresses([
-            {
-                id: `addr-${Date.now()}-1`,
-                title: '',
-                fullName: fullName || 'Kullanıcı',
-                phone: phoneNumber || '0(5__) ___ __ __',
-                city: 'İstanbul',
-                district: 'Kadıköy',
-                fullAddress: 'Moda Mah. Caferağa Sok. No:12 D:8',
-                type: 'home',
-                isDefault: true
-            }
-        ]);
-    }, [addressStorageKey, userId, fullName, phoneNumber, t]);
-
-    useEffect(() => {
-        if (!userId) {
-            return;
-        }
-
-        localStorage.setItem(addressStorageKey, JSON.stringify(addresses));
-    }, [addresses, userId, addressStorageKey]);
+    // NOTE: addresses used to be stored under `tb_addresses_${userId}` in localStorage with a
+    // seeded fallback row (Moda Mah. ...) when no entries existed. Both the read and write
+    // effects, plus the seed, were removed when the feature moved to the backend. The legacy
+    // localStorage keys are wiped at app boot by src/utils/clearLegacyAddresses.js.
 
     useEffect(() => {
         if (!userId) {
@@ -681,30 +664,17 @@ const MyUserInfo = () => {
     };
 
     const clearAddressForm = () => {
-        setAddressForm({
-            title: '',
-            fullName: '',
-            phone: '',
-            city: '',
-            district: '',
-            fullAddress: '',
-            type: 'home'
-        });
+        setAddressForm(buildEmptyAddressForm());
         setEditingAddressId(null);
         setShowAddressForm(false);
     };
 
     const handleOpenNewAddressForm = () => {
         setEditingAddressId(null);
-        setAddressForm({
-            title: '',
+        setAddressForm(buildEmptyAddressForm({
             fullName: fullName || '',
             phone: phoneNumber || '',
-            city: '',
-            district: '',
-            fullAddress: '',
-            type: 'home'
-        });
+        }));
         setShowAddressForm(true);
     };
 
@@ -714,10 +684,12 @@ const MyUserInfo = () => {
             title: address.title || '',
             fullName: address.fullName || '',
             phone: address.phone || '',
+            country: address.country || DEFAULT_COUNTRY,
             city: address.city || '',
             district: address.district || '',
-            fullAddress: address.fullAddress || '',
-            type: address.type || 'home'
+            neighborhood: address.neighborhood || '',
+            addressLine: address.addressLine || '',
+            postalCode: address.postalCode || '',
         });
         setShowAddressForm(true);
     };
@@ -726,42 +698,124 @@ const MyUserInfo = () => {
         setAddressForm((prev) => ({...prev, [field]: value}));
     };
 
+    const handleAddressMutationError = (error, fallbackDetailKey, fallbackDetailText) => {
+        if (error && error.response && error.response.status === 401) {
+            // Token expired or missing — bounce to login like the rest of the app does.
+            localStorage.removeItem("token");
+            history.push("/login");
+            return;
+        }
+        const status = error && error.response && error.response.status;
+        const detail = status === 400
+            ? safeText('profile.addressFormErrorDetail', 'Lütfen tüm zorunlu alanları kontrol edin.')
+            : safeText(fallbackDetailKey, fallbackDetailText);
+        showMessage(
+            safeText('profile.addressFormErrorTitle', 'Adres kaydedilemedi'),
+            detail,
+            toastCenter,
+            'warn'
+        );
+    };
+
     const handleDeleteAddress = (addressId) => {
-        setAddresses((prev) => {
-            const next = prev.filter((item) => item.id !== addressId);
-            if (next.length > 0 && !next.some((item) => item.isDefault)) {
-                next[0] = {...next[0], isDefault: true};
-            }
-            return next;
+        deleteAddressMutation.mutate(addressId, {
+            onError: (error) => handleAddressMutationError(
+                error,
+                'profile.addressDeleteErrorDetail',
+                'Adres silinemedi. Lütfen daha sonra tekrar deneyin.'
+            ),
         });
     };
 
-    const handleSetDefaultAddress = (addressId) => {
-        setAddresses((prev) => prev.map((item) => ({...item, isDefault: item.id === addressId})));
+    const handleSetDefaultAddress = (address) => {
+        // Backend's PUT is intentionally full-replace, so we build a body from the existing
+        // AddressView and flip just the isDefault flag. The server clears any previous
+        // default in the same transaction — we don't have to.
+        updateAddressMutation.mutate(
+            {id: address.id, body: buildSetDefaultBody(address)},
+            {
+                onError: (error) => handleAddressMutationError(
+                    error,
+                    'profile.addressSetDefaultErrorDetail',
+                    'Varsayılan adres güncellenemedi.'
+                ),
+            }
+        );
     };
 
     const handleAddressSave = () => {
-        if (!addressForm.title || !addressForm.fullName || !addressForm.phone || !addressForm.city || !addressForm.district || !addressForm.fullAddress) {
+        // Mirror the backend's @NotBlank checks: title / fullName / phone / country / city /
+        // district / addressLine are required. neighborhood and postalCode are optional.
+        const requiredMissing = !addressForm.title.trim()
+            || !addressForm.fullName.trim()
+            || !addressForm.phone.trim()
+            || !addressForm.country.trim()
+            || !addressForm.city.trim()
+            || !addressForm.district.trim()
+            || !addressForm.addressLine.trim();
+        if (requiredMissing) {
             showMessage(t('profile.addressFormErrorTitle'), t('profile.addressFormErrorDetail'), toastCenter, 'warn');
             return;
         }
 
-        if (editingAddressId) {
-            setAddresses((prev) => prev.map((item) => (item.id === editingAddressId ? {...item, ...addressForm} : item)));
-        } else {
-            const isFirstAddress = addresses.length === 0;
-            setAddresses((prev) => [
-                ...prev,
-                {
-                    ...addressForm,
-                    id: `addr-${Date.now()}`,
-                    isDefault: isFirstAddress
-                }
-            ]);
+        if (!ADDRESS_PHONE_REGEX.test(addressForm.phone.trim())) {
+            showMessage(
+                safeText('profile.addressFormErrorTitle', 'Adres kaydedilemedi'),
+                safeText('profile.addressPhoneInvalidDetail', 'Telefon numarası rakam, boşluk, parantez, tire veya + içerebilir (6-30 karakter).'),
+                toastCenter,
+                'warn'
+            );
+            return;
         }
 
-        clearAddressForm();
+        // Trimming mirrors what AddressService does on the server, but we trim here too so the
+        // optimistic body sent over the wire matches what gets stored. neighborhood and
+        // postalCode get null when blank, matching the server's trimToNull.
+        const trimOrNull = (value) => {
+            const trimmed = String(value || '').trim();
+            return trimmed.length === 0 ? '' : trimmed;
+        };
+
+        // Newly-created addresses default to isDefault=true when this is the first address;
+        // edits preserve whatever the row already had unless the user explicitly changed it.
+        const editedAddress = editingAddressId
+            ? addresses.find((item) => item.id === editingAddressId)
+            : null;
+        const isFirstAddress = addresses.length === 0;
+        const isDefaultFlag = editedAddress
+            ? Boolean(editedAddress.isDefault)
+            : isFirstAddress;
+
+        const body = {
+            title: addressForm.title.trim(),
+            fullName: addressForm.fullName.trim(),
+            phone: addressForm.phone.trim(),
+            country: addressForm.country.trim(),
+            city: addressForm.city.trim(),
+            district: addressForm.district.trim(),
+            neighborhood: trimOrNull(addressForm.neighborhood),
+            addressLine: addressForm.addressLine.trim(),
+            postalCode: trimOrNull(addressForm.postalCode),
+            isDefault: isDefaultFlag,
+        };
+
+        const onSuccess = () => clearAddressForm();
+        const onError = (error) => handleAddressMutationError(
+            error,
+            'profile.addressSaveErrorDetail',
+            'Adres kaydedilemedi. Lütfen daha sonra tekrar deneyin.'
+        );
+
+        if (editingAddressId) {
+            updateAddressMutation.mutate({id: editingAddressId, body}, {onSuccess, onError});
+        } else {
+            createAddressMutation.mutate(body, {onSuccess, onError});
+        }
     };
+
+    const isAddressBusy = createAddressMutation.isLoading
+        || updateAddressMutation.isLoading
+        || deleteAddressMutation.isLoading;
 
     const renderAddressSection = () => {
         return (
@@ -775,12 +829,21 @@ const MyUserInfo = () => {
                             icon="pi pi-plus"
                             label={t('profile.addAddress')}
                             onClick={handleOpenNewAddressForm}
+                            disabled={isAddressBusy}
                         />
                     </div>
                 </div>
 
                 <div className="process-row">
-                    {addresses.length === 0 ? (
+                    {addressesLoading ? (
+                        <div className="address-empty-state">
+                            {safeText('profile.addressLoading', 'Adresleriniz yükleniyor...')}
+                        </div>
+                    ) : addressesError ? (
+                        <div className="address-empty-state">
+                            {safeText('profile.addressLoadError', 'Adresler yüklenemedi. Lütfen sayfayı yenileyin.')}
+                        </div>
+                    ) : addresses.length === 0 ? (
                         <div className="address-empty-state">{t('profile.addressEmpty')}</div>
                     ) : (
                         <div className="address-grid">
@@ -790,12 +853,6 @@ const MyUserInfo = () => {
                                         <div className="address-card-title-group">
                                             <div className="address-card-title-line">
                                                 <h4>{(address.title || '').trim() || safeText('profile.addressCardFallbackTitle', 'Teslimat Adresim')}</h4>
-                                                <span className={`address-type-tag ${address.type === 'work' ? 'is-work' : 'is-home'}`}>
-                                                    <i className={address.type === 'work' ? 'pi pi-briefcase' : 'pi pi-home'} />
-                                                    {address.type === 'work'
-                                                        ? safeText('profile.workAddressType', 'İş Adresi')
-                                                        : safeText('profile.homeAddressType', 'Ev Adresi')}
-                                                </span>
                                             </div>
                                         </div>
                                         {address.isDefault ? <div className="address-default-tag">{t('profile.defaultAddress')}</div> : null}
@@ -804,18 +861,36 @@ const MyUserInfo = () => {
                                     <div className="address-card-content">
                                         <strong>{address.fullName}</strong>
                                         <span>{address.phone}</span>
-                                        <span>{address.district} / {address.city}</span>
-                                        <p>{address.fullAddress}</p>
+                                        <span>{[address.neighborhood, address.district, address.city].filter(Boolean).join(' / ')}</span>
+                                        <p>{address.addressLine}</p>
+                                        <span>{[address.postalCode, address.country].filter(Boolean).join(' • ')}</span>
                                     </div>
 
                                     <div className="address-card-actions">
                                         {!address.isDefault ? (
-                                            <button type="button" onClick={() => handleSetDefaultAddress(address.id)}>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSetDefaultAddress(address)}
+                                                disabled={isAddressBusy}
+                                            >
                                                 {t('profile.setDefault')}
                                             </button>
                                         ) : <span className="address-action-placeholder"/>}
-                                        <button type="button" onClick={() => handleEditAddress(address)}>{t('profile.editAddress')}</button>
-                                        <button type="button" className="is-danger" onClick={() => handleDeleteAddress(address.id)}>{t('profile.deleteAddress')}</button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleEditAddress(address)}
+                                            disabled={isAddressBusy}
+                                        >
+                                            {t('profile.editAddress')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="is-danger"
+                                            onClick={() => handleDeleteAddress(address.id)}
+                                            disabled={isAddressBusy}
+                                        >
+                                            {t('profile.deleteAddress')}
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -831,32 +906,13 @@ const MyUserInfo = () => {
                             <div className="address-form-grid">
                                 <div className="address-form-field">
                                     <label>{t('profile.addressTitle')}</label>
-                                    <InputText value={addressForm.title} onChange={(e) => handleAddressFieldChange('title', e.target.value)}/>
+                                    <InputText value={addressForm.title} onChange={(e) => handleAddressFieldChange('title', e.target.value)} maxLength={60}/>
                                 </div>
-                                <div className="address-form-field">
-                                    <label>{t('profile.addressType')}</label>
-                                    <div className="address-type-switch">
-                                        <button
-                                            type="button"
-                                            className={addressForm.type === 'home' ? 'is-active' : ''}
-                                            onClick={() => handleAddressFieldChange('type', 'home')}
-                                        >
-                                            {t('profile.homeType')}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className={addressForm.type === 'work' ? 'is-active' : ''}
-                                            onClick={() => handleAddressFieldChange('type', 'work')}
-                                        >
-                                            {t('profile.workType')}
-                                        </button>
-                                    </div>
-                                </div>
-
                                 <div className="address-form-field">
                                     <label>{t('profile.nameSurname')}</label>
-                                    <InputText value={addressForm.fullName} onChange={(e) => handleAddressFieldChange('fullName', e.target.value)}/>
+                                    <InputText value={addressForm.fullName} onChange={(e) => handleAddressFieldChange('fullName', e.target.value)} maxLength={120}/>
                                 </div>
+
                                 <div className="address-form-field">
                                     <label>{t('profile.phone')}</label>
                                     <InputMask
@@ -867,30 +923,44 @@ const MyUserInfo = () => {
                                         onChange={(e) => handleAddressFieldChange('phone', e.target.value)}
                                     />
                                 </div>
+                                <div className="address-form-field">
+                                    <label>{safeText('profile.country', 'Ülke')}</label>
+                                    <InputText value={addressForm.country} onChange={(e) => handleAddressFieldChange('country', e.target.value)} maxLength={60}/>
+                                </div>
 
                                 <div className="address-form-field">
                                     <label>{t('profile.city')}</label>
-                                    <InputText value={addressForm.city} onChange={(e) => handleAddressFieldChange('city', e.target.value)}/>
+                                    <InputText value={addressForm.city} onChange={(e) => handleAddressFieldChange('city', e.target.value)} maxLength={60}/>
                                 </div>
                                 <div className="address-form-field">
                                     <label>{t('profile.district')}</label>
-                                    <InputText value={addressForm.district} onChange={(e) => handleAddressFieldChange('district', e.target.value)}/>
+                                    <InputText value={addressForm.district} onChange={(e) => handleAddressFieldChange('district', e.target.value)} maxLength={60}/>
+                                </div>
+
+                                <div className="address-form-field">
+                                    <label>{safeText('profile.neighborhood', 'Mahalle (opsiyonel)')}</label>
+                                    <InputText value={addressForm.neighborhood} onChange={(e) => handleAddressFieldChange('neighborhood', e.target.value)} maxLength={80}/>
+                                </div>
+                                <div className="address-form-field">
+                                    <label>{safeText('profile.postalCode', 'Posta Kodu (opsiyonel)')}</label>
+                                    <InputText value={addressForm.postalCode} onChange={(e) => handleAddressFieldChange('postalCode', e.target.value)} maxLength={20}/>
                                 </div>
                             </div>
 
                             <div className="address-form-field">
-                                <label>{t('profile.fullAddressLabel')}</label>
+                                <label>{safeText('profile.addressLineLabel', 'Açık Adres')}</label>
                                 <InputTextarea
                                     autoResize
                                     rows={4}
-                                    value={addressForm.fullAddress}
-                                    onChange={(e) => handleAddressFieldChange('fullAddress', e.target.value)}
+                                    value={addressForm.addressLine}
+                                    onChange={(e) => handleAddressFieldChange('addressLine', e.target.value)}
+                                    maxLength={500}
                                 />
                             </div>
 
                             <div className="address-form-actions">
-                                <Button label={t('profile.cancel')} className="p-button-text" onClick={clearAddressForm}/>
-                                <Button label={t('profile.saveAddress')} onClick={handleAddressSave}/>
+                                <Button label={t('profile.cancel')} className="p-button-text" onClick={clearAddressForm} disabled={isAddressBusy}/>
+                                <Button label={t('profile.saveAddress')} onClick={handleAddressSave} disabled={isAddressBusy} loading={isAddressBusy}/>
                             </div>
                         </div>
                     </div>

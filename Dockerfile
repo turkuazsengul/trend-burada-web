@@ -4,9 +4,11 @@ ENV NODE_OPTIONS=--openssl-legacy-provider
 
 WORKDIR /app
 
-COPY package.json ./
-
-COPY package-lock.json ./
+# Copy the package manifests AND the npm config together so `legacy-peer-deps=true`
+# (defined in .npmrc) is honoured during the layer that runs `npm install`. Without
+# .npmrc here the install fails with ERESOLVE on the @types/react peer conflict between
+# primereact 10 and the optional react-native peer of @tanstack/react-query 4.x.
+COPY package.json package-lock.json .npmrc ./
 
 RUN npm install
 

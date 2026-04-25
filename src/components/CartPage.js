@@ -4,6 +4,28 @@ import ProductService from "../service/ProductService";
 import {useHistory} from "react-router-dom";
 import AppContext from "../AppContext";
 import UserActivityService from "../service/UserActivityService";
+import {useAddresses, useCreateAddress} from "../hooks/useAddresses";
+
+// Mirrors AddressRequest.java's @Pattern. Catch obviously-bad phone input client-side
+// instead of letting the server reject the request with a 400.
+const ADDRESS_PHONE_REGEX = /^[+0-9 ()\-]{6,30}$/;
+const DEFAULT_COUNTRY = 'Türkiye';
+const buildEmptyCartAddressForm = () => ({
+    title: '',
+    fullName: '',
+    phone: '',
+    country: DEFAULT_COUNTRY,
+    city: '',
+    district: '',
+    neighborhood: '',
+    addressLine: '',
+    postalCode: '',
+});
+
+// Single source of truth for "is the current visitor logged in". The cart page checks this
+// in a few places (entering checkout step 2, completing purchase) so factor it out.
+const hasAuthToken = () =>
+    typeof window !== 'undefined' && Boolean(localStorage.getItem('token'));
 
 const formatPrice = (price, locale) => `${Number(price || 0).toLocaleString(locale, {minimumFractionDigits: 2, maximumFractionDigits: 2})} TL`;
 
@@ -26,7 +48,6 @@ export const CartPage = () => {
     };
     const locale = language === 'en' ? 'en-US' : 'tr-TR';
     const history = useHistory();
-    const addressFallbackOptions = useMemo(() => ([]), []);
     const paymentOptions = useMemo(() => ([
         {
             id: 'card',
@@ -50,7 +71,6 @@ export const CartPage = () => {
     const [recentlyViewedFallback, setRecentlyViewedFallback] = useState([]);
     const [campaignProducts, setCampaignProducts] = useState([]);
     const discountRates = [10, 20, 30, 40];
-    const [addressOptions, setAddressOptions] = useState([]);
     const [selectedAddress, setSelectedAddress] = useState('');
     const [selectedPayment, setSelectedPayment] = useState(paymentOptions[0].id);
     const [completed, setCompleted] = useState(false);
@@ -61,14 +81,19 @@ export const CartPage = () => {
     const [otpError, setOtpError] = useState('');
     const [checkoutStep, setCheckoutStep] = useState(typeof window !== 'undefined' && window.innerWidth <= 768 ? 2 : 1);
     const [showNewAddressForm, setShowNewAddressForm] = useState(false);
-    const [newAddressForm, setNewAddressForm] = useState({
-        title: '',
-        city: '',
-        district: '',
-        phone: '',
-        fullAddress: '',
-        type: 'home'
-    });
+    const [newAddressForm, setNewAddressForm] = useState(buildEmptyCartAddressForm());
+    const [newAddressError, setNewAddressError] = useState('');
+
+    // Backend-backed address list (React Query). Fetches when a Bearer token exists; for
+    // guests the hook stays disabled and `addresses` is an empty list, which the UI uses
+    // to render the "Giriş yapmadan ödeme yapamazsınız" guard further down.
+    const {
+        data: addresses = [],
+        isLoading: addressesLoading,
+        isError: addressesError,
+    } = useAddresses();
+    const createAddressMutation = useCreateAddress();
+    const isAuthenticated = hasAuthToken();
     const [cardForm, setCardForm] = useState({
         cardNumber: '',
         holderName: '',
@@ -129,55 +154,30 @@ export const CartPage = () => {
         return () => window.removeEventListener('resize', onResize);
     }, []);
 
-    useEffect(() => {
-        const userRaw = localStorage.getItem('user');
-        let userId = 'guest';
-        if (userRaw) {
-            try {
-                const parsedUser = JSON.parse(userRaw);
-                userId = parsedUser?.pkId || parsedUser?.id || 'guest';
-            } catch (e) {
-                userId = 'guest';
-            }
+    // Map server-side AddressView to the {id, label, detail, isDefault} shape used by the
+    // checkout option list. The label falls back to "Teslimat Adresim" if the user didn't
+    // give the address a title (server allows blank-after-trim only via @NotBlank validation
+    // failing — but defensive default keeps the UI from rendering an empty radio).
+    const addressOptions = useMemo(() => {
+        if (!Array.isArray(addresses)) {
+            return [];
         }
-
-        const addressStorageKey = `tb_addresses_${userId}`;
-        const addressRaw = localStorage.getItem(addressStorageKey);
-        if (!addressRaw) {
-            setAddressOptions([]);
-            return;
-        }
-
-        try {
-            const parsedAddresses = JSON.parse(addressRaw);
-            if (!Array.isArray(parsedAddresses) || parsedAddresses.length === 0) {
-                setAddressOptions([]);
-                return;
-            }
-
-            const mapTypeLabel = (type) => type === 'work' ? t('cart.workAddress') : t('cart.homeAddress');
-
-            const mapped = parsedAddresses.map((item, index) => {
-                const city = String(item?.city || '').trim();
-                const district = String(item?.district || '').trim();
-                const fullAddress = String(item?.fullAddress || '').trim();
-                const location = [district, city].filter(Boolean).join(' / ');
-                const detail = [fullAddress, location].filter(Boolean).join(' - ');
-                const title = String(item?.title || '').trim();
-
-                return {
-                    id: item?.id || `saved-address-${index}`,
-                    label: title || mapTypeLabel(item?.type),
-                    detail: detail || t('cart.addressDetailFallback'),
-                    isDefault: Boolean(item?.isDefault)
-                };
-            });
-
-            setAddressOptions(mapped);
-        } catch (e) {
-            setAddressOptions([]);
-        }
-    }, [addressFallbackOptions, t]);
+        return addresses.map((item) => {
+            const city = String(item?.city || '').trim();
+            const district = String(item?.district || '').trim();
+            const neighborhood = String(item?.neighborhood || '').trim();
+            const addressLine = String(item?.addressLine || '').trim();
+            const location = [neighborhood, district, city].filter(Boolean).join(' / ');
+            const detail = [addressLine, location].filter(Boolean).join(' - ');
+            const title = String(item?.title || '').trim();
+            return {
+                id: item?.id,
+                label: title || t('cart.addressDetailFallback'),
+                detail: detail || t('cart.addressDetailFallback'),
+                isDefault: Boolean(item?.isDefault),
+            };
+        });
+    }, [addresses, t]);
 
     useEffect(() => {
         if (addressOptions.length === 0) {
@@ -315,6 +315,17 @@ export const CartPage = () => {
         setBankModalOpen(true);
     };
 
+    // Step 1 -> Step 2 needs an authenticated user since address CRUD is JWT-scoped on the
+    // backend. Bouncing to login here closes the "guest checkout" flow without breaking
+    // the rest of the cart (browse, add, etc. stay anonymous).
+    const goToAddressStep = () => {
+        if (!hasAuthToken()) {
+            history.push('/login?redirect=/sepetim');
+            return;
+        }
+        setCheckoutStep(2);
+    };
+
     const handleAddressContinue = () => {
         if (!selectedAddress) {
             return;
@@ -334,71 +345,69 @@ export const CartPage = () => {
 
     const handleNewAddressField = (field, value) => {
         setNewAddressForm((prev) => ({...prev, [field]: value}));
+        if (newAddressError) {
+            setNewAddressError('');
+        }
     };
 
     const handleCreateAddress = () => {
-        if (!newAddressForm.title || !newAddressForm.city || !newAddressForm.district || !newAddressForm.phone || !newAddressForm.fullAddress) {
+        // All NotBlank fields from AddressRequest. neighborhood and postalCode are optional.
+        const requiredMissing = !newAddressForm.title.trim()
+            || !newAddressForm.fullName.trim()
+            || !newAddressForm.phone.trim()
+            || !newAddressForm.country.trim()
+            || !newAddressForm.city.trim()
+            || !newAddressForm.district.trim()
+            || !newAddressForm.addressLine.trim();
+        if (requiredMissing) {
+            setNewAddressError(text('cart.addressFormError', 'Lütfen zorunlu alanları doldurun.'));
             return;
         }
 
-        const userRaw = localStorage.getItem('user');
-        let userId = 'guest';
-        if (userRaw) {
-            try {
-                const parsedUser = JSON.parse(userRaw);
-                userId = parsedUser?.pkId || parsedUser?.id || 'guest';
-            } catch (e) {
-                userId = 'guest';
-            }
+        if (!ADDRESS_PHONE_REGEX.test(newAddressForm.phone.trim())) {
+            setNewAddressError(text('cart.addressPhoneInvalid', 'Telefon numarası geçersiz.'));
+            return;
         }
 
-        const addressStorageKey = `tb_addresses_${userId}`;
-        const currentRaw = localStorage.getItem(addressStorageKey);
-        let current = [];
-        if (currentRaw) {
-            try {
-                const parsed = JSON.parse(currentRaw);
-                if (Array.isArray(parsed)) {
-                    current = parsed;
+        const trimOrNull = (value) => {
+            const trimmed = String(value || '').trim();
+            return trimmed.length === 0 ? '' : trimmed;
+        };
+
+        // First-address-becomes-default is enforced in two layers: client sends isDefault=true
+        // when nothing exists yet, AND the server's partial unique index would catch any other
+        // race. After creation, RQ invalidation refetches and the picker auto-selects via the
+        // selectedAddress useEffect below.
+        const body = {
+            title: newAddressForm.title.trim(),
+            fullName: newAddressForm.fullName.trim(),
+            phone: newAddressForm.phone.trim(),
+            country: newAddressForm.country.trim(),
+            city: newAddressForm.city.trim(),
+            district: newAddressForm.district.trim(),
+            neighborhood: trimOrNull(newAddressForm.neighborhood),
+            addressLine: newAddressForm.addressLine.trim(),
+            postalCode: trimOrNull(newAddressForm.postalCode),
+            isDefault: addresses.length === 0,
+        };
+
+        createAddressMutation.mutate(body, {
+            onSuccess: (created) => {
+                if (created && created.id) {
+                    setSelectedAddress(created.id);
                 }
-            } catch (e) {
-                current = [];
-            }
-        }
-
-        const created = {
-            id: `saved-address-${Date.now()}`,
-            title: newAddressForm.title,
-            fullName: 'Teslimat',
-            phone: newAddressForm.phone,
-            city: newAddressForm.city,
-            district: newAddressForm.district,
-            fullAddress: newAddressForm.fullAddress,
-            type: newAddressForm.type,
-            isDefault: current.length === 0
-        };
-
-        const nextStorage = [...current, created];
-        localStorage.setItem(addressStorageKey, JSON.stringify(nextStorage));
-
-        const detail = `${created.fullAddress} - ${created.district} / ${created.city}`;
-        const mapped = {
-            id: created.id,
-            label: created.title,
-            detail,
-            isDefault: created.isDefault
-        };
-
-        setAddressOptions((prev) => [...prev, mapped]);
-        setSelectedAddress(created.id);
-        setShowNewAddressForm(false);
-        setNewAddressForm({
-            title: '',
-            city: '',
-            district: '',
-            phone: '',
-            fullAddress: '',
-            type: 'home'
+                setShowNewAddressForm(false);
+                setNewAddressForm(buildEmptyCartAddressForm());
+                setNewAddressError('');
+            },
+            onError: (error) => {
+                if (error && error.response && error.response.status === 401) {
+                    localStorage.removeItem('token');
+                    history.push('/login?redirect=/sepetim');
+                    return;
+                }
+                setNewAddressError(text('cart.addressSaveError', 'Adres kaydedilemedi. Lütfen tekrar deneyin.'));
+            },
         });
     };
 
@@ -550,7 +559,7 @@ export const CartPage = () => {
                         <button
                             type="button"
                             className="checkout-complete-button"
-                            onClick={() => setCheckoutStep(2)}
+                            onClick={goToAddressStep}
                             disabled={items.length === 0}
                         >
                             {text('cart.continueAddress', 'Adrese Geç')}
@@ -562,102 +571,191 @@ export const CartPage = () => {
             {checkoutStep === 2 && (
                 <div className="checkout-panel-card">
                     <h3>{t('cart.addressTitle')}</h3>
-                    {addressOptions.length === 0 ? (
-                        <div className="cart-address-empty-box">
-                            <span>{t('cart.noAddressInAccount')}</span>
-                        </div>
-                    ) : (
-                        <div className="checkout-option-list">
-                            {addressOptions.map((option) => (
-                                <label key={option.id} className={`checkout-option ${selectedAddress === option.id ? 'is-active' : ''}`}>
-                                    <input
-                                        type="radio"
-                                        name="address"
-                                        value={option.id}
-                                        checked={selectedAddress === option.id}
-                                        onChange={() => setSelectedAddress(option.id)}
-                                    />
-                                    <span className="checkout-option-text">
-                                        <strong>{option.label}</strong>
-                                        <small>{option.detail}</small>
-                                    </span>
-                                </label>
-                            ))}
-                        </div>
-                    )}
 
-                    <div className="checkout-step-actions">
-                        {!isMobileViewport && (
-                            <button type="button" className="checkout-outline-btn" onClick={() => setCheckoutStep(1)}>
-                                {text('cart.back', 'Geri')}
-                            </button>
-                        )}
-                        <button type="button" className="checkout-outline-btn" onClick={() => setShowNewAddressForm((prev) => !prev)}>
-                            {text('cart.addAddressInline', 'Yeni Adres Ekle')}
-                        </button>
-                        <button
-                            type="button"
-                            className="checkout-complete-button"
-                            onClick={handleAddressContinue}
-                            disabled={!selectedAddress}
-                        >
-                            {text('cart.continuePayment', 'Ödemeye Geç')}
-                        </button>
-                    </div>
-
-                    {showNewAddressForm && (
-                        <div className="inline-address-form">
-                            <div className="inline-address-grid">
-                                <label>
-                                    <span>{text('cart.addressFormTitle', 'Adres Başlığı')}</span>
-                                    <input
-                                        type="text"
-                                        value={newAddressForm.title}
-                                        onChange={(e) => handleNewAddressField('title', e.target.value)}
-                                    />
-                                </label>
-                                <label>
-                                    <span>{text('cart.addressPhone', 'Telefon')}</span>
-                                    <input
-                                        type="text"
-                                        value={newAddressForm.phone}
-                                        onChange={(e) => handleNewAddressField('phone', e.target.value)}
-                                    />
-                                </label>
-                                <label>
-                                    <span>{text('cart.addressCity', 'İl')}</span>
-                                    <input
-                                        type="text"
-                                        value={newAddressForm.city}
-                                        onChange={(e) => handleNewAddressField('city', e.target.value)}
-                                    />
-                                </label>
-                                <label>
-                                    <span>{text('cart.addressDistrict', 'İlçe')}</span>
-                                    <input
-                                        type="text"
-                                        value={newAddressForm.district}
-                                        onChange={(e) => handleNewAddressField('district', e.target.value)}
-                                    />
-                                </label>
-                                <label className="full">
-                                    <span>{text('cart.addressFull', 'Açık Adres')}</span>
-                                    <input
-                                        type="text"
-                                        value={newAddressForm.fullAddress}
-                                        onChange={(e) => handleNewAddressField('fullAddress', e.target.value)}
-                                    />
-                                </label>
+                    {!isAuthenticated ? (
+                        // Guest guard. The mobile flow lands on step 2 directly, so we can't
+                        // rely on the step 1 -> 2 button alone — render the prompt here too.
+                        <>
+                            <div className="cart-address-empty-box">
+                                <span>{text('cart.guestCheckoutBlocked', 'Devam etmek için giriş yapmanız gerekir.')}</span>
                             </div>
                             <div className="checkout-step-actions">
-                                <button type="button" className="checkout-outline-btn" onClick={() => setShowNewAddressForm(false)}>
-                                    {text('cart.cancel', 'Vazgeç')}
-                                </button>
-                                <button type="button" className="checkout-complete-button" onClick={handleCreateAddress}>
-                                    {text('cart.saveAddress', 'Adresi Kaydet')}
+                                <button
+                                    type="button"
+                                    className="checkout-complete-button"
+                                    onClick={() => history.push('/login?redirect=/sepetim')}
+                                >
+                                    {text('cart.goToLogin', 'Giriş Yap')}
                                 </button>
                             </div>
+                        </>
+                    ) : addressesLoading ? (
+                        <div className="cart-address-empty-box">
+                            <span>{text('cart.addressLoading', 'Adresler yükleniyor...')}</span>
                         </div>
+                    ) : addressesError ? (
+                        <div className="cart-address-empty-box">
+                            <span>{text('cart.addressLoadError', 'Adresler yüklenemedi. Lütfen sayfayı yenileyin.')}</span>
+                        </div>
+                    ) : (
+                        <>
+                            {addressOptions.length === 0 ? (
+                                <div className="cart-address-empty-box">
+                                    <span>{t('cart.noAddressInAccount')}</span>
+                                </div>
+                            ) : (
+                                <div className="checkout-option-list">
+                                    {addressOptions.map((option) => (
+                                        <label key={option.id} className={`checkout-option ${selectedAddress === option.id ? 'is-active' : ''}`}>
+                                            <input
+                                                type="radio"
+                                                name="address"
+                                                value={option.id}
+                                                checked={selectedAddress === option.id}
+                                                onChange={() => setSelectedAddress(option.id)}
+                                            />
+                                            <span className="checkout-option-text">
+                                                <strong>{option.label}</strong>
+                                                <small>{option.detail}</small>
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="checkout-step-actions">
+                                {!isMobileViewport && (
+                                    <button type="button" className="checkout-outline-btn" onClick={() => setCheckoutStep(1)}>
+                                        {text('cart.back', 'Geri')}
+                                    </button>
+                                )}
+                                <button type="button" className="checkout-outline-btn" onClick={() => setShowNewAddressForm((prev) => !prev)}>
+                                    {text('cart.addAddressInline', 'Yeni Adres Ekle')}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="checkout-complete-button"
+                                    onClick={handleAddressContinue}
+                                    disabled={!selectedAddress}
+                                >
+                                    {text('cart.continuePayment', 'Ödemeye Geç')}
+                                </button>
+                            </div>
+
+                            {showNewAddressForm && (
+                                <div className="inline-address-form">
+                                    <div className="inline-address-grid">
+                                        <label>
+                                            <span>{text('cart.addressFormTitle', 'Adres Başlığı')}</span>
+                                            <input
+                                                type="text"
+                                                maxLength={60}
+                                                value={newAddressForm.title}
+                                                onChange={(e) => handleNewAddressField('title', e.target.value)}
+                                            />
+                                        </label>
+                                        <label>
+                                            <span>{text('cart.addressFullName', 'Ad Soyad')}</span>
+                                            <input
+                                                type="text"
+                                                maxLength={120}
+                                                value={newAddressForm.fullName}
+                                                onChange={(e) => handleNewAddressField('fullName', e.target.value)}
+                                            />
+                                        </label>
+                                        <label>
+                                            <span>{text('cart.addressPhone', 'Telefon')}</span>
+                                            <input
+                                                type="text"
+                                                maxLength={30}
+                                                value={newAddressForm.phone}
+                                                onChange={(e) => handleNewAddressField('phone', e.target.value)}
+                                            />
+                                        </label>
+                                        <label>
+                                            <span>{text('cart.addressCountry', 'Ülke')}</span>
+                                            <input
+                                                type="text"
+                                                maxLength={60}
+                                                value={newAddressForm.country}
+                                                onChange={(e) => handleNewAddressField('country', e.target.value)}
+                                            />
+                                        </label>
+                                        <label>
+                                            <span>{text('cart.addressCity', 'İl')}</span>
+                                            <input
+                                                type="text"
+                                                maxLength={60}
+                                                value={newAddressForm.city}
+                                                onChange={(e) => handleNewAddressField('city', e.target.value)}
+                                            />
+                                        </label>
+                                        <label>
+                                            <span>{text('cart.addressDistrict', 'İlçe')}</span>
+                                            <input
+                                                type="text"
+                                                maxLength={60}
+                                                value={newAddressForm.district}
+                                                onChange={(e) => handleNewAddressField('district', e.target.value)}
+                                            />
+                                        </label>
+                                        <label>
+                                            <span>{text('cart.addressNeighborhood', 'Mahalle (opsiyonel)')}</span>
+                                            <input
+                                                type="text"
+                                                maxLength={80}
+                                                value={newAddressForm.neighborhood}
+                                                onChange={(e) => handleNewAddressField('neighborhood', e.target.value)}
+                                            />
+                                        </label>
+                                        <label>
+                                            <span>{text('cart.addressPostalCode', 'Posta Kodu (opsiyonel)')}</span>
+                                            <input
+                                                type="text"
+                                                maxLength={20}
+                                                value={newAddressForm.postalCode}
+                                                onChange={(e) => handleNewAddressField('postalCode', e.target.value)}
+                                            />
+                                        </label>
+                                        <label className="full">
+                                            <span>{text('cart.addressFull', 'Açık Adres')}</span>
+                                            <input
+                                                type="text"
+                                                maxLength={500}
+                                                value={newAddressForm.addressLine}
+                                                onChange={(e) => handleNewAddressField('addressLine', e.target.value)}
+                                            />
+                                        </label>
+                                    </div>
+                                    {newAddressError && (
+                                        <div className="bank-otp-error">{newAddressError}</div>
+                                    )}
+                                    <div className="checkout-step-actions">
+                                        <button
+                                            type="button"
+                                            className="checkout-outline-btn"
+                                            onClick={() => {
+                                                setShowNewAddressForm(false);
+                                                setNewAddressError('');
+                                            }}
+                                            disabled={createAddressMutation.isLoading}
+                                        >
+                                            {text('cart.cancel', 'Vazgeç')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="checkout-complete-button"
+                                            onClick={handleCreateAddress}
+                                            disabled={createAddressMutation.isLoading}
+                                        >
+                                            {createAddressMutation.isLoading
+                                                ? text('cart.saveAddressLoading', 'Kaydediliyor...')
+                                                : text('cart.saveAddress', 'Adresi Kaydet')}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             )}
@@ -1053,6 +1151,10 @@ export const CartPage = () => {
                         type="button"
                         className="cart-mobile-cta-button"
                         onClick={() => {
+                            if (!hasAuthToken()) {
+                                history.push('/login?redirect=/sepetim');
+                                return;
+                            }
                             setCheckoutStep(2);
                             setMobileCheckoutOpen(true);
                         }}
