@@ -17,9 +17,13 @@ const initialForm = {
     discountRate: '',
     color: '',
     size: '',
-    installmentText: 'Peşin fiyatına',
+    colorOptions: [],
+    sizeOptions: [],
+    installmentText: 'Pesin fiyatina',
     freeCargo: false,
-    fastDelivery: false
+    fastDelivery: false,
+    highlightsText: '',
+    attributesText: ''
 };
 
 export const SellerProductCreatePage = () => {
@@ -30,7 +34,7 @@ export const SellerProductCreatePage = () => {
 
     const handleSubmit = async ({form, isValid}) => {
         if (!isValid) {
-            setErrorMessage('Baslik, marka, tam kategori secimi, fiyat ve gorsel alani zorunludur.');
+            setErrorMessage('Zorunlu kart alanlarini ve temel detay bilgilerini tamamlayin.');
             return;
         }
 
@@ -40,10 +44,10 @@ export const SellerProductCreatePage = () => {
             const created = await SellerProductService.createSellerProduct(form);
             if (toastRef.current) {
                 toastRef.current.show({
-                severity: 'success',
-                summary: 'Urun kaydedildi',
-                detail: `${created?.title || 'Urun'} listeye eklendi.`,
-                life: 1800
+                    severity: 'success',
+                    summary: 'Urun kaydedildi',
+                    detail: `${created?.title || 'Urun'} listeye eklendi.`,
+                    life: 1800
                 });
             }
             window.setTimeout(() => {
@@ -59,7 +63,7 @@ export const SellerProductCreatePage = () => {
     return (
         <>
             <Toast ref={toastRef} position="top-right"/>
-            <SellerLayout title="Yeni urun" subtitle="Marka secimi seller baglamindan, kategori secimi ise kademeli agac yapisindan gelir.">
+            <SellerLayout title="Yeni urun" subtitle="Kart ve detay alanlarini ayni urun modeli uzerinden olustur.">
                 <SellerProductForm
                     initialForm={initialForm}
                     errorMessage={errorMessage}

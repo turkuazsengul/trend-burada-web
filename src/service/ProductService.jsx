@@ -6,6 +6,7 @@ import {
     USE_STATIC_PRODUCT_DATA
 } from "../constants/UrlConstans";
 import {getAllCategoryKeys, getCategoryMeta, getCategoryProducts} from "../data/demoProductData";
+import {normalizeColorOption, resolveColorHex, resolveColorLabel} from "../utils/colorOptions";
 
 const STATIC_TARGET_COUNT = 54;
 
@@ -101,28 +102,9 @@ const normalizeColorOptions = (items, fallbackImage = "") => {
         return [];
     }
 
-    return items.map((item) => {
-        if (typeof item === "string") {
-            return {
-                name: item,
-                image: fallbackImage
-            };
-        }
-
-        if (!item || typeof item !== "object") {
-            return null;
-        }
-
-        const name = item.name || item.label || item.color || "";
-        if (!name) {
-            return null;
-        }
-
-        return {
-            name,
-            image: item.image || item.img || item.imageUrl || fallbackImage
-        };
-    }).filter(Boolean);
+    return items
+        .map((item) => normalizeColorOption(item, fallbackImage))
+        .filter(Boolean);
 };
 
 const normalizeAttributes = (items) => {
@@ -233,6 +215,7 @@ const getStaticProductsByCategory = (categoryKey) => {
         const seed = base[i % Math.max(base.length, 1)] || {};
         const mark = BRAND_POOL[(i + categoryKey.length) % BRAND_POOL.length];
         const color = COLOR_POOL[(i * 2 + categoryKey.length) % COLOR_POOL.length];
+        const primaryColorHex = resolveColorHex(color);
         const size = SIZE_POOL[(i + 1) % SIZE_POOL.length];
         const sizeOptions = [
             SIZE_POOL[(i + 0) % SIZE_POOL.length],
@@ -243,15 +226,18 @@ const getStaticProductsByCategory = (categoryKey) => {
         const img = imagePool[(i + categoryKey.length) % imagePool.length] || seed.img;
         const colorOptions = [
             {
-                name: color,
+                name: resolveColorLabel(color),
+                hex: primaryColorHex,
                 image: img
             },
             {
-                name: COLOR_POOL[(i + 1 + categoryKey.length) % COLOR_POOL.length],
+                name: resolveColorLabel(COLOR_POOL[(i + 1 + categoryKey.length) % COLOR_POOL.length]),
+                hex: resolveColorHex(COLOR_POOL[(i + 1 + categoryKey.length) % COLOR_POOL.length]),
                 image: imagePool[(i + 2 + categoryKey.length) % imagePool.length]
             },
             {
-                name: COLOR_POOL[(i + 3 + categoryKey.length) % COLOR_POOL.length],
+                name: resolveColorLabel(COLOR_POOL[(i + 3 + categoryKey.length) % COLOR_POOL.length]),
+                hex: resolveColorHex(COLOR_POOL[(i + 3 + categoryKey.length) % COLOR_POOL.length]),
                 image: imagePool[(i + 4 + categoryKey.length) % imagePool.length]
             }
         ];

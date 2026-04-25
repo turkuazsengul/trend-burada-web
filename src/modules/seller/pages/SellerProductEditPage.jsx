@@ -40,7 +40,7 @@ export const SellerProductEditPage = ({match}) => {
 
     const handleSubmit = async ({form, isValid}) => {
         if (!isValid) {
-            setErrorMessage('Baslik, marka, tam kategori secimi, fiyat ve gorsel alani zorunludur.');
+            setErrorMessage('Zorunlu kart alanlarini ve temel detay bilgilerini tamamlayin.');
             return;
         }
 

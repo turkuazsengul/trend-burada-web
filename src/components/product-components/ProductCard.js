@@ -5,32 +5,9 @@ import AppContext from "../../AppContext";
 import CartService, {CART_UPDATED_EVENT} from "../../service/CartService";
 import {ProductCardCartCta} from "./ProductCardCartCta";
 import {ProductFavoriteButton} from "./ProductFavoriteButton";
+import {resolveColorHex, resolveColorLabel} from "../../utils/colorOptions";
 
 const formatPrice = (price, locale = 'tr-TR') => `${Number(price || 0).toLocaleString(locale)} TL`;
-
-const CARD_COLOR_HEX_MAP = {
-    siyah: '#1f2937',
-    beyaz: '#f8fafc',
-    bej: '#d6c9af',
-    lacivert: '#243b70',
-    haki: '#6b7b4d',
-    kirmizi: '#d53434',
-    kırmızı: '#d53434',
-    gri: '#9ca3af',
-    mavi: '#3b82f6',
-    krem: '#efe7d7',
-    pembe: '#f59eb5',
-    bordo: '#8c2f39',
-    kahverengi: '#8b5e3c',
-    turuncu: '#f97316',
-    yesil: '#22c55e',
-    yeşil: '#22c55e'
-};
-
-const resolveCardColorHex = (colorName = '') => {
-    const key = String(colorName).trim().toLowerCase();
-    return CARD_COLOR_HEX_MAP[key] || '#cbd5e1';
-};
 
 const hashCode = (value = '') => {
     return String(value).split('').reduce((acc, char) => ((acc * 31) + char.charCodeAt(0)) >>> 0, 0);
@@ -108,7 +85,7 @@ export const ProductCard = ({product}) => {
                     return '';
                 }
 
-                return item.name || item.label || item.color || '';
+                return item.hex || item.name || item.label || item.color || '';
             }).filter(Boolean)
             : [];
 
@@ -143,7 +120,7 @@ export const ProductCard = ({product}) => {
 
     const defaultCartSelection = useMemo(() => ({
         selectedSize: product?.sizeOptions?.[0] || product?.size || '',
-        selectedColor: product?.colorOptions?.[0]?.name || product?.color || ''
+        selectedColor: resolveColorLabel(product?.colorOptions?.[0] || product?.color || '')
     }), [product]);
 
     useEffect(() => {
@@ -323,8 +300,8 @@ export const ProductCard = ({product}) => {
                                     <span
                                         key={`${product.id}-swatch-${index}`}
                                         className="product-color-swatch"
-                                        style={{backgroundColor: resolveCardColorHex(colorName), zIndex: colorSwatches.length - index}}
-                                        title={colorName}
+                                        style={{backgroundColor: resolveColorHex(colorName), zIndex: colorSwatches.length - index}}
+                                        title={resolveColorLabel(colorName)}
                                     />
                                 ))}
                             </div>

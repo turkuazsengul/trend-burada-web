@@ -8,10 +8,11 @@ export const SellerGuard = ({component: Component, ...rest}) => (
         render={(props) => {
             const user = AuthService.getCurrentUser();
             const roles = Array.isArray(user?.roleList) ? user.roleList : [];
-            const hasSession = Boolean(AuthService.getBearerToken() && user);
+            const hasSession = AuthService.hasValidSession();
             const hasSellerRole = roles.some((role) => role?.name === 'SELLER' || role?.name === 'ADMIN');
 
             if (!hasSession || !hasSellerRole) {
+                AuthService.clearSession();
                 return <Redirect to={`/seller/login?redirect=${encodeURIComponent(props.location.pathname)}`}/>;
             }
 

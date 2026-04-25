@@ -11,6 +11,7 @@ import AppContext from "../../AppContext";
 import UserActivityService from "../../service/UserActivityService";
 import {FAVORITES_UPDATED_EVENT, initFavorites, isFavorite, toggleFavorite} from "../../service/FavoriteService";
 import {ProductFavoriteButton} from "./ProductFavoriteButton";
+import {normalizeColorOption, resolveColorHex, resolveColorLabel} from "../../utils/colorOptions";
 
 const resolveCategoryKeyFromId = (productId = '') => {
     const normalized = String(productId).toLowerCase();
@@ -200,27 +201,14 @@ const normalizeAttributes = (product, t) => {
     return [
         {label: t('productDetail.seller'), value: product?.mark || '-'},
         {label: t('productDetail.color'), value: product?.color || '-'},
-        {label: t('productDetail.sellerScore'), value: String(product?.sellerScore || '-')}
+        {label: t('productDetail.sellerScore'), value: formatSellerScore(product?.sellerScore)}
     ];
 };
 
 const normalizeColorOptions = (product) => {
     const incoming = Array.isArray(product?.colorOptions) ? product.colorOptions : [];
     const normalizedIncoming = incoming
-        .map((item) => {
-            if (typeof item === 'string') {
-                return {name: item, image: product?.img || ''};
-            }
-
-            if (!item || typeof item !== 'object') {
-                return null;
-            }
-
-            return {
-                name: item.name || item.label || item.color || '',
-                image: item.image || item.img || item.imageUrl || product?.img || ''
-            };
-        })
+        .map((item) => normalizeColorOption(item, product?.img || ''))
         .filter((item) => item && item.name);
 
     if (normalizedIncoming.length > 0) {
@@ -228,30 +216,13 @@ const normalizeColorOptions = (product) => {
     }
 
     if (product?.color) {
-        return [{name: product.color, image: product?.img || ''}];
+        return [normalizeColorOption(product.color, product?.img || '')].filter(Boolean);
     }
 
     return [];
 };
 
-const COLOR_HEX_MAP = {
-    siyah: '#1f2937',
-    beyaz: '#f8fafc',
-    bej: '#d6c9af',
-    lacivert: '#243b70',
-    haki: '#6b7b4d',
-    kirmizi: '#d53434',
-    kırmızı: '#d53434',
-    gri: '#9ca3af',
-    mavi: '#3b82f6',
-    krem: '#efe7d7',
-    pembe: '#f59eb5'
-};
-
-const resolveColorHex = (colorName = '') => {
-    const key = String(colorName).trim().toLowerCase();
-    return COLOR_HEX_MAP[key] || '#cbd5e1';
-};
+const formatSellerScore = (value) => Number(value || 0).toFixed(1);
 
 const getAttributeValue = (attributes = [], labels = []) => {
     const keys = labels.map((label) => String(label).toLowerCase());
@@ -300,7 +271,7 @@ export const ProductDetail = ({match}) => {
             const incomingSizes = Array.isArray(productData?.sizeOptions) ? productData.sizeOptions : [];
             setSelectedSize(incomingSizes[0] || productData?.size || '');
             const incomingColors = normalizeColorOptions(productData);
-            setSelectedColor(incomingColors[0]?.name || productData?.color || '');
+            setSelectedColor(resolveColorLabel(incomingColors[0] || productData?.color || ''));
         }).finally(() => {
             if (isMounted) {
                 setLoading(false);
@@ -372,7 +343,7 @@ export const ProductDetail = ({match}) => {
     const productSummaryParagraphs = useMemo(() => {
         const safeTitle = product?.title || '';
         const safeMark = product?.mark || '';
-        const safeColor = product?.color || '';
+        const safeColor = resolveColorLabel(product?.color || colorOptions[0] || '');
         const fit = getAttributeValue(productAttributes, ['Kalıp', 'Fit']) || (language === 'en' ? 'regular fit' : 'regular fit');
         const material = getAttributeValue(productAttributes, ['Materyal', 'Material']) || (language === 'en' ? 'soft textured fabric' : 'yumuşak dokulu kumaş');
         const summaryText = t('productDetail.summaryText', {title: safeTitle});
@@ -390,7 +361,7 @@ export const ProductDetail = ({match}) => {
             `${safeMark} imzası taşıyan bu model, ${fit.toLowerCase()} kalıbı ve ${material.toLowerCase()} yapısıyla gün boyu konfor sunarken daha toplu ve dengeli bir siluet oluşturur.`,
             `${safeColor ? `${safeColor} tonu` : 'Renk yapısı'} günlük şehir stilinde, ofis kombinlerinde ve katmanlı mevsim geçişi görünümlerinde rahatça kullanılabilecek kadar güçlü ve dengelidir.`
         ];
-    }, [language, product, productAttributes, t]);
+    }, [language, product, productAttributes, colorOptions, t]);
     const productDetailFacts = useMemo(() => {
         const material = getAttributeValue(productAttributes, ['Materyal', 'Material']) || (language === 'en' ? 'Soft textured fabric' : 'Yumuşak dokulu kumaş');
         const fit = getAttributeValue(productAttributes, ['Kalıp', 'Fit']) || (language === 'en' ? 'Regular fit' : 'Regular fit');
@@ -412,14 +383,14 @@ export const ProductDetail = ({match}) => {
         ];
     }, [language, productAttributes]);
     const galleryImages = useMemo(() => {
-        const selectedColorImage = colorOptions.find((item) => item.name === selectedColor)?.image;
+        const selectedColorImage = colorOptions.find((item) => resolveColorLabel(item) === selectedColor)?.image;
         const colorImages = colorOptions.map((item) => item.image);
         const pool = [selectedColorImage, product?.img, ...colorImages, ...(relatedProducts || []).slice(0, 5).map((item) => item.img)];
         return Array.from(new Set(pool.filter(Boolean)));
     }, [product, relatedProducts, colorOptions, selectedColor]);
 
     useEffect(() => {
-        const imageForColor = colorOptions.find((item) => item.name === selectedColor)?.image;
+        const imageForColor = colorOptions.find((item) => resolveColorLabel(item) === selectedColor)?.image;
         if (imageForColor) {
             setSelectedImage(imageForColor);
         }
@@ -596,16 +567,16 @@ export const ProductDetail = ({match}) => {
                             <div className="product-detail-color-options">
                                 {colorOptions.map((colorItem) => (
                                     <button
-                                        key={colorItem.name}
+                                        key={`${colorItem.name}-${colorItem.hex || ''}`}
                                         type="button"
-                                        className={`product-detail-color-option ${selectedColor === colorItem.name ? 'is-active' : ''}`}
-                                        onClick={() => setSelectedColor(colorItem.name)}
-                                        aria-label={`${t('productDetail.color')}: ${colorItem.name}`}
-                                        aria-pressed={selectedColor === colorItem.name}
+                                        className={`product-detail-color-option ${selectedColor === resolveColorLabel(colorItem) ? 'is-active' : ''}`}
+                                        onClick={() => setSelectedColor(resolveColorLabel(colorItem))}
+                                        aria-label={`${t('productDetail.color')}: ${resolveColorLabel(colorItem)}`}
+                                        aria-pressed={selectedColor === resolveColorLabel(colorItem)}
                                     >
                                         <span
                                             className="product-detail-color-dot"
-                                            style={{backgroundColor: resolveColorHex(colorItem.name)}}
+                                            style={{backgroundColor: resolveColorHex(colorItem)}}
                                             aria-hidden="true"
                                         />
                                     </button>
@@ -618,7 +589,7 @@ export const ProductDetail = ({match}) => {
                         <div className="product-detail-panel-item">
                             <div className="panel-label">{t('productDetail.seller')}</div>
                             <div className="panel-value">{product.mark} {t('productDetail.sellerStoreSuffix')}</div>
-                            <div className="panel-sub">{t('productDetail.sellerScore')}: {product.sellerScore || 0}</div>
+                            <div className="panel-sub">{t('productDetail.sellerScore')}: {formatSellerScore(product.sellerScore)}</div>
                         </div>
                         <div className="product-detail-panel-item">
                             <div className="panel-label">{t('productDetail.estimatedDelivery')}</div>
@@ -832,16 +803,16 @@ export const ProductDetail = ({match}) => {
                             <div className="product-detail-color-options">
                                 {colorOptions.map((colorItem) => (
                                     <button
-                                        key={colorItem.name}
+                                        key={`${colorItem.name}-${colorItem.hex || ''}`}
                                         type="button"
-                                        className={`product-detail-color-option ${selectedColor === colorItem.name ? 'is-active' : ''}`}
-                                        onClick={() => setSelectedColor(colorItem.name)}
-                                        aria-label={`${t('productDetail.color')}: ${colorItem.name}`}
-                                        aria-pressed={selectedColor === colorItem.name}
+                                        className={`product-detail-color-option ${selectedColor === resolveColorLabel(colorItem) ? 'is-active' : ''}`}
+                                        onClick={() => setSelectedColor(resolveColorLabel(colorItem))}
+                                        aria-label={`${t('productDetail.color')}: ${resolveColorLabel(colorItem)}`}
+                                        aria-pressed={selectedColor === resolveColorLabel(colorItem)}
                                     >
                                         <span
                                             className="product-detail-color-dot"
-                                            style={{backgroundColor: resolveColorHex(colorItem.name)}}
+                                            style={{backgroundColor: resolveColorHex(colorItem)}}
                                             aria-hidden="true"
                                         />
                                     </button>
@@ -854,7 +825,7 @@ export const ProductDetail = ({match}) => {
                     <div className="product-detail-panel-item">
                             <div className="panel-label">{t('productDetail.seller')}</div>
                             <div className="panel-value">{product.mark} {t('productDetail.sellerStoreSuffix')}</div>
-                            <div className="panel-sub">{t('productDetail.sellerScore')}: {product.sellerScore || 0}</div>
+                            <div className="panel-sub">{t('productDetail.sellerScore')}: {formatSellerScore(product.sellerScore)}</div>
                         </div>
 
                         <div className="product-detail-panel-item">
@@ -922,7 +893,7 @@ export const ProductDetail = ({match}) => {
                         <h3>{t('productDetail.seller')}</h3>
                         <div className="side-seller-row">
                             <strong>{product.mark}</strong>
-                            <span className="seller-score-chip">{product.sellerScore || 0}</span>
+                            <span className="seller-score-chip">{formatSellerScore(product.sellerScore)}</span>
                         </div>
                         <div className="side-muted-line">{buildDeliveryLabel(language, t)}</div>
                         <button type="button" className="side-outline-button">{t('productDetail.storeButton')}</button>
