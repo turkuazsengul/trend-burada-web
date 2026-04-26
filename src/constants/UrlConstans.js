@@ -42,6 +42,14 @@ export const MY_USER_INFO_URL = getConfigValue("REACT_APP_MY_USER_INFO_URL")
 export const MY_ORDER_URL = getConfigValue("REACT_APP_MY_ORDER_URL")
 export const MY_ADDRESS_URL = getConfigValue("REACT_APP_MY_ADDRESS_URL", "/hesabÄ±m/Adreslerim")
 
+// Self-service customer profile (GET + PATCH). Same fallback pattern as ADDRESS_BASE_URL —
+// derive from USER_SERVICE_BASE_URL when the explicit env var is missing so a single base
+// URL change keeps every customer endpoint pointing at the right host.
+export const CUSTOMER_ME_URL = getConfigValue(
+    "REACT_APP_CUSTOMER_ME_URL",
+    USER_SERVICE_BASE_URL ? `${USER_SERVICE_BASE_URL}/customer/me` : ""
+)
+
 // Backend address CRUD endpoint base. Falls back to user-service base + the controller path
 // so a single REACT_APP_USER_SERVICE_BASE_URL change keeps everything pointing at the right
 // host even if REACT_APP_ADDRESS_BASE_URL is forgotten in an env file.

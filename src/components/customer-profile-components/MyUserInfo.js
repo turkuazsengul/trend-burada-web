@@ -5,7 +5,6 @@ import {InputText} from "primereact/inputtext";
 import {Button} from "primereact/button";
 import {Password} from "primereact/password";
 import {InputMask} from "primereact/inputmask";
-import UserService from "../../service/UserService.";
 import {useHistory, useLocation} from "react-router-dom";
 import {Calendar} from "primereact/calendar";
 import {Toast} from "primereact/toast";
@@ -19,6 +18,44 @@ import {
     useUpdateAddress,
     buildSetDefaultBody,
 } from "../../hooks/useAddresses";
+import {
+    useCustomerProfile,
+    useUpdateCustomerProfile,
+    extractFieldErrors,
+} from "../../hooks/useCustomerProfile";
+
+// Server gender enum is uppercase (FEMALE/MALE/UNSPECIFIED); UI radio buttons use lowercase.
+// Two helpers keep that conversion in one place.
+const genderToServer = (uiValue) => {
+    if (!uiValue) return null;
+    return uiValue.toLowerCase();
+};
+const genderToUi = (serverValue) => {
+    if (!serverValue) return '';
+    return String(serverValue).toLowerCase();
+};
+
+// Convert a JavaScript Date (PrimeReact Calendar value) to ISO yyyy-MM-dd that the server
+// LocalDate parser accepts. Null in -> null out.
+const dateToIso = (date) => {
+    if (!date) return null;
+    const d = date instanceof Date ? date : new Date(date);
+    if (Number.isNaN(d.getTime())) return null;
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+};
+
+// fullName is a single column on the server. Existing UI shows two readonly inputs
+// (Ad / Soyad), so we split on the first whitespace for display only — purely cosmetic
+// since these fields are not editable.
+const splitFullName = (fullName) => {
+    const value = String(fullName || '').trim();
+    if (!value) return {firstName: '', lastName: ''};
+    const [first, ...rest] = value.split(/\s+/);
+    return {firstName: first || '', lastName: rest.join(' ')};
+};
 
 // Backend phone validation regex (mirrors AddressRequest.java). Keep the source of truth
 // on the server but reject obviously-bad input client-side so users don't get a 400.
@@ -120,28 +157,50 @@ const MyUserInfo = () => {
         ref.current.show({severity: severity, summary: labelText, detail: detailText, life: 3000});
     };
 
-    useEffect(() => {
-        const storedUserStr = localStorage.getItem("user");
-        const user = storedUserStr ? JSON.parse(storedUserStr) : null;
+    // Customer profile is now sourced from GET /api/v1/customer/me (React Query). When the
+    // request 401s the user is bounced to /login below; on success we sync the form's
+    // local state so existing edit/dirty-tracking continues to work without rewiring every
+    // input to derive its value from the cache directly.
+    const {
+        data: customerProfile,
+        isLoading: profileLoading,
+        isError: profileError,
+        error: profileFetchError,
+    } = useCustomerProfile();
+    const updateProfileMutation = useUpdateCustomerProfile();
+    const [fieldErrors, setFieldErrors] = useState({});
 
-        if (user) {
-            setUserId(user.pkId || user.id || "")
-            setPhoneNumber(user.gsm_no || "")
-            setBirthDate(user.dob ? new Date(user.dob) : null)
-            setFirstName(user.name || "")
-            setEmail(user.email || "")
-            setLastName(user.surname || "")
-            setGender(user.gender || "")
-            setFullName(`${user.name || ''} ${user.surname || ''}`.trim())
-            setNewPhoneNumber(user.gsm_no || "")
-        } else {
+    useEffect(() => {
+        // 401 means the token is missing or expired — same behaviour the legacy localStorage
+        // path used to take.
+        if (profileFetchError && profileFetchError.response && profileFetchError.response.status === 401) {
             localStorage.removeItem("token");
             history.push("/login");
-            window.location.reload()
-
-            showMessage(t('profile.noUserTitle'), t('profile.noUserDetail'), toastCenter, 'warn')
+            return;
         }
-    }, [history, t]);
+        if (profileError && !customerProfile) {
+            showMessage(t('profile.noUserTitle'), t('profile.noUserDetail'), toastCenter, 'warn');
+        }
+    }, [profileError, profileFetchError, customerProfile, history, t]);
+
+    useEffect(() => {
+        if (!customerProfile) {
+            return;
+        }
+        // server returns customerCode as `customerId` (cust-XXXX). It's the public-facing id
+        // we stash into the userId state so unrelated code paths (Activity, Cart events,
+        // toasts) keep working.
+        setUserId(customerProfile.customerId || "");
+        setEmail(customerProfile.email || "");
+        const split = splitFullName(customerProfile.fullName);
+        setFirstName(split.firstName);
+        setLastName(split.lastName);
+        setFullName(customerProfile.fullName || "");
+        setGender(genderToUi(customerProfile.gender));
+        setBirthDate(customerProfile.birthDate ? new Date(customerProfile.birthDate) : null);
+        setPhoneNumber(customerProfile.phone || "");
+        setNewPhoneNumber(customerProfile.phone || "");
+    }, [customerProfile]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -184,29 +243,54 @@ const MyUserInfo = () => {
     }, [userId, activeSection]);
 
     const clickUserInformationUpdateBtn = () => {
-        const user = {
-            pkId: userId,
-            gsm_no: phoneNumber,
-            dob: birthDate,
-            name: firstName,
-            email: email,
-            surname: lastName,
-            gender: gender
+        // Phone is intentionally NOT included here — it has its own OTP-gated path
+        // (handleApprovePhoneOtp) which fires its own PATCH after the 6-digit code is
+        // validated. Sending it from this button would bypass that demo flow.
+        //
+        // fullName / email / firstName / lastName are also absent: the request DTO doesn't
+        // expose them, and the server treats them as immutable identity fields. Even if a
+        // future bug let an attacker post them, the controller would simply ignore them.
+        setFieldErrors({});
+        const body = {
+            gender: genderToServer(gender),
+            birthDate: dateToIso(birthDate),
         };
 
-        UserService.updateUser(user).then((response) => {
-            if (response) {
-                localStorage.setItem("user", JSON.stringify(user));
-                window.location.reload()
-            }
-        }).catch((error) => {
-            if (error.response && error.response.status === 401) {
-                localStorage.removeItem("token");
-                history.push("/login");
-            } else {
-                showMessage(t('profile.noUserTitle'), t('profile.noUserDetail'), toastCenter, 'warn')
-            }
-        })
+        updateProfileMutation.mutate(body, {
+            onSuccess: () => {
+                setUpdateBtnDisabled(true);
+                showMessage(
+                    safeText('profile.updatedTitle', 'Bilgiler kaydedildi'),
+                    safeText('profile.updatedDetail', 'Profil bilgileriniz başarıyla güncellendi.'),
+                    toastCenter,
+                    'success'
+                );
+            },
+            onError: (error) => {
+                if (error && error.response && error.response.status === 401) {
+                    localStorage.removeItem("token");
+                    history.push("/login");
+                    return;
+                }
+                const errors = extractFieldErrors(error);
+                setFieldErrors(errors);
+                if (Object.keys(errors).length > 0) {
+                    showMessage(
+                        safeText('profile.validationTitle', 'Geçersiz alanlar var'),
+                        safeText('profile.validationDetail', 'Lütfen kırmızı ile işaretli alanları kontrol edin.'),
+                        toastCenter,
+                        'warn'
+                    );
+                } else {
+                    showMessage(
+                        safeText('profile.updateErrorTitle', 'Güncelleme başarısız'),
+                        safeText('profile.updateErrorDetail', 'Profiliniz şu anda güncellenemiyor. Lütfen daha sonra tekrar deneyin.'),
+                        toastCenter,
+                        'warn'
+                    );
+                }
+            },
+        });
     }
 
     const PHONE_OTP_DEMO_CODE = '428613';
@@ -234,29 +318,43 @@ const MyUserInfo = () => {
             return;
         }
 
-        setPhoneNumber(newPhoneNumber);
-        setUpdateBtnDisabled(false);
-        setPhoneOtpModalOpen(false);
-        setPhoneOtpError('');
-        setPhoneOtpCode('');
+        // OTP is the local "you own this number" guard; the server-side persistence is the
+        // PATCH below. Both sides must succeed before we celebrate — otherwise the local
+        // state would drift from the database and a refresh would revert the change.
+        const phoneBody = {phone: String(newPhoneNumber || '').trim()};
 
-        try {
-            const storedUserStr = localStorage.getItem("user");
-            const user = storedUserStr ? JSON.parse(storedUserStr) : null;
-            if (user) {
-                user.gsm_no = newPhoneNumber;
-                localStorage.setItem("user", JSON.stringify(user));
-            }
-        } catch (e) {
-            // no-op
-        }
-
-        showMessage(
-            safeText('profile.phoneUpdatedTitle', 'Başarılı'),
-            safeText('profile.phoneUpdatedDetail', 'Cep telefonu numaranız güncellendi.'),
-            toastCenter,
-            'success'
-        );
+        updateProfileMutation.mutate(phoneBody, {
+            onSuccess: () => {
+                setPhoneNumber(newPhoneNumber);
+                setPhoneOtpModalOpen(false);
+                setPhoneOtpError('');
+                setPhoneOtpCode('');
+                showMessage(
+                    safeText('profile.phoneUpdatedTitle', 'Başarılı'),
+                    safeText('profile.phoneUpdatedDetail', 'Cep telefonu numaranız güncellendi.'),
+                    toastCenter,
+                    'success'
+                );
+            },
+            onError: (error) => {
+                if (error && error.response && error.response.status === 401) {
+                    localStorage.removeItem("token");
+                    history.push("/login");
+                    return;
+                }
+                const errors = extractFieldErrors(error);
+                if (errors.phone) {
+                    // Surface the server's specific complaint (e.g. bad characters) inside
+                    // the modal so the user can fix it without dismissing the dialog.
+                    setPhoneOtpError(errors.phone);
+                    return;
+                }
+                setPhoneOtpError(safeText(
+                    'profile.phoneUpdateErrorDetail',
+                    'Telefon güncellenemedi. Lütfen daha sonra tekrar deneyin.'
+                ));
+            },
+        });
     };
 
     const sectionMeta = {
@@ -406,6 +504,9 @@ const MyUserInfo = () => {
                                                 <span>{safeText('profile.genderUnspecified', 'Belirtmek İstemiyorum')}</span>
                                             </label>
                                         </div>
+                                        {fieldErrors.gender && (
+                                            <div className="bank-otp-error">{fieldErrors.gender}</div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -421,7 +522,11 @@ const MyUserInfo = () => {
                                                 setBirthDate(e.value)
                                                 setUpdateBtnDisabled(false)
                                             }}
+                                            maxDate={new Date()}
                                         />
+                                        {fieldErrors.birthDate && (
+                                            <div className="bank-otp-error">{fieldErrors.birthDate}</div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="detail-row-4">
@@ -430,8 +535,10 @@ const MyUserInfo = () => {
                                             <Button
                                                 className="profile-action-btn"
                                                 onClick={clickUserInformationUpdateBtn}
-                                                label={t('profile.update')}
-                                                disabled={updateBtnDisabled}
+                                                label={updateProfileMutation.isLoading
+                                                    ? safeText('profile.updating', 'Kaydediliyor...')
+                                                    : t('profile.update')}
+                                                disabled={updateBtnDisabled || updateProfileMutation.isLoading || profileLoading}
                                                 size="large"
                                             />
                                         </div>
@@ -1104,9 +1211,11 @@ const MyUserInfo = () => {
                                 type="button"
                                 className="approve"
                                 onClick={handleApprovePhoneOtp}
-                                disabled={phoneOtpCode.length !== 6}
+                                disabled={phoneOtpCode.length !== 6 || updateProfileMutation.isLoading}
                             >
-                                {safeText('profile.phoneOtpApprove', 'Onayla')}
+                                {updateProfileMutation.isLoading
+                                    ? safeText('profile.phoneOtpApproving', 'Kaydediliyor...')
+                                    : safeText('profile.phoneOtpApprove', 'Onayla')}
                             </button>
                         </div>
                     </div>
